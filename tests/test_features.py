@@ -92,10 +92,13 @@ def test_default_obs_bit_identical_to_pre_change_capture(oval, config):
     assert config["observation"]["features"] == ["rays", "speed"]
     env = RacingEnv(oval, config, n_envs=3, seed=123)
     obs = env.reset()
-    np.testing.assert_array_equal(obs, BASELINE_RESET)
+    # The baseline was captured on one machine; libm/BLAS on another can differ in the last bit
+    # (seen on Linux CI: 5.6e-17). Exact equality against a same-run reference is guarded by
+    # test_default_obs_bit_identical_to_hand_computed_rays_speed below; here allow 1e-12.
+    np.testing.assert_allclose(obs, BASELINE_RESET, rtol=0, atol=1e-12)
     for a in BASELINE_ACTIONS:
         obs, _, _, _ = env.step(np.full(3, a))
-    np.testing.assert_array_equal(obs, BASELINE_AFTER)
+    np.testing.assert_allclose(obs, BASELINE_AFTER, rtol=0, atol=1e-12)
 
 
 def test_default_obs_bit_identical_to_hand_computed_rays_speed(oval, config):

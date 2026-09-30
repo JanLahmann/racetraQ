@@ -9,6 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
@@ -22,6 +23,8 @@ jobs:
       - name: Lint
         run: ruff check .
       - name: Test
+        # run the tests even when lint fails, so a style issue never hides a real regression
+        if: success() || failure()
         run: pytest
 
   notebooks:
