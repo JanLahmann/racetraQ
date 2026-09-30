@@ -237,7 +237,9 @@ def render_markdown(path: Path = RECORDS_PATH) -> str:
                   "| driver | kind | qubits | best | mean | laps | episodes lapped |",
                   "|---|---|---|---|---|---|---|"]
         for r in rows:
-            fmt = lambda v: f"{v:.2f} s" if v is not None else "—"
+            def fmt(v):
+                return f"{v:.2f} s" if v is not None else "—"
+
             lines.append(
                 f"| {r['driver']} | {r['kind']} | {r['n_qubits'] or '—'} "
                 f"| {fmt(r['best_s'])} | {fmt(r['mean_s'])} | {r['laps']} "

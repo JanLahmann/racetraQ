@@ -96,7 +96,7 @@ class CarObserver:
         self.lookahead_m = float(obs_cfg.get("lookahead_m", 15.0))
         self.features = [str(kind) for kind in obs_cfg.get("features", ["rays", "speed"])]
         self._parsed = [_parse_feature(kind) for kind in self.features]
-        unknown = [kind for kind, (base, _) in zip(self.features, self._parsed)
+        unknown = [kind for kind, (base, _) in zip(self.features, self._parsed, strict=True)
                    if base not in FEATURE_KINDS]
         if unknown:
             raise ValueError(

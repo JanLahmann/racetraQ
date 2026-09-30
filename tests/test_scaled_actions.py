@@ -28,7 +28,7 @@ def _track(config, name="oval"):
 
 def test_action_sets_are_prefix_compatible():
     assert action_set(4) == ACTIONS
-    for small, big in zip(ACTION_SIZES, ACTION_SIZES[1:]):
+    for small, big in zip(ACTION_SIZES, ACTION_SIZES[1:], strict=False):
         assert action_set(big)[: small] == action_set(small)
         assert action_labels(big)[: small] == action_labels(small)
     assert len(action_set(6)) == 6 and len(action_labels(8)) == 8
