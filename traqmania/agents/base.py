@@ -48,7 +48,14 @@ def action_labels(n_actions: int = N_ACTIONS) -> tuple[str, ...]:
 
 @runtime_checkable
 class QFunction(Protocol):
-    """Batched, differentiable state-action value function over flat parameters."""
+    """Batched, differentiable state-action value function over flat parameters.
+
+    OPTIONAL (deliberately not a protocol member, so backends without it still
+    satisfy ``isinstance(..., QFunction)``): ``param_groups() -> dict[str, slice]``
+    names contiguous slices of the flat parameter vector — e.g. the quantum
+    circuit's ``lam``/``theta``/``head`` — so the trainer can give each group
+    its own learning rate (``[training] lr_groups``).
+    """
 
     n_features: int
     n_actions: int

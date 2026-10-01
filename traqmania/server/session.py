@@ -17,6 +17,7 @@ in background threads and samples its live envs via
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import threading
 import time
@@ -29,8 +30,9 @@ import numpy as np
 from traqmania.agents.base import N_ACTIONS, action_set
 from traqmania.agents.classical import MLPQFunction
 from traqmania.agents.quantum.circuit import circuit_spec
+from traqmania.agents.quantum.lightcone import blind_spot_warning
 from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.agents.training import DQNTrainer
+from traqmania.agents.training import DEFAULT_EVAL_EPISODES, DQNTrainer
 from traqmania.config import load_config
 from traqmania.env.car import CarPhysics
 from traqmania.env.racing_env import CarObserver, RacingEnv
@@ -53,6 +55,8 @@ from traqmania.server.runtime import (
     weights_actions,
     weights_observation,
 )
+
+_log = logging.getLogger(__name__)
 
 HUMAN_RESPAWN_DELAY_S = 1.0
 QUANTUM_MSG_MIN_INTERVAL_S = 0.099  # <= 10 Hz
@@ -85,6 +89,24 @@ def quantum_weights_path(track_name: str, n_qubits: int, suffix: str = "") -> Pa
     ``_warmstart`` / ``_stage<i>`` variants, which follow the same rule)."""
     qtag = "" if int(n_qubits) == 4 else f"_q{int(n_qubits)}"
     return WEIGHTS_DIR / f"quantum_{track_name}{suffix}{qtag}.npz"
+
+
+def _hardware_run_fields(info: dict) -> dict:
+    """hardware_status fields describing HOW a hardware job runs, from the
+    run info of ``hardware.run_hardware_lap`` / ``spsa_sprint`` (their
+    ``on_start`` payload and result): where the circuit runs, the execution
+    mode (session | batch | job), the note explaining a mode fallback, and
+    the transpiled circuit's two-qubit gate count and depth. Absent or null
+    entries are left out."""
+    fields: dict[str, Any] = {}
+    for key, wire, cast in (("backend_name", "backend_name", str),
+                            ("mode", "execution_mode", str),
+                            ("note", "note", str),
+                            ("two_qubit_gates", "two_qubit_gates", int),
+                            ("depth", "circuit_depth", int)):
+        if info.get(key) is not None:
+            fields[wire] = cast(info[key])
+    return fields
 
 
 RANDOM_TRACK = "random"  # set_track name that triggers procedural generation
@@ -865,11 +887,20 @@ class DemoSession:
             qfunc = QuantumQFunction(self.config["circuit"], seed=seed)
         else:
             qfunc = MLPQFunction(n_features=env.n_features, n_actions=N_ACTIONS, seed=seed)
+        if agent == "quantum":
+            # too few blocks for the ring: some actions decide without some
+            # features — worth a server-log line, not a client error
+            for line in blind_spot_warning(env.feature_names, qfunc.n_layers, qfunc.n_actions):
+                _log.warning("%s", line)
 
         track, config = self.track, self.config  # bind now: self.track may change later
 
+        # one parallel eval env per greedy eval episode: the trainer runs ONE
+        # round of n_envs distinct episodes
+        eval_envs = int(tcfg.get("eval_episodes", DEFAULT_EVAL_EPISODES))
+
         def env_factory(track=track, config=config, seed=seed) -> RacingEnv:
-            return RacingEnv(track, config, n_envs=4, seed=seed + 10_000)
+            return RacingEnv(track, config, n_envs=eval_envs, seed=seed + 10_000)
 
         stop_event = threading.Event()
         monitor = _TrainingLapMonitor(env)  # records lap times into the job (set below)
@@ -1009,6 +1040,10 @@ class DemoSession:
         iterations = (int(msg.iterations) if msg.iterations is not None
                       else int(hw_cfg.get("spsa_iterations", 30)))
         use_fake = msg.backend == "fake"
+        # [hardware] backend_name picks the real device (empty: least busy),
+        # fake_name the local twin (default: hardware.DEFAULT_FAKE)
+        real_name = str(hw_cfg.get("backend_name") or "") or None
+        fake_name = str(hw_cfg.get("fake_name") or hardware_mod.DEFAULT_FAKE)
         track_name = self.track_name
         weights_path = self._quantum_weights_path()
         max_decisions = msg.max_decisions
@@ -1022,30 +1057,45 @@ class DemoSession:
 
             try:
                 job.push("connecting",
-                         message="local fake backend" if use_fake
-                         else "connecting to IBM Quantum (least busy backend)")
-                backend = hardware.get_backend(use_fake=use_fake, min_qubits=min_qubits)
-                backend_name = str(getattr(backend, "name", backend))
-                job.push("transpiling", backend_name=backend_name,
-                         message=f"transpiling circuit for {backend_name}")
+                         message=f"local fake backend ({fake_name})" if use_fake
+                         else "connecting to IBM Quantum "
+                              f"({real_name or 'least busy backend'})")
+                backend = hardware.get_backend(real_name, use_fake=use_fake,
+                                               fake_name=fake_name, min_qubits=min_qubits)
+                shown = {"name": str(getattr(backend, "name", backend))}
+                job.push("transpiling", backend_name=shown["name"],
+                         message=f"transpiling circuit for {shown['name']}")
+
+                def on_start(info: dict) -> None:
+                    # transpiled, execution mode open: where and how it runs
+                    # (this message stays up while the job runs)
+                    shown["name"] = str(info["backend_name"])
+                    mitigation = hardware.RESILIENCE_LEVELS[info["resilience_level"]]
+                    job.push("transpiling",
+                             message=f"circuit transpiled: {info['two_qubit_gates']} "
+                                     f"two-qubit gates, depth {info['depth']}"
+                                     f"{' (light-cone pruned)' if info['pruned'] else ''}"
+                                     f" · {mitigation}",
+                             **_hardware_run_fields(info))
+
                 if job.kind == "lap":
                     def on_decision(i: int, info: dict) -> None:
-                        job.push_running(backend_name=backend_name, decision=i + 1,
+                        job.push_running(backend_name=shown["name"], decision=i + 1,
                                          seconds_per_decision=float(info["seconds"]))
 
                     job.result = hardware.run_hardware_lap(
                         track_name, weights_path, backend, shots=shots,
                         max_decisions=max_decisions, on_decision=on_decision,
-                        stop_event=job.stop_event, config=config)
+                        stop_event=job.stop_event, config=config, on_start=on_start)
                 else:  # sprint
                     def on_iter(k: int, info: dict) -> None:
-                        job.push("running", backend_name=backend_name,
+                        job.push("running", backend_name=shown["name"],
                                  iteration=k + 1, loss=float(info["loss"]))
 
                     job.result = hardware.spsa_sprint(
                         track_name, weights_path, backend, iterations=iterations,
                         shots=shots, on_iter=on_iter, stop_event=job.stop_event,
-                        config=config)
+                        config=config, on_start=on_start)
             except Exception as exc:  # surfaced as hardware_status error by the reaper
                 job.error = f"{type(exc).__name__}: {exc}"
 
@@ -1081,6 +1131,7 @@ class DemoSession:
                 "phase": "done",
                 "eval_return_before": float(job.result["return_before"]),
                 "eval_return_after": float(job.result["return_after"]),
+                **_hardware_run_fields(job.result),
             })
 
     def _finish_hardware_lap(self, result: dict) -> None:
@@ -1090,6 +1141,7 @@ class DemoSession:
             "type": "hardware_status",
             "phase": "done",
             "seconds_per_decision": float(result["seconds_per_decision"]),
+            **_hardware_run_fields(result),
         }
         if result["lapped"]:
             done["lap_time"] = float(result["best_lap_s"])

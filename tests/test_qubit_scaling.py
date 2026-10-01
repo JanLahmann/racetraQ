@@ -174,8 +174,9 @@ def test_fake_backend_selection_is_qubit_aware():
 
     backend = hardware.get_backend(use_fake=True, min_qubits=6)
     assert backend.num_qubits >= 6
-    # The preferred fake (5-qubit manila) is skipped when it is too small.
-    backend = hardware._fake_backend("fake_manila", min_qubits=6)
+    # A named fake that is too small (5-qubit manila) is swapped, with a warning.
+    with pytest.warns(UserWarning, match="only 5 qubits"):
+        backend = hardware._fake_backend("fake_manila", min_qubits=6)
     assert backend.num_qubits >= 6
 
 

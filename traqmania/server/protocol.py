@@ -22,6 +22,7 @@ EVENT_KINDS = ("lap", "crash", "clean_lap", "training_done", "new_best_lap")
 HARDWARE_ACTIONS = ("lap", "sprint", "abort")
 HARDWARE_BACKENDS = ("fake", "real")
 HARDWARE_PHASES = ("idle", "connecting", "transpiling", "running", "replay", "done", "error")
+HARDWARE_EXECUTION_MODES = ("session", "batch", "job")
 
 # input.keys bitmask
 KEY_THROTTLE, KEY_BRAKE, KEY_LEFT, KEY_RIGHT = 1, 2, 4, 8
@@ -239,6 +240,10 @@ class HardwareStatus:
     eval_return_before: float | None = None
     eval_return_after: float | None = None
     lap_time: float | None = None
+    execution_mode: str | None = None  # one of HARDWARE_EXECUTION_MODES
+    note: str | None = None  # why a more exclusive execution mode was refused
+    two_qubit_gates: int | None = None  # of the transpiled (ISA) circuit
+    circuit_depth: int | None = None  # of the transpiled (ISA) circuit
     TYPE: ClassVar[str] = "hardware_status"
 
 
@@ -293,7 +298,8 @@ _OMIT_IF_NONE: dict[str, set[str]] = {
     Telemetry.TYPE: {"best_lap_s", "lap_times"},
     HardwareStatus.TYPE: {"backend_name", "message", "decision", "seconds_per_decision",
                           "iteration", "loss", "eval_return_before", "eval_return_after",
-                          "lap_time"},
+                          "lap_time", "execution_mode", "note", "two_qubit_gates",
+                          "circuit_depth"},
     CarState.__name__: {"rays", "label", "ghost"},
 }
 
@@ -646,6 +652,11 @@ def _parse_hardware_status(d: dict) -> HardwareStatus:
         eval_return_before=_opt_float(d, "eval_return_before"),
         eval_return_after=_opt_float(d, "eval_return_after"),
         lap_time=_opt_float(d, "lap_time"),
+        execution_mode=_enum(d["execution_mode"], "execution_mode", HARDWARE_EXECUTION_MODES)
+        if d.get("execution_mode") is not None else None,
+        note=_str(d["note"], "note") if d.get("note") is not None else None,
+        two_qubit_gates=_opt_int(d, "two_qubit_gates", 0),
+        circuit_depth=_opt_int(d, "circuit_depth", 0),
     )
 
 

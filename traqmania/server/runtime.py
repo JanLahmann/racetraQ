@@ -1,5 +1,7 @@
 """Server-side glue: bundled-agent loading, TrackPayload building, and training
-config resolution (per-track presets + warm-start recipes from default.toml)."""
+config resolution (per-track presets + warm-start recipes from default.toml —
+``resolve_training_cfg``, defined in ``traqmania.config`` where headless
+training shares it and re-exported here for the session)."""
 
 from __future__ import annotations
 
@@ -12,7 +14,7 @@ import numpy as np
 from traqmania.agents.base import N_ACTIONS
 from traqmania.agents.classical import MLPQFunction
 from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.config import load_config
+from traqmania.config import load_config, resolve_training_cfg  # noqa: F401  (re-export)
 from traqmania.env.track import TRACKS_DIR, Track
 
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
@@ -256,15 +258,3 @@ def track_payload(track: Track) -> dict:
         "left": left.tolist(),
         "right": right.tolist(),
     }
-
-
-def resolve_training_cfg(config: dict, track: str, warm: bool = False) -> dict:
-    """[training] merged with [training_presets.<track>] and, when ``warm``,
-    [training_warm] (+ [training_warm_gp] on top for gp)."""
-    cfg = dict(config["training"])
-    cfg.update(config.get("training_presets", {}).get(track, {}))
-    if warm:
-        cfg.update(config.get("training_warm", {}))
-        if track == "gp":
-            cfg.update(config.get("training_warm_gp", {}))
-    return cfg

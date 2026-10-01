@@ -136,3 +136,31 @@ def test_session_q6_bundled_weights_attract_drives(tmp_path):
     # a 6-feature observation feeds the circuit: 5 rays broadcast per car
     rays = next(c["rays"] for m in reversed(states) for c in m["cars"] if "rays" in c)
     assert len(rays) == 5
+
+
+@pytest.mark.parametrize(("profile", "blind"), [("q8", True), ("q6", False)])
+def test_training_start_logs_light_cone_blind_spots(profile, blind, tmp_path, caplog):
+    """8 qubits at 4 blocks hide one feature from every action: starting a
+    quantum training logs that (server log only, no client error); 6 qubits
+    see everything and stay silent."""
+    config = load_config(profile)
+    config["reward"] = dict(config["reward"], max_decisions=50)
+    config["training"] = dict(config["training"], n_parallel_envs=2, replay_size=500,
+                              batch_size=8)
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    session.drain_outbox()
+    with caplog.at_level("WARNING", logger="traqmania.server.session"):
+        session.handle_message(P.Train(action="start", agent="quantum", episodes=100_000))
+    job = session.jobs["quantum"]
+    session.handle_message(P.Train(action="stop", agent="quantum"))
+    job.thread.join(timeout=30.0)
+    session.shutdown()
+    assert not job.thread.is_alive(), "training thread did not stop"
+
+    lines = [r.getMessage() for r in caplog.records if r.name == "traqmania.server.session"]
+    if blind:
+        assert "n_layers = 4 is too shallow for 8 qubits" in lines[0]
+        assert any("Brake (Z_3) cannot see: speed" in line for line in lines)
+    else:
+        assert lines == []
+    assert not [m for m in session.drain_outbox() if m["type"] == "error"]

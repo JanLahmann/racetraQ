@@ -63,8 +63,22 @@ epsilon_decay_episodes = 250
 n_parallel_envs = 8
 seed = 42
 warm_start = false
+# Optional trainer knobs (agents/training/dqn.py). Each line shows the default,
+# which is the behaviour without it; uncomment to change.
+# eval_every = 50               # greedy snapshot eval every N episodes
+# eval_episodes = 12            # distinct greedy episodes per eval (parallel eval envs)
+# bootstrap_truncation = false  # true: the 60 s time limit is a truncation, not a terminal state (TD target keeps bootstrapping)
+# loss = "mse"                  # "mse" | "huber" (TD error clipped to +-huber_delta in the gradient)
+# huber_delta = 10.0            # Huber threshold in Q units (Q-values here reach the hundreds)
+# lr_groups = { head = 0.01 }   # per-group learning rates; quantum: lam | theta | head, mlp: body | head; unlisted groups use lr
+# lr_end = 0.01                 # linear lr anneal from lr to lr_end over the run's episodes (scales every group alike)
+# target_update = "hard"        # "hard": copy every target_sync_every updates | "soft": Polyak averaging every update
+# tau = 0.005                   # soft target rate: target <- (1 - tau) * target + tau * online
+# grad_clip = 0.0               # > 0: clip the gradient's global L2 norm to this value
+# reward_scale = 1.0            # multiplies rewards as stored in replay only (reported returns stay unscaled)
 
-# Per-track overrides merged onto [training] by the server (see server/runtime.py).
+# Per-track overrides merged onto [training] by the server and by train_headless
+# (config.resolve_training_cfg; train_headless --preset none skips them).
 # oval/chicane train fine with the base settings and need no preset.
 # Winning recipe from the v2 overnight sweep (8 decay/gamma combos + lr/sync
 # probes): slow 2000-episode epsilon decay keeps exploration alive long enough
@@ -132,6 +146,13 @@ attract_idle_seconds = 45
 kiosk = false
 
 [hardware]
-backend_name = ""          # empty -> least busy available
+backend_name = ""          # real device, e.g. "ibm_fez" (CLI --backend overrides); empty -> least busy available
+# Local twin for --fake / the UI's "Simulated device"; any spelling (fake_fez, FakeFez).
+# fake_nighthawk: 120-qubit square lattice, the CZ ring embeds with zero SWAPs (IBM's placeholder error values);
+# fake_miami / fake_berlin: calibration snapshots of real Nighthawk QPUs (qiskit-ibm-runtime >= 0.47);
+# fake_fez / fake_marrakesh / fake_kingston ...: heavy-hex Herons; fake_manila / fake_lagos: retired CX-era Falcons.
+fake_name = "fake_nighthawk"
 shots = 1024
 spsa_iterations = 30
+resilience_level = 0       # Estimator error mitigation: 0 raw device noise (honest default) | 1 TREX readout mitigation | 2 ZNE + gate twirling
+prune_light_cone = true    # transpile only the gates inside the readouts' light cone: identical expectation values, fewer two-qubit gates (12 instead of 16 CZ at 4 qubits)

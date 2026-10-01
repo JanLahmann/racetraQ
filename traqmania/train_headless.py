@@ -7,6 +7,11 @@ sub-env episodes, prints a per-20-episode mean-return trace, reports the first
 episode (and wall-clock second) at which a full clean lap occurred, and saves
 the learned weights to ``traqmania/weights/<agent>_<track>.npz`` plus a JSON
 metadata sidecar.
+
+The training recipe is ``[training]`` with the track's
+``[training_presets.<track>]`` merged on top (``--preset none`` skips that);
+``--set section.key=value`` overrides any config value and ``--episodes`` /
+``--seed`` win over everything.
 """
 
 from __future__ import annotations
@@ -15,14 +20,17 @@ import argparse
 import hashlib
 import json
 import time
+from collections.abc import Iterable, Mapping
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 from traqmania.agents.base import N_ACTIONS
 from traqmania.agents.classical import MLPQFunction
 from traqmania.agents.training import DQNTrainer
-from traqmania.config import load_config
+from traqmania.agents.training.dqn import DEFAULT_EVAL_EPISODES, OPTION_KEYS
+from traqmania.config import apply_overrides, load_config, parse_override, resolve_training_cfg
 from traqmania.env.multi_track import MultiTrackEnv
 from traqmania.env.racing_env import RacingEnv
 from traqmania.env.track import Track
@@ -30,6 +38,7 @@ from traqmania.env.track import Track
 WEIGHTS_DIR = Path(__file__).resolve().parent / "weights"
 REPORT_EVERY = 20  # episodes per mean-return line
 MULTI_TRACK_NAMES = ("oval", "chicane", "gp", "combo")  # the --track multi mixture
+PRESET_MODES = ("auto", "none")  # --preset: merge [training_presets.<track>] or not
 
 
 class CleanLapMonitor:
@@ -83,6 +92,15 @@ def build_qfunc(agent: str, n_features: int, seed: int, config: dict,
     raise ValueError(f"unknown agent '{agent}' (expected 'mlp' or 'quantum')")
 
 
+def _json_default(value: Any):
+    """JSON fallback for numpy scalars/arrays in programmatic config overrides."""
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    return str(value)
+
+
 def config_hash(config: dict) -> str:
     """Short stable hash of the fully-resolved config dict."""
     blob = json.dumps(config, sort_keys=True, default=str).encode("utf-8")
@@ -90,11 +108,13 @@ def config_hash(config: dict) -> str:
 
 
 def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int,
-                 out_dir: Path | None = None) -> Path:
+                 out_dir: Path | None = None, training_cfg: dict | None = None) -> Path:
     """Write ``<agent>_<track>.npz`` (params) + ``.meta.json`` sidecar; returns npz path.
 
     Non-default circuit sizes get a ``_q<n>`` filename tag (both agents, so a
     q6/q8/q10 training run never clobbers the bundled 4-feature weights).
+    ``training_cfg`` (the resolved training table the run actually used:
+    preset, pace and overrides merged) is recorded in the sidecar when given.
     """
     out_dir = Path(out_dir) if out_dir is not None else WEIGHTS_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -108,6 +128,13 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
         "track": track_name,
         "config_hash": config_hash(config),
         "episodes": episodes,
+        # the circuit shape the params belong to (n_layers is not recoverable
+        # from the filename; an MLP only uses n_qubits as its feature count)
+        "circuit": {
+            "n_qubits": n_qubits,
+            "n_layers": int(config.get("circuit", {}).get("n_layers", 4)),
+            "n_actions": int(qfunc.n_actions),
+        },
         # what the driver was trained to see; loaders (see
         # runtime.weights_observation) overlay this on the profile obs
         "observation": {
@@ -122,15 +149,20 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
         "actions": {"n_actions": int(qfunc.n_actions)},
         "date": "DATE",
     }
+    if training_cfg is not None:
+        meta["training"] = dict(training_cfg)
     meta_path = npz_path.with_suffix("").with_suffix(".meta.json")
-    meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, indent=2, default=_json_default) + "\n",
+                         encoding="utf-8")
     return npz_path
 
 
 def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
           profile: str | None, out_dir: str | None = None, init: str | None = None,
           history_path: str | None = None, actions: int | None = None,
-          pace: bool = False) -> dict:
+          pace: bool = False, preset: str = "auto",
+          overrides: Mapping[str, Any] | Iterable[str] | None = None,
+          save_final: bool = False) -> dict:
     """Build env/agent/trainer from config, train, print progress, save weights.
 
     ``actions`` overrides ``[circuit] n_actions`` (the 6/8-action scaled
@@ -139,13 +171,42 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     objective becomes lap time rather than reliable progress; meant to be
     combined with ``--init`` on an already-lapping snapshot.
 
-    Returns a summary dict: episode returns, wall time, and first-clean-lap
-    episode/second (None if no clean lap happened).
+    ``preset="auto"`` merges ``[training_presets.<track>]`` onto ``[training]``
+    (the server's rule, :func:`traqmania.config.resolve_training_cfg`);
+    ``"none"`` trains on plain ``[training]``.  ``overrides`` are dotted-key
+    config overrides — ``"section.key=value"`` strings or a
+    ``{"section.key": value}`` mapping — applied last, so they beat the
+    preset and pace recipes; explicit ``episodes`` / ``seed`` beat those too.
+    A ``training.<key>`` override the trainer does not know raises (a typo
+    would otherwise train the baseline unnoticed).
+    ``save_final`` also writes ``<name>.final.npz``: the params at the end of
+    training, next to the best-snapshot weights.
+
+    Returns a summary dict: episode returns, wall time, first-clean-lap
+    episode/second (None if no clean lap happened), every greedy eval
+    (``eval_log``) with the best and final ones, and the saved paths.
     """
+    if preset not in PRESET_MODES:
+        raise ValueError(f"preset must be one of {PRESET_MODES}, got '{preset}'")
+    if overrides is None:
+        overrides = {}
+    elif not isinstance(overrides, Mapping):
+        overrides = dict(parse_override(spec) for spec in overrides)
     config = load_config(profile=profile)
+    # A mistyped training key would be ignored and silently train the baseline.
+    known = set(config["training"]) | set(OPTION_KEYS)
+    unknown = sorted(key for key in overrides
+                     if key.startswith("training.") and key.split(".")[1] not in known)
+    if unknown:
+        raise ValueError(f"unknown [training] override(s) {unknown}; "
+                         f"known keys: {sorted(known)}")
+    apply_overrides(config, overrides)
     if actions is not None:
         config.setdefault("circuit", {})["n_actions"] = int(actions)
-    training_cfg = dict(config["training"])
+    if preset == "auto":
+        training_cfg = resolve_training_cfg(config, track_name)
+    else:
+        training_cfg = dict(config["training"])
     if pace:
         pace_cfg = dict(config.get("training_pace", {}))
         config["reward"]["time_penalty"] = float(pace_cfg.pop("time_penalty", 0.5))
@@ -153,13 +214,23 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
         if init is None:
             print("WARNING: --pace without --init fine-tunes random weights; "
                   "expected use is on an already-lapping snapshot")
+    # Explicit overrides win over the recipes merged above: re-apply them to
+    # the config (pace sets reward.time_penalty) and to the resolved table.
+    apply_overrides(config, overrides)
+    apply_overrides({"training": training_cfg},
+                    {k: v for k, v in overrides.items() if k.startswith("training.")})
     if seed is not None:
         training_cfg["seed"] = seed
     seed = int(training_cfg["seed"])
     episodes = int(episodes) if episodes is not None else int(training_cfg["episodes"])
+    training_cfg["episodes"] = episodes  # the resolved table records the actual run
 
     spacing = config["track"]["resample_spacing"]
     n_parallel = training_cfg["n_parallel_envs"]
+    # One snapshot eval = one round of n_eval parallel greedy episodes, each
+    # from its own spawn jitter (a small env rebuilt from the same seed would
+    # just replay the same few episodes).
+    n_eval = int(training_cfg.get("eval_episodes", DEFAULT_EVAL_EPISODES))
     if track_name in ("multi", "random"):
         # Mixture training: one policy over several tracks (the universal
         # candidates); weights are saved under the literal name multi/random.
@@ -172,14 +243,14 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
         save_name = track_name
 
         def env_factory(tracks=tracks, config=config, seed=seed) -> MultiTrackEnv:
-            return MultiTrackEnv(tracks, config, n_envs=4, seed=seed + 10_000)
+            return MultiTrackEnv(tracks, config, n_envs=n_eval, seed=seed + 10_000)
     else:
         track = Track.load(track_name, spacing)
         env = RacingEnv(track, config, n_envs=n_parallel, seed=seed)
         save_name = track.name
 
         def env_factory(track=track, config=config, seed=seed) -> RacingEnv:
-            return RacingEnv(track, config, n_envs=4, seed=seed + 10_000)
+            return RacingEnv(track, config, n_envs=n_eval, seed=seed + 10_000)
 
     monitor = CleanLapMonitor(env)
     qfunc = build_qfunc(agent, env.n_features, seed, config, n_actions=env.n_actions)
@@ -189,6 +260,12 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     if init is not None:
         qfunc.set_params(np.load(init)["params"])
         print(f"warm-started from {init}")
+    if agent == "quantum":
+        # too few blocks for the ring: some actions decide without some features
+        from traqmania.agents.quantum.lightcone import blind_spot_warning
+
+        for line in blind_spot_warning(env.feature_names, qfunc.n_layers, qfunc.n_actions):
+            print(f"WARNING: {line}")
 
     trainer = DQNTrainer(qfunc, monitor, training_cfg, rng=np.random.default_rng(seed),
                          env_factory=env_factory)
@@ -223,10 +300,20 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
         print(f"saved snapshot: episode {be['episode']} (greedy eval: "
               f"{be['lapped_episodes']}/{be['eval_episodes']} episodes lapped, "
               f"mean lap {mean}, best {lap})")
+        fe = history["final_eval"]
+        print(f"final params: {fe['lapped_episodes']}/{fe['eval_episodes']} episodes "
+              f"lapped; {sum(e['lapped_episodes'] > 0 for e in history['eval_log'])}"
+              f"/{len(history['eval_log'])} evals lapped at all")
 
     npz_path = save_weights(qfunc, agent, save_name, config, episodes,
-                            out_dir=Path(out_dir) if out_dir else None)
+                            out_dir=Path(out_dir) if out_dir else None,
+                            training_cfg=training_cfg)
     print(f"weights saved to {npz_path}")
+    final_path = None
+    if save_final:
+        final_path = npz_path.with_suffix("").with_suffix(".final.npz")
+        np.savez(final_path, params=trainer.final_params)
+        print(f"final params saved to {final_path}")
     if not np.isnan(monitor.best_lap_s):
         print(f"best lap: {monitor.best_lap_s:.2f}s")
 
@@ -236,10 +323,17 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
         "first_clean_episode": monitor.first_clean_episode,
         "first_clean_wall_s": monitor.first_clean_wall_s,
         "best_lap_s": None if np.isnan(monitor.best_lap_s) else float(monitor.best_lap_s),
+        "eval_log": history.get("eval_log", []),
+        "best_eval": history.get("best_eval"),
+        "final_eval": history.get("final_eval"),
+        "weights_path": str(npz_path),
+        "final_weights_path": str(final_path) if final_path is not None else None,
     }
     if history_path:
-        payload = dict(summary, agent=agent, track=save_name, seed=seed, episodes=episodes)
-        Path(history_path).write_text(json.dumps(payload) + "\n", encoding="utf-8")
+        payload = dict(summary, agent=agent, track=save_name, seed=seed, episodes=episodes,
+                       training=training_cfg)
+        Path(history_path).write_text(json.dumps(payload, default=_json_default) + "\n",
+                                      encoding="utf-8")
     return summary
 
 
@@ -265,10 +359,24 @@ def main() -> None:
     parser.add_argument("--pace", action="store_true",
                         help="pace fine-tune: merge [training_pace] (low epsilon "
                              "+ per-decision time penalty); combine with --init")
+    parser.add_argument("--preset", default="auto", choices=list(PRESET_MODES),
+                        help="auto (default): merge [training_presets.<track>] onto "
+                             "[training], as the server does; none: plain [training]")
+    parser.add_argument("--set", dest="overrides", action="append", default=[],
+                        metavar="SECTION.KEY=VALUE",
+                        help="config override, repeatable; the value is a TOML literal "
+                             "(bare words count as strings), e.g. --set training.loss=huber "
+                             "--set circuit.n_layers=6 --set reward.lap_bonus=0. "
+                             "Wins over the preset; --episodes/--seed win over it; "
+                             "an unknown training.<key> is an error")
+    parser.add_argument("--save-final", action="store_true",
+                        help="also write <name>.final.npz: the params at the end of "
+                             "training, next to the best-snapshot weights")
     args = parser.parse_args()
     train(args.agent, args.track, args.episodes, args.seed, args.profile,
           out_dir=args.out, init=args.init, history_path=args.history,
-          actions=args.actions, pace=args.pace)
+          actions=args.actions, pace=args.pace, preset=args.preset,
+          overrides=args.overrides, save_final=args.save_final)
 
 
 if __name__ == "__main__":

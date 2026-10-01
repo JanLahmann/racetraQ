@@ -40,6 +40,13 @@ class MLPQFunction:
         self.W2[:] = rng.normal(0.0, 1.0 / np.sqrt(h), size=(h, a))
         # Biases start at zero.
 
+    def param_groups(self) -> dict[str, slice]:
+        """Named slices of the flat parameter vector: ``body`` (hidden layer
+        W1, b1) and ``head`` (output layer W2, b2) — the units
+        ``[training] lr_groups`` assigns learning rates to."""
+        n_body = self.n_features * self.hidden + self.hidden
+        return {"body": slice(0, n_body), "head": slice(n_body, self.n_params)}
+
     def q_values(self, obs: np.ndarray) -> np.ndarray:
         """(B, F) -> (B, A)."""
         obs = np.asarray(obs, dtype=np.float64)

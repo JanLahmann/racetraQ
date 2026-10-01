@@ -25,6 +25,7 @@ and ``circuit_spec`` works without qiskit at all.
 from __future__ import annotations
 
 from traqmania.agents.base import action_labels
+from traqmania.agents.quantum import lightcone
 
 
 def build_circuit(n_qubits: int = 4, n_layers: int = 4):
@@ -78,11 +79,35 @@ def observables(n_qubits: int = 4) -> list:
     ]
 
 
+def _light_cone_spec(n: int, layers: int, n_actions: int) -> dict:
+    """The light-cone part of :func:`circuit_spec` (see ``lightcone.py``).
+
+    ``visibility[a][j]`` is 1 iff readout Z_a can depend on the feature on
+    qubit j; ``dead_params`` counts the lam/theta parameters whose gradient is
+    exactly zero for every input; ``min_layers_full_visibility`` is the depth
+    from which every readout sees every feature. All None for a shape the
+    analysis rejects (more readouts than qubits, no blocks).
+    """
+    try:
+        visible = lightcone.feature_visibility(n, layers, n_actions)
+        mask = lightcone.live_parameter_mask(n, layers, n_actions)
+        min_layers = lightcone.min_layers_full_visibility(n, n_actions)
+    except ValueError:
+        return {"visibility": None, "dead_params": None, "min_layers_full_visibility": None}
+    return {
+        "visibility": visible.astype(int).tolist(),
+        "dead_params": int(sum(m.size - m.sum() for m in mask.values())),
+        "min_layers_full_visibility": min_layers,
+    }
+
+
 def circuit_spec(config: dict) -> dict:
     """JSON-serializable, layer-by-layer description of the circuit (no qiskit).
 
     ``config`` may be a full traQmania config dict (with a "circuit" section)
-    or the [circuit] section itself. Intended for the browser circuit diagram.
+    or the [circuit] section itself. Intended for the browser circuit diagram;
+    also carries the structural light cone (``visibility``, ``dead_params``,
+    ``min_layers_full_visibility`` — see :func:`_light_cone_spec`).
     """
     cfg = config.get("circuit", config) if isinstance(config.get("circuit"), dict) else config
     n = int(cfg.get("n_qubits", 4))
@@ -122,4 +147,5 @@ def circuit_spec(config: dict) -> dict:
         "param_layout": ["lam", "theta", "w", "b"],
         "readout": [f"Z_{a}" for a in range(n_actions)],
         "action_labels": list(action_labels(n_actions)),
+        **_light_cone_spec(n, layers, n_actions),
     }

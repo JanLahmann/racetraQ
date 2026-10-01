@@ -2,9 +2,10 @@
 
 Same setup as tests/test_hardware.py: no network, no IBM account — the worker
 thread calls ``get_backend(use_fake=True)`` and runs on the Aer-simulated fake
-twin. Skipped wholesale when qiskit-ibm-runtime is not installed. The session
-is driven via direct ``tick()`` calls (no asyncio); ticking loops sleep 1 ms
-to yield the GIL to the hardware thread, exactly like the training smoke test.
+twin (the Nighthawk device patch by default). Skipped wholesale when
+qiskit-ibm-runtime is not installed. The session is driven via direct
+``tick()`` calls (no asyncio); ticking loops sleep 1 ms to yield the GIL to
+the hardware thread, exactly like the training smoke test.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import pytest
 
 pytest.importorskip("qiskit_ibm_runtime")
 
+from traqmania import hardware  # noqa: E402
 from traqmania.config import load_config  # noqa: E402
 from traqmania.server import protocol as P  # noqa: E402
 from traqmania.server.session import DemoSession  # noqa: E402
@@ -87,12 +89,27 @@ def test_hardware_mode_idle_then_lap_and_replay(tmp_path):
                                            "done", "replay")]
         assert order == sorted(order)
 
+        # the second transpiling status says where and how the circuit runs
+        transpiled = [s for s in statuses if s["phase"] == "transpiling"]
+        assert transpiled[0]["backend_name"] == "fake_nighthawk"
+        how = transpiled[-1]
+        assert how["backend_name"].startswith("fake_nighthawk (4-qubit patch")
+        assert how["execution_mode"] == "session"
+        assert how["two_qubit_gates"] == 12  # pruned CZ ring, zero SWAPs
+        assert how["circuit_depth"] > 0
+        assert "note" not in how  # no fallback, nothing to explain
+        assert how["message"].startswith("circuit transpiled: 12 two-qubit gates")
+        assert "(light-cone pruned)" in how["message"]
+        assert "raw device noise" in how["message"]  # resilience level 0
+
         running = [s for s in statuses if s["phase"] == "running"]
         assert running[0]["decision"] >= 1
         assert running[0]["seconds_per_decision"] > 0.0
-        assert running[0]["backend_name"]
+        assert running[0]["backend_name"] == how["backend_name"]
         done = next(s for s in statuses if s["phase"] == "done")
         assert done["seconds_per_decision"] > 0.0  # 3 decisions: no lap_time expected
+        assert done["execution_mode"] == "session"
+        assert done["two_qubit_gates"] == 12
 
         # replay: pinned hardware ghost loops alongside a live fastsim car
         for _ in range(30):
@@ -133,6 +150,8 @@ def test_hardware_sprint_smoke(tmp_path):
 
         done = next(s for s in statuses if s["phase"] == "done")
         assert "eval_return_before" in done and "eval_return_after" in done
+        assert done["execution_mode"] == "session"
+        assert done["two_qubit_gates"] == 12 and done["circuit_depth"] > 0
         assert states  # idle car broadcast throughout; sprint has no replay
         assert session._hw_replay is None
     finally:
@@ -175,3 +194,77 @@ def test_hardware_abort_and_mode_switch(tmp_path):
         assert session.hw_job is None
     finally:
         session.shutdown()
+
+
+def test_execution_mode_fallback_note_reaches_the_ui(tmp_path, monkeypatch):
+    """An account without Sessions: the mode actually used and the reason for
+    the fallback travel in hardware_status (the note used to be dropped)."""
+    note = "Session unavailable on fake (code 1352); Batch unavailable on fake (nope); " \
+           "using job mode (each job queues on its own)"
+    monkeypatch.setattr(hardware, "open_execution_mode",
+                        lambda backend: (None, "job", note))
+    session = DemoSession(load_config(), ghosts_dir=tmp_path)
+    try:
+        session.handle_message(
+            P.HardwareMsg(action="lap", backend="fake", shots=128, max_decisions=2))
+        statuses, _ = run_until(session, {"done", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        how = [s for s in statuses if s["phase"] == "transpiling"][-1]
+        assert how["execution_mode"] == "job" and how["note"] == note
+        done = next(s for s in statuses if s["phase"] == "done")
+        assert done["execution_mode"] == "job" and done["note"] == note
+    finally:
+        session.shutdown()
+
+
+def test_hardware_config_picks_the_backend(tmp_path, monkeypatch):
+    """[hardware] backend_name / fake_name reach get_backend (backend_name used
+    to be ignored: the web UI always took the least busy device)."""
+    calls: list[tuple] = []
+
+    def fake_get_backend(name=None, use_fake=False, fake_name=None, min_qubits=5):
+        calls.append((name, use_fake, fake_name, min_qubits))
+        raise RuntimeError("stub: no backend")
+
+    monkeypatch.setattr(hardware, "get_backend", fake_get_backend)
+    config = load_config()
+    config["hardware"] = {**config["hardware"], "backend_name": "ibm_kingston",
+                          "fake_name": "fake_fez"}
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    try:
+        for backend in ("real", "fake"):
+            session.handle_message(
+                P.HardwareMsg(action="lap", backend=backend, max_decisions=1))
+            statuses, _ = run_until(session, {"error"})
+            assert "stub: no backend" in statuses[-1]["message"]
+            connecting = next(s for s in statuses if s["phase"] == "connecting")
+            assert ("ibm_kingston" if backend == "real" else "fake_fez") in connecting["message"]
+        assert calls == [("ibm_kingston", False, "fake_fez", 5),
+                         ("ibm_kingston", True, "fake_fez", 5)]
+
+        # defaults: least busy real device, the default fake
+        calls.clear()
+        session.config["hardware"] = {"shots": 128}
+        session.handle_message(P.HardwareMsg(action="lap", backend="real", max_decisions=1))
+        run_until(session, {"error"})
+        assert calls == [(None, False, hardware.DEFAULT_FAKE, 5)]
+    finally:
+        session.shutdown()
+
+
+def test_training_eval_env_runs_one_env_per_eval_episode(tmp_path):
+    """The snapshot-eval factory sizes its env to [training] eval_episodes
+    (default 12): one round of distinct episodes, not a 4-env round repeated."""
+    for eval_episodes, expected in ((None, 12), (5, 5)):
+        config = load_config()
+        config["reward"] = {**config["reward"], "max_decisions": 20}
+        config["training"] = {**config["training"], "n_parallel_envs": 2}
+        if eval_episodes is not None:
+            config["training"]["eval_episodes"] = eval_episodes
+        session = DemoSession(config, ghosts_dir=tmp_path)
+        try:
+            session.handle_message(P.Train(action="start", agent="mlp", episodes=1))
+            factory = session.jobs["mlp"].trainer.env_factory
+            assert factory().n_envs == expected
+        finally:
+            session.shutdown()

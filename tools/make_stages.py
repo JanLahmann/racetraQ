@@ -4,8 +4,9 @@ Run as ``python tools/make_stages.py [--track oval --seed 42]``.  Trains a
 fresh :class:`QuantumQFunction` with the standard :class:`DQNTrainer` config
 (``[training]`` merged with any per-track preset) for 800 episodes, snapshots
 ``get_params()`` copies every 50 episodes, then GREEDY-EVALS every snapshot
-(4 episodes on a fresh env, same scoring as ``DQNTrainer._greedy_eval``:
-lexicographic ``(laps, -best_lap)``).  Four checkpoints with STRICTLY
+(12 distinct episodes — one per parallel sub-env of a fresh env, as in
+``DQNTrainer._eval_snapshot`` — scored lexicographically
+``(laps, -best_lap)``).  Four checkpoints with STRICTLY
 improving eval score spanning early -> late are selected (first snapshot that
 completes a lap, two intermediates, the best) and saved to
 ``traqmania/weights/quantum_<track>_stage<i>.npz`` plus a ``.meta.json``
@@ -28,16 +29,16 @@ import numpy as np
 
 from traqmania.agents.quantum.qdqn import QuantumQFunction
 from traqmania.agents.training import DQNTrainer
-from traqmania.config import load_config
+from traqmania.config import load_config, resolve_training_cfg
 from traqmania.env.racing_env import RacingEnv
 from traqmania.env.track import Track
-from traqmania.server.runtime import WEIGHTS_DIR, resolve_training_cfg
+from traqmania.server.runtime import WEIGHTS_DIR
 from traqmania.train_headless import config_hash
 
 N_STAGES = 4
 SNAPSHOT_EVERY = 50
 TOTAL_EPISODES = 800
-EVAL_EPISODES = 4
+EVAL_EPISODES = 12  # distinct greedy episodes per snapshot (the trainer's default)
 
 
 def greedy_eval(
@@ -50,18 +51,23 @@ def greedy_eval(
 ) -> tuple[int, float, float]:
     """Greedy (epsilon = 0) eval of a parameter snapshot on a fresh env.
 
+    Runs ``eval_episodes`` DISTINCT episodes: one per parallel sub-env, each
+    from its own spawn jitter, and only each sub-env's FIRST episode counts
+    (as in ``DQNTrainer._greedy_eval_round``) — counting the first episodes
+    to finish instead would let a fast-crashing sub-env fill the quota with
+    its restarts while the lapping ones are still driving.
+
     Returns ``(laps_completed, best_lap_seconds, mean_step_return)`` over
-    ``eval_episodes`` finished episodes; ``best_lap`` is ``+inf`` when no lap
-    completed.  Laps and lap time mirror ``DQNTrainer._greedy_eval`` so scores
-    are comparable; the mean per-step reward is a progress signal that still
-    orders snapshots on tracks where greedy laps stay rare (see
-    ``select_stages``)."""
-    env = RacingEnv(track, config, n_envs=4, seed=seed + 10_000)
+    those episodes; ``best_lap`` is ``+inf`` when no lap completed.  The mean
+    per-step reward is a progress signal that still orders snapshots on
+    tracks where greedy laps stay rare (see ``select_stages``)."""
+    env = RacingEnv(track, config, n_envs=eval_episodes, seed=seed + 10_000)
     qfunc = QuantumQFunction(config["circuit"], seed=seed)
     qfunc.set_params(params)
 
     obs = env.reset()
-    finished = 0
+    done_seen = np.zeros(env.n_envs, dtype=bool)
+    prev_lap = np.zeros(env.n_envs, dtype=np.int64)
     laps = 0
     best_lap = float("inf")
     reward_sum = 0.0
@@ -69,14 +75,18 @@ def greedy_eval(
     for _ in range(max_steps):
         actions = np.argmax(qfunc.q_values(obs), axis=1)
         obs, reward, done, info = env.step(actions)
-        reward_sum += float(np.sum(reward))
-        steps += env.n_envs
-        lap_times = np.asarray(info["last_lap_time"], dtype=np.float64)
-        if np.any(~np.isnan(lap_times)):
-            best_lap = min(best_lap, float(np.nanmin(lap_times)))
-        laps += int(np.sum(np.asarray(info["lap"])[np.flatnonzero(done)]))
-        finished += int(np.sum(done))
-        if finished >= eval_episodes:
+        active = ~done_seen  # sub-envs still in their first episode
+        reward_sum += float(np.sum(reward[active]))
+        steps += int(active.sum())
+        lap = np.asarray(info["lap"], dtype=np.int64)
+        event = (lap > prev_lap) & active  # a lap finished this step
+        if np.any(event):
+            laps += int(event.sum())
+            lap_times = np.asarray(info["last_lap_time"], dtype=np.float64)
+            best_lap = min(best_lap, float(np.min(lap_times[event])))
+        prev_lap = np.where(done, 0, lap)  # env auto-resets on done
+        done_seen |= done
+        if done_seen.all():
             break
     return laps, best_lap, reward_sum / max(steps, 1)
 

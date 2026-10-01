@@ -189,7 +189,7 @@ def test_eval_snapshot_uses_lapped_and_mean_lap():
     qfunc = MLPQFunction(n_features=4, n_actions=4, seed=0)
     tcfg = dict(config["training"], eval_episodes=8)
     trainer = DQNTrainer(qfunc, env, tcfg, rng=np.random.default_rng(0),
-                         env_factory=lambda: RacingEnv(track, config, n_envs=4, seed=99))
+                         env_factory=lambda: RacingEnv(track, config, n_envs=8, seed=99))
     assert trainer.eval_episodes == 8
     best = trainer._eval_snapshot(None, episode=0)
     assert best["eval_episodes"] == 8

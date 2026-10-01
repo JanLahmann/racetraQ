@@ -66,6 +66,12 @@ SERVER_MSGS = [
     P.HardwareStatus(phase="idle"),
     P.HardwareStatus(phase="connecting", message="connecting to IBM Quantum"),
     P.HardwareStatus(phase="transpiling", backend_name="fake_manila"),
+    P.HardwareStatus(phase="transpiling", backend_name="fake_nighthawk (4-qubit patch)",
+                     message="circuit transpiled", execution_mode="session",
+                     two_qubit_gates=12, circuit_depth=39),
+    P.HardwareStatus(phase="done", seconds_per_decision=40.0, execution_mode="batch",
+                     note="Session unavailable on ibm_fez (code 1352); using a Batch",
+                     two_qubit_gates=27, circuit_depth=85),
     P.HardwareStatus(phase="running", backend_name="ibm_torino", decision=12,
                      seconds_per_decision=3.4),
     P.HardwareStatus(phase="running", iteration=7, loss=0.42),
@@ -140,6 +146,11 @@ def test_hardware_msg_and_status_optional_fields_omitted():
     assert set(wire) == {"type", "phase", "decision", "seconds_per_decision"}
     with pytest.raises(P.ProtocolError):
         P.parse_server({"type": "hardware_status", "phase": "warming_up"})
+    with pytest.raises(P.ProtocolError):
+        P.parse_server({"type": "hardware_status", "phase": "done",
+                        "execution_mode": "dedicated"})
+    with pytest.raises(P.ProtocolError):
+        P.parse_server({"type": "hardware_status", "phase": "done", "two_qubit_gates": -1})
     with pytest.raises(P.ProtocolError):
         P.parse_server({"type": "hardware_status"})
 

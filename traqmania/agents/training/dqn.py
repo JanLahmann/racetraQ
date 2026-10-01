@@ -8,7 +8,10 @@ this loop unchanged.
 Env protocol: ``env.reset() -> obs (n_envs, F)``;
 ``env.step(actions (n_envs,) int) -> (obs, reward (n_envs,), done (n_envs,) bool, info)``,
 where done sub-envs are auto-reset (the returned obs is the fresh one — safe here
-because done transitions never bootstrap from next_obs).
+because done transitions never bootstrap from next_obs).  With
+``[training] bootstrap_truncation`` the env must also report ``info["truncated"]``
+and ``info["final_obs"]`` (see ``RacingEnv.step``): time-limit endings are then
+stored as non-terminal transitions into the pre-reset observation.
 """
 
 from __future__ import annotations
@@ -19,14 +22,28 @@ from typing import Any
 
 import numpy as np
 
+DEFAULT_EVAL_EPISODES = 12  # greedy episodes per snapshot eval ([training] eval_episodes)
+LOSSES = ("mse", "huber")
+TARGET_UPDATES = ("hard", "soft")
+# Optional [training] keys the trainer reads (absent = the legacy behaviour).
+# train_headless checks ``--set training.<key>`` against these plus the keys
+# of the loaded [training] table, so a typo cannot silently train the baseline.
+OPTION_KEYS = (
+    "eval_every", "eval_episodes", "bootstrap_truncation", "loss", "huber_delta",
+    "lr_groups", "lr_end", "target_update", "tau", "grad_clip", "reward_scale",
+)
+
 
 class Adam:
-    """Standard bias-corrected Adam optimizer on a flat parameter vector."""
+    """Standard bias-corrected Adam optimizer on a flat parameter vector.
+
+    ``lr`` is a scalar or a per-parameter vector of shape ``(n_params,)``.
+    """
 
     def __init__(
         self,
         n_params: int,
-        lr: float = 1e-3,
+        lr: float | np.ndarray = 1e-3,
         beta1: float = 0.9,
         beta2: float = 0.999,
         eps: float = 1e-8,
@@ -97,6 +114,13 @@ class DQNTrainer:
         when given, a greedy eval runs every ``eval_every`` (default 50) episodes and
         ``train()`` leaves ``qfunc`` at the best-scoring snapshot.  ``stop_event``
         (optional): ``threading.Event``-like; when set, ``train()`` returns early.
+
+        Optional ``training_cfg`` keys (each defaults to the legacy behaviour):
+        ``bootstrap_truncation`` (false), ``loss`` ("mse" | "huber") with
+        ``huber_delta`` (10.0), ``lr_groups`` ({group: lr} over
+        ``qfunc.param_groups()``), ``lr_end`` (= lr), ``target_update``
+        ("hard" | "soft") with ``tau`` (0.005), ``grad_clip`` (0 = off) and
+        ``reward_scale`` (1.0) — see ``config/default.toml`` for what each does.
         """
         self.qfunc = qfunc
         self.env = env
@@ -105,11 +129,14 @@ class DQNTrainer:
         self.env_factory = env_factory
         self.stop_event = stop_event
         self.eval_every = int(training_cfg.get("eval_every", 50))
-        # Total greedy episodes per snapshot eval (rounded up to full batches
-        # of the eval env). 12 instead of the old 4: a 4-episode eval once
+        # Greedy episodes per snapshot eval — the size ``env_factory`` is
+        # expected to give its env (n_envs = eval_episodes): one eval is ONE
+        # round of that many parallel episodes, each from its own spawn jitter.
+        # (Re-running a small env built from the same seed only repeats the
+        # same few episodes.)  12 instead of the old 4: a 4-episode eval once
         # crowned an 18.1 s gp headline that a 36-episode recheck put at 5/36
         # lapped episodes — reliability needs a sample, not a lucky roll.
-        self.eval_episodes = int(training_cfg.get("eval_episodes", 12))
+        self.eval_episodes = int(training_cfg.get("eval_episodes", DEFAULT_EVAL_EPISODES))
 
         self.gamma = training_cfg["gamma"]
         self.batch_size = training_cfg["batch_size"]
@@ -118,10 +145,86 @@ class DQNTrainer:
         self.epsilon_end = training_cfg["epsilon_end"]
         self.epsilon_decay_episodes = training_cfg["epsilon_decay_episodes"]
 
+        # Time-limit endings are truncations, not terminal states: when set,
+        # they are stored with done = 0 and the pre-reset observation, so the
+        # TD target keeps bootstrapping through them.
+        flag = training_cfg.get("bootstrap_truncation", False)
+        if isinstance(flag, str):  # bool("false") / bool("off") would be True
+            raise ValueError(
+                f"[training] bootstrap_truncation must be true or false, got '{flag}'"
+            )
+        self.bootstrap_truncation = bool(flag)
+        self.loss = str(training_cfg.get("loss", "mse"))
+        if self.loss not in LOSSES:
+            raise ValueError(f"[training] loss must be one of {LOSSES}, got '{self.loss}'")
+        self.huber_delta = float(training_cfg.get("huber_delta", 10.0))
+        if self.huber_delta <= 0.0:
+            raise ValueError(f"[training] huber_delta must be > 0, got {self.huber_delta}")
+        self.target_update = str(training_cfg.get("target_update", "hard"))
+        if self.target_update not in TARGET_UPDATES:
+            raise ValueError(
+                f"[training] target_update must be one of {TARGET_UPDATES}, "
+                f"got '{self.target_update}'"
+            )
+        self.tau = float(training_cfg.get("tau", 0.005))
+        if not 0.0 < self.tau <= 1.0:
+            raise ValueError(f"[training] tau must be in (0, 1], got {self.tau}")
+        self.grad_clip = float(training_cfg.get("grad_clip", 0.0))
+        if self.grad_clip < 0.0:
+            raise ValueError(f"[training] grad_clip must be >= 0, got {self.grad_clip}")
+        self.reward_scale = float(training_cfg.get("reward_scale", 1.0))
+        if self.reward_scale <= 0.0:
+            raise ValueError(f"[training] reward_scale must be > 0, got {self.reward_scale}")
+
         self.buffer = _ReplayBuffer(training_cfg["replay_size"], qfunc.n_features)
-        self.optimizer = Adam(qfunc.get_params().shape[0], lr=training_cfg["lr"])
+        lr = training_cfg["lr"]
+        # Start-of-run learning rate(s): the scalar lr, or a per-parameter
+        # vector when lr_groups assigns group-specific rates.
+        self._lr_start = self._learning_rates(lr, training_cfg.get("lr_groups"))
+        lr_end = training_cfg.get("lr_end", lr)
+        if lr_end != lr and (not lr > 0.0 or lr_end < 0.0):  # negative rates ascend
+            raise ValueError(
+                f"[training] lr_end needs lr > 0 and lr_end >= 0, "
+                f"got lr = {lr}, lr_end = {lr_end}"
+            )
+        self._lr_ratio = 1.0 if lr_end == lr else float(lr_end) / float(lr)
+        self.optimizer = Adam(qfunc.get_params().shape[0], lr=self._lr_start)
         self.target_params = qfunc.get_params()
         self._updates = 0
+        # Params at the end of the last train() call, BEFORE the best snapshot
+        # is restored (None until train() has run).
+        self.final_params: np.ndarray | None = None
+        self.last_eval: dict | None = None  # eval_log entry of the latest snapshot eval
+
+    def _learning_rates(self, lr: float, lr_groups: dict | None) -> float | np.ndarray:
+        """The scalar ``lr``, or — with ``lr_groups`` — a per-parameter vector:
+        each named group of ``qfunc.param_groups()`` gets its own rate, groups
+        not listed keep ``lr``."""
+        if not lr_groups:
+            return lr
+        param_groups = getattr(self.qfunc, "param_groups", None)
+        if param_groups is None:
+            raise ValueError(
+                f"[training] lr_groups needs a Q-function with param_groups(); "
+                f"{type(self.qfunc).__name__} has none"
+            )
+        groups = param_groups()
+        unknown = sorted(set(lr_groups) - set(groups))
+        if unknown:
+            raise ValueError(
+                f"[training] lr_groups: unknown group(s) {unknown}; "
+                f"{type(self.qfunc).__name__} has {sorted(groups)}"
+            )
+        rates = np.full(self.qfunc.get_params().shape[0], float(lr))
+        for name, rate in lr_groups.items():
+            rates[groups[name]] = float(rate)
+        return rates
+
+    def _anneal_lr(self, frac: float) -> None:
+        """Linear lr schedule: every rate goes from its start value (frac = 0)
+        to start * lr_end / lr (frac = 1).  No-op without ``lr_end``."""
+        if self._lr_ratio != 1.0:
+            self.optimizer.lr = self._lr_start * (1.0 + (self._lr_ratio - 1.0) * min(1.0, frac))
 
     def _epsilon(self, episode: int) -> float:
         frac = min(1.0, episode / max(1, self.epsilon_decay_episodes))
@@ -133,8 +236,23 @@ class DQNTrainer:
         explore = self.rng.random(obs.shape[0]) < epsilon
         return np.where(explore, random_a, greedy)
 
+    def _loss_and_upstream(self, td: np.ndarray) -> tuple[float, np.ndarray]:
+        """Batch-mean loss of the TD errors and its gradient wrt each selected Q.
+
+        MSE: mean(td^2).  Huber: 0.5 * td^2 inside +-huber_delta, linear
+        outside — so its gradient is the TD error CLIPPED to +-huber_delta,
+        which keeps a few huge errors (Q-values here reach the hundreds) from
+        dominating the batch.
+        """
+        if self.loss == "huber":
+            delta = self.huber_delta
+            abs_td = np.abs(td)
+            loss = np.where(abs_td <= delta, 0.5 * td**2, delta * (abs_td - 0.5 * delta))
+            return float(np.mean(loss)), np.clip(td, -delta, delta) / self.batch_size
+        return float(np.mean(td**2)), 2.0 * td / self.batch_size  # d(MSE)/d(Q_sel)
+
     def _update(self) -> float:
-        """One double-DQN gradient step on a uniform replay batch; returns MSE loss."""
+        """One double-DQN gradient step on a uniform replay batch; returns the loss."""
         idx = self.rng.integers(0, self.buffer.size, size=self.batch_size)
         obs = self.buffer.obs[idx]
         action = self.buffer.action[idx]
@@ -153,14 +271,46 @@ class DQNTrainer:
 
         q_sel = self.qfunc.q_values(obs)[rows, action]
         td = q_sel - target
-        upstream = 2.0 * td / self.batch_size  # d(MSE)/d(Q_sel)
+        loss, upstream = self._loss_and_upstream(td)
         grad = self.qfunc.grad_selected(obs, action, upstream)
+        if self.grad_clip > 0.0:  # global-norm clipping
+            norm = float(np.linalg.norm(grad))
+            if norm > self.grad_clip:
+                grad = grad * (self.grad_clip / norm)
         self.qfunc.set_params(self.optimizer.step(online_params, grad))
 
         self._updates += 1
-        if self._updates % self.target_sync_every == 0:
+        if self.target_update == "soft":  # Polyak averaging, every update
+            self.target_params = (
+                (1.0 - self.tau) * self.target_params + self.tau * self.qfunc.get_params()
+            )
+        elif self._updates % self.target_sync_every == 0:
             self.target_params = self.qfunc.get_params()
-        return float(np.mean(td**2))
+        return loss
+
+    def _stored_transition(
+        self, next_obs: np.ndarray, done: np.ndarray, info: Any
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """(next_obs, done) as stored in replay under ``bootstrap_truncation``:
+        finished sub-envs get the observation BEFORE their auto-reset, and only
+        off-track endings stay terminal — a time-limit truncation keeps
+        bootstrapping from that final observation."""
+        if not isinstance(info, dict) or "truncated" not in info or "final_obs" not in info:
+            raise ValueError(
+                "[training] bootstrap_truncation needs an env whose step() info "
+                "reports 'truncated' and 'final_obs' (RacingEnv / MultiTrackEnv do); "
+                f"{type(self.env).__name__} does not"
+            )
+        done = np.asarray(done, dtype=bool)
+        if not done.any():
+            return next_obs, done
+        if info["final_obs"] is None:
+            raise ValueError(
+                "[training] bootstrap_truncation: a sub-env finished but the env "
+                "reported info['final_obs'] = None"
+            )
+        next_obs = np.where(done[:, None], info["final_obs"], next_obs)
+        return next_obs, done & ~np.asarray(info["truncated"], dtype=bool)
 
     def _greedy_eval_round(self, env, max_steps: int = 5000):
         """One greedy (epsilon = 0) round: one full episode per env, in parallel.
@@ -202,31 +352,34 @@ class DQNTrainer:
         return int(lapped.sum()), lap_times, episode_returns
 
     def _eval_snapshot(self, best: dict | None, episode: int) -> dict:
-        """Greedy-eval the current params on fresh envs; keep the best snapshot.
+        """Greedy-eval the current params on a fresh env; keep the best snapshot.
 
-        Runs ``eval_episodes`` greedy episodes (in batches of the eval env's
-        size) and scores lexicographically (lapped_episodes, -mean_lap,
+        Calls ``env_factory()`` ONCE and runs one round of ``env.n_envs``
+        parallel greedy episodes — distinct episodes, one per spawn jitter
+        (the factory sizes the env; ``eval_episodes`` is the intended size).
+        Scores lexicographically (lapped_episodes, -mean_lap,
         mean_return): reliability first — the number of EPISODES that produced
         a lap — then average pace over every lap driven, then eval return.
         Mean lap over all laps (not the single best) keeps one lucky lap from
         crowning an unreliable snapshot; the return tie-breaker matters before
         the first lap, where (0, inf) would otherwise tie forever and pin the
-        earliest (untrained) snapshot.
+        earliest (untrained) snapshot.  The eval's summary is left in
+        ``self.last_eval`` whether or not it becomes the best.
         """
-        lapped = 0
-        lap_times: list[float] = []
-        episode_returns: list[float] = []
-        episodes_run = 0
-        while episodes_run < self.eval_episodes:
-            env = self.env_factory()
-            round_lapped, round_laps, round_returns = self._greedy_eval_round(env)
-            lapped += round_lapped
-            lap_times.extend(round_laps)
-            episode_returns.extend(round_returns)
-            episodes_run += env.n_envs if hasattr(env, "n_envs") else max(1, len(round_returns))
+        env = self.env_factory()
+        lapped, lap_times, episode_returns = self._greedy_eval_round(env)
+        episodes_run = env.n_envs if hasattr(env, "n_envs") else max(1, len(episode_returns))
         mean_lap = float(np.mean(lap_times)) if lap_times else float("inf")
         mean_return = float(np.mean(episode_returns)) if episode_returns else float("-inf")
         score = (lapped, -mean_lap, mean_return)
+        self.last_eval = {
+            "episode": episode,
+            "lapped_episodes": lapped,
+            "eval_episodes": episodes_run,
+            "mean_lap": None if np.isinf(mean_lap) else mean_lap,
+            "best_lap": min(lap_times) if lap_times else None,
+            "mean_return": None if np.isinf(mean_return) else mean_return,
+        }
         if best is None or score > best["score"]:
             best = {
                 "score": score,
@@ -250,6 +403,10 @@ class DQNTrainer:
         With ``env_factory`` set, a greedy eval runs every ``eval_every`` episodes
         (plus once at the end); ``qfunc`` is left at the BEST-scoring params and
         ``history["best_eval"]`` reports {episode, laps, best_lap}.
+        ``history["eval_log"]`` lists EVERY eval ({episode, lapped_episodes,
+        eval_episodes, mean_lap, best_lap, mean_return}) and
+        ``history["final_eval"]`` is its last entry — the eval of the final
+        params, which stay available as ``self.final_params``.
         """
         episodes = episodes if episodes is not None else self.cfg["episodes"]
         t_start = time.perf_counter()
@@ -261,15 +418,23 @@ class DQNTrainer:
         losses: list[float] = []
         best: dict | None = None
         evals_done = 0
+        eval_log: list[dict] = []
+        evaluated_at = -1  # self._updates at the latest eval (params change only there)
 
         while len(episode_returns) < episodes:
             if self.stop_event is not None and self.stop_event.is_set():
                 break
             epsilon = self._epsilon(len(episode_returns))
+            self._anneal_lr(len(episode_returns) / max(1, episodes))
             actions = self._select_actions(obs, epsilon)
-            next_obs, reward, done, _info = self.env.step(actions)
+            next_obs, reward, done, info = self.env.step(actions)
 
-            self.buffer.add(obs, actions, reward, next_obs, done)
+            stored_next, stored_done = next_obs, done
+            if self.bootstrap_truncation:
+                stored_next, stored_done = self._stored_transition(next_obs, done, info)
+            # reward_scale shapes the replay targets only; reported returns stay raw
+            stored_reward = reward if self.reward_scale == 1.0 else reward * self.reward_scale
+            self.buffer.add(obs, actions, stored_reward, stored_next, stored_done)
             return_acc += reward
             obs = next_obs
 
@@ -287,22 +452,31 @@ class DQNTrainer:
                     )
             return_acc[done] = 0.0
 
-            if self.env_factory is not None:
-                while len(episode_returns) >= (evals_done + 1) * self.eval_every:
-                    evals_done += 1
-                    best = self._eval_snapshot(best, len(episode_returns))
+            if (self.env_factory is not None
+                    and len(episode_returns) >= (evals_done + 1) * self.eval_every):
+                evals_done = len(episode_returns) // self.eval_every
+                best = self._eval_snapshot(best, len(episode_returns))
+                eval_log.append(self.last_eval)
+                evaluated_at = self._updates
 
         history = {
             "episode_returns": episode_returns,
             "losses": losses,
         }
+        self.final_params = self.qfunc.get_params()
         if self.env_factory is not None:
-            best = self._eval_snapshot(best, len(episode_returns))  # final params compete too
+            # Final params compete too — unless the last periodic eval already
+            # scored exactly these params (no update since).
+            if evaluated_at != self._updates:
+                best = self._eval_snapshot(best, len(episode_returns))
+                eval_log.append(self.last_eval)
             self.qfunc.set_params(best["params"])
             history["best_eval"] = {
                 k: best[k]
                 for k in ("episode", "lapped_episodes", "eval_episodes",
                           "mean_lap", "laps", "best_lap")
             }
+            history["eval_log"] = eval_log
+            history["final_eval"] = eval_log[-1]
         history["wall_time_s"] = time.perf_counter() - t_start
         return history
