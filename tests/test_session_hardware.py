@@ -91,9 +91,9 @@ def test_hardware_mode_idle_then_lap_and_replay(tmp_path):
 
         # the second transpiling status says where and how the circuit runs
         transpiled = [s for s in statuses if s["phase"] == "transpiling"]
-        assert transpiled[0]["backend_name"] == "fake_nighthawk"
+        assert transpiled[0]["backend_name"] == "fake_miami"
         how = transpiled[-1]
-        assert how["backend_name"].startswith("fake_nighthawk (4-qubit patch")
+        assert how["backend_name"].startswith("fake_miami (4-qubit patch")
         assert how["execution_mode"] == "session"
         assert how["two_qubit_gates"] == 12  # pruned CZ ring, zero SWAPs
         assert how["circuit_depth"] > 0
@@ -101,6 +101,9 @@ def test_hardware_mode_idle_then_lap_and_replay(tmp_path):
         assert how["message"].startswith("circuit transpiled: 12 two-qubit gates")
         assert "(light-cone pruned)" in how["message"]
         assert "raw device noise" in how["message"]  # resilience level 0
+        assert how["shots"] == 128  # the message's shots, per decision
+        assert "rescale" not in how and "attenuation" not in how  # off by default
+        assert "rescale" not in how["message"]
 
         running = [s for s in statuses if s["phase"] == "running"]
         assert running[0]["decision"] >= 1
@@ -152,6 +155,10 @@ def test_hardware_sprint_smoke(tmp_path):
         assert "eval_return_before" in done and "eval_return_after" in done
         assert done["execution_mode"] == "session"
         assert done["two_qubit_gates"] == 12 and done["circuit_depth"] > 0
+        # what the sprint did with its two steps, and the shots it ran at
+        assert done["message"].startswith("SPSA on head: steps taken ")
+        assert "/2" in done["message"] and "hardware loss" in done["message"]
+        assert done["shots"] == 128 and "rescale" not in done
         assert states  # idle car broadcast throughout; sprint has no replay
         assert session._hw_replay is None
     finally:
@@ -217,6 +224,36 @@ def test_execution_mode_fallback_note_reaches_the_ui(tmp_path, monkeypatch):
         session.shutdown()
 
 
+def test_rescale_and_decision_shots_reach_the_ui(tmp_path):
+    """[hardware] rescale turns the attenuation rescale on (one calibration
+    job before the first decision) and decision_shots sets a lap's shots when
+    the client names none; both are reported in hardware_status."""
+    config = load_config()
+    config["hardware"] = {**config["hardware"], "rescale": "readout", "decision_shots": 256,
+                          "calibration_samples": 16, "calibration_shots": 1024}
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    try:
+        session.handle_message(P.HardwareMsg(action="lap", backend="fake", max_decisions=2))
+        statuses, _ = run_until(session, {"done", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        how = [s for s in statuses if s["phase"] == "transpiling"][-1]
+        assert how["shots"] == 256
+        assert how["rescale"] == "readout" and 0.85 < how["attenuation"] < 1.0
+        assert "raw device noise + per-readout attenuation rescale (calibrated f = 0.9" \
+            in how["message"]
+        done = next(s for s in statuses if s["phase"] == "done")
+        assert done["rescale"] == "readout" and done["attenuation"] == how["attenuation"]
+
+        # a sprint keeps [hardware] shots; shots named by the client always win
+        session.handle_message(
+            P.HardwareMsg(action="sprint", backend="fake", iterations=1, shots=64))
+        statuses, _ = run_until(session, {"done", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        assert [s for s in statuses if s["phase"] == "transpiling"][-1]["shots"] == 64
+    finally:
+        session.shutdown()
+
+
 def test_hardware_config_picks_the_backend(tmp_path, monkeypatch):
     """[hardware] backend_name / fake_name reach get_backend (backend_name used
     to be ignored: the web UI always took the least busy device)."""
@@ -268,3 +305,21 @@ def test_training_eval_env_runs_one_env_per_eval_episode(tmp_path):
             assert factory().n_envs == expected
         finally:
             session.shutdown()
+
+
+def test_training_act_noise_applies_to_the_quantum_agent_only(tmp_path):
+    """[training] act_noise is noise on readout expectations: the quantum
+    trainer acts under it, the classical baseline trains as before."""
+    config = load_config()
+    config["reward"] = {**config["reward"], "max_decisions": 20}
+    config["training"] = {**config["training"], "n_parallel_envs": 2,
+                          "act_noise": {"attenuation": 0.95, "shots": 1024}}
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    try:
+        session.handle_message(P.Train(action="start", agent="both", episodes=1))
+        noise = session.jobs["quantum"].trainer.act_noise
+        assert (noise.attenuation, noise.shots) == (0.95, 1024)
+        assert session.jobs["mlp"].trainer.act_noise is None
+        assert config["training"]["act_noise"] == {"attenuation": 0.95, "shots": 1024}
+    finally:
+        session.shutdown()

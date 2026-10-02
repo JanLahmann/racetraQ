@@ -177,6 +177,53 @@ def test_switch_to_untrained_8_degrades_gracefully(tmp_path, monkeypatch):
     assert errors and "quantum_oval_q8.npz" in errors[0]["message"]
 
 
+def test_switch_keeps_the_sections_the_server_was_started_with(tmp_path):
+    # a q{n} profile is about [circuit] and [observation] only: the exhibition
+    # kiosk must stay a kiosk, and a [hardware] overlay must survive the switch
+    config = load_config("exhibition")
+    config["hardware"]["prune_light_cone"] = False
+    config["hardware"]["fake_name"] = "fake_fez"
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    session.drain_outbox()
+    ui = dict(config["ui"])
+    assert ui["kiosk"] is True and ui["attract_idle_seconds"] == 20
+
+    for n in (6, 4):
+        session.handle_message(P.Qubits(n=n))
+        msgs = session.drain_outbox()
+        assert not by_type(msgs, "error")
+        welcome = by_type(msgs, "welcome")[-1]
+        assert welcome["circuit_spec"]["n_qubits"] == n
+        assert welcome["ui"] == ui
+        assert welcome["circuit_spec"]["pruned_on_hardware"] is False
+        assert session.config["hardware"]["fake_name"] == "fake_fez"
+        assert session.config["server"] == config["server"]
+    # the size itself still comes from the packaged profile
+    assert session.config["observation"]["ray_angles_deg"] == [-60.0, 0.0, 60.0]
+
+
+def test_weights_of_another_depth_are_refused_not_crashed(tmp_path):
+    # the loaders adopt a driver's observation and action count but not its
+    # depth: bundled 4-block weights under [circuit] n_layers = 5 must degrade
+    # to a car-less attract mode with an error, at start-up and on a switch
+    config = load_config("q8")
+    config["circuit"]["n_layers"] = 5
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    msgs = session.drain_outbox()
+    errors = by_type(msgs, "error")
+    assert errors and "quantum_oval_q8.npz" in errors[0]["message"]
+    assert "104 parameters" in errors[0]["message"] and "128" in errors[0]["message"]
+    assert session.cars == [] and session.mode == "attract"
+    for switch in (P.SetMode(mode="race"), P.SetMode(mode="hardware")):
+        session.handle_message(switch)
+        assert session.mode == "attract"
+        assert by_type(session.drain_outbox(), "error")
+    for _ in range(6):
+        session.tick()
+    session.handle_message(P.Qubits(n=4))  # the default size still drives
+    assert not by_type(session.drain_outbox(), "error") and len(session.cars) == 1
+
+
 @pytest.mark.parametrize("n", [3, 5, 12])
 def test_invalid_qubit_count_leaves_state_unchanged(tmp_path, n):
     session = make_session(tmp_path)

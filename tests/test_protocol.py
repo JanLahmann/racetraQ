@@ -66,12 +66,15 @@ SERVER_MSGS = [
     P.HardwareStatus(phase="idle"),
     P.HardwareStatus(phase="connecting", message="connecting to IBM Quantum"),
     P.HardwareStatus(phase="transpiling", backend_name="fake_manila"),
-    P.HardwareStatus(phase="transpiling", backend_name="fake_nighthawk (4-qubit patch)",
+    P.HardwareStatus(phase="transpiling", backend_name="fake_miami (4-qubit patch)",
                      message="circuit transpiled", execution_mode="session",
                      two_qubit_gates=12, circuit_depth=39),
     P.HardwareStatus(phase="done", seconds_per_decision=40.0, execution_mode="batch",
                      note="Session unavailable on ibm_fez (code 1352); using a Batch",
                      two_qubit_gates=27, circuit_depth=85),
+    P.HardwareStatus(phase="transpiling", execution_mode="session", two_qubit_gates=12,
+                     circuit_depth=39, shots=4096, rescale="readout", attenuation=0.952),
+    P.HardwareStatus(phase="done", lap_time=15.1, seconds_per_decision=0.1, shots=1024),
     P.HardwareStatus(phase="running", backend_name="ibm_torino", decision=12,
                      seconds_per_decision=3.4),
     P.HardwareStatus(phase="running", iteration=7, loss=0.42),
@@ -99,6 +102,35 @@ def test_server_round_trip(msg):
     wire = P.serialize(msg)
     assert wire["type"] == msg.TYPE
     assert P.parse_server(wire) == msg
+
+
+@pytest.mark.parametrize("n_qubits", [4, 10])
+def test_welcome_carries_the_light_cone_circuit_spec(n_qubits):
+    """The real circuit_spec — per-gate ``live`` flags, ``dead_gates``,
+    ``visibility`` — survives the JSON wire unchanged; the protocol passes
+    ``circuit_spec`` through as an opaque dict, so older clients that read
+    only the original keys keep working."""
+    import json
+
+    from traqmania.agents.quantum.circuit import circuit_spec
+
+    spec = circuit_spec({"circuit": {"n_qubits": n_qubits}})
+    msg = P.Welcome(mode="attract", track={"name": "oval"}, tracks=["oval"],
+                    circuit_spec=spec, ui={"kiosk": False},
+                    obs_labels=[f"f{j}" for j in range(n_qubits)])
+    wire = json.loads(json.dumps(P.serialize(msg)))
+    assert P.parse_server(wire) == msg
+    sent = wire["circuit_spec"]
+    assert {"n_qubits", "n_layers", "n_actions", "gates", "counts", "n_params",
+            "param_layout", "readout", "action_labels"} <= set(sent)
+    assert all(type(g["live"]) is bool for g in sent["gates"])
+    assert sent["dead_gates"]["total"] == sum(not g["live"] for g in sent["gates"])
+    assert sent["pruned_on_hardware"] is True
+    assert len(sent["visibility"]) == sent["n_actions"]
+    assert all(len(row) == n_qubits for row in sent["visibility"])
+    # full visibility at 4 qubits; at 10 qubits x 4 layers every action misses 3 inputs
+    hidden = [row.count(0) for row in sent["visibility"]]
+    assert hidden == ([0] * 4 if n_qubits == 4 else [3] * 4)
 
 
 def test_optional_none_fields_omitted_from_wire():
@@ -151,6 +183,16 @@ def test_hardware_msg_and_status_optional_fields_omitted():
                         "execution_mode": "dedicated"})
     with pytest.raises(P.ProtocolError):
         P.parse_server({"type": "hardware_status", "phase": "done", "two_qubit_gates": -1})
+    # the run fields session._hardware_run_fields adds: shots, rescale, attenuation
+    wire = P.serialize(P.HardwareStatus(phase="done", shots=1024))
+    assert set(wire) == {"type", "phase", "shots"}
+    parsed = P.parse_server({"type": "hardware_status", "phase": "done", "shots": 4096,
+                             "rescale": "global", "attenuation": 0.95})
+    assert (parsed.shots, parsed.rescale, parsed.attenuation) == (4096, "global", 0.95)
+    with pytest.raises(P.ProtocolError):
+        P.parse_server({"type": "hardware_status", "phase": "done", "shots": 0})
+    with pytest.raises(P.ProtocolError):
+        P.parse_server({"type": "hardware_status", "phase": "done", "rescale": "off"})
     with pytest.raises(P.ProtocolError):
         P.parse_server({"type": "hardware_status"})
 

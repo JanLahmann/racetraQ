@@ -4,7 +4,7 @@ import * as net from "./net.js";
 import { RaceRenderer, KIND_COLORS } from "./race.js";
 import { initInput, setInputActive } from "./input.js";
 import { QuantumPanel } from "./quantum-panel.js";
-import { renderCircuit } from "./circuit.js";
+import { renderCircuit, renderVisibility } from "./circuit.js";
 import { TrainingChart, LapChart } from "./charts.js";
 import { AttractManager } from "./attract.js";
 import { initDraw } from "./draw.js";
@@ -325,6 +325,8 @@ net.on("welcome", (msg) => {
   );
   if (msg.circuit_spec) {
     renderCircuit(msg.circuit_spec, $("#circuit-diagram"), $("#circuit-legend"));
+    // light cone: which inputs each action can see (labels change with the driver)
+    renderVisibility(msg.circuit_spec, msg.obs_labels, $("#light-cone"));
     applyCircuitSize(msg.circuit_spec);
     quantumPanel.setCircuit(msg.circuit_spec);
   }

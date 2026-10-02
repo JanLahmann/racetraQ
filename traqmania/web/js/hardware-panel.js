@@ -2,8 +2,9 @@
 // device, or a local noisy "fake" simulation of one). Sends C->S "hardware"
 // commands and renders S->C "hardware_status" updates: phase pill, live
 // counters (including how the job runs: execution mode, transpiled two-qubit
-// gate count and depth), the note explaining an execution-mode fallback, the
-// sprint loss chart and the before/after eval-return comparison.
+// gate count and depth, shots per job and the attenuation rescale when one is
+// active), the note explaining an execution-mode fallback, the sprint loss
+// chart and the before/after eval-return comparison.
 
 import { hardwareCmd } from "./net.js";
 import { LossChart } from "./charts.js";
@@ -17,6 +18,13 @@ const MODE_LABEL = {
   session: "session (dedicated)",
   batch: "batch",
   job: "job mode (each job queues)",
+};
+
+// Attenuation rescale (hardware_status rescale): the measured expectations are
+// divided by an attenuation calibrated with one extra job before the run.
+const RESCALE_LABEL = {
+  global: "global",
+  readout: "per readout",
 };
 
 const PHASE_CLASS = {
@@ -151,6 +159,11 @@ export function initHardwarePanel() {
     }
     if (typeof msg.circuit_depth === "number") {
       counters.set("circuit depth", String(msg.circuit_depth));
+    }
+    if (typeof msg.shots === "number") counters.set("shots / job", String(msg.shots));
+    if (Object.hasOwn(RESCALE_LABEL, msg.rescale)) {
+      const f = typeof msg.attenuation === "number" ? `, f = ${msg.attenuation.toFixed(3)}` : "";
+      counters.set("attenuation rescale", `${RESCALE_LABEL[msg.rescale]}${f}`);
     }
     if (typeof msg.decision === "number") counters.set("decision", String(msg.decision));
     if (typeof msg.seconds_per_decision === "number") {

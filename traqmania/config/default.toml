@@ -69,13 +69,19 @@ warm_start = false
 # eval_episodes = 12            # distinct greedy episodes per eval (parallel eval envs)
 # bootstrap_truncation = false  # true: the 60 s time limit is a truncation, not a terminal state (TD target keeps bootstrapping)
 # loss = "mse"                  # "mse" | "huber" (TD error clipped to +-huber_delta in the gradient)
-# huber_delta = 10.0            # Huber threshold in Q units (Q-values here reach the hundreds)
+# huber_delta = 10.0            # Huber threshold in Q units (Q-values here are of order 100)
 # lr_groups = { head = 0.01 }   # per-group learning rates; quantum: lam | theta | head, mlp: body | head; unlisted groups use lr
 # lr_end = 0.01                 # linear lr anneal from lr to lr_end over the run's episodes (scales every group alike)
 # target_update = "hard"        # "hard": copy every target_sync_every updates | "soft": Polyak averaging every update
 # tau = 0.005                   # soft target rate: target <- (1 - tau) * target + tau * online
 # grad_clip = 0.0               # > 0: clip the gradient's global L2 norm to this value
 # reward_scale = 1.0            # multiplies rewards as stored in replay only (reported returns stay unscaled)
+# Hardware robustness (quantum agent; default off). act_noise: rollouts and snapshot evals pick actions from NOISY readout
+# expectations, <Z> -> attenuation * <Z> + bias + shot noise of `shots` shots (attenuation / bias: one number or one per readout);
+# TD targets and gradients stay exact, and the saved snapshot is the one that drives best under the noise.
+# `python -m traqmania.agents.quantum.noise calibrate --fake fake_miami` fits the attenuation of a device.
+# act_noise = { attenuation = 0.95, shots = 1024 }
+# action_gap = 0.0              # in [0, 1): advantage learning (Bellemare et al., AAAI 2016) — the TD target loses action_gap * (max_a Q(s, a) - Q(s, a_taken)), which widens the gap between the best action and the rest by 1 / (1 - action_gap) and leaves the best action unchanged
 
 # Per-track overrides merged onto [training] by the server and by train_headless
 # (config.resolve_training_cfg; train_headless --preset none skips them).
@@ -148,11 +154,21 @@ kiosk = false
 [hardware]
 backend_name = ""          # real device, e.g. "ibm_fez" (CLI --backend overrides); empty -> least busy available
 # Local twin for --fake / the UI's "Simulated device"; any spelling (fake_fez, FakeFez).
-# fake_nighthawk: 120-qubit square lattice, the CZ ring embeds with zero SWAPs (IBM's placeholder error values);
-# fake_miami / fake_berlin: calibration snapshots of real Nighthawk QPUs (qiskit-ibm-runtime >= 0.47);
+# fake_miami / fake_berlin: calibration snapshots of real Nighthawk QPUs — 120-qubit square lattice, the CZ ring embeds with zero SWAPs;
+# fake_nighthawk: same lattice with IBM's placeholder error values (works on older qiskit-ibm-runtime, >= 0.44);
 # fake_fez / fake_marrakesh / fake_kingston ...: heavy-hex Herons; fake_manila / fake_lagos: retired CX-era Falcons.
-fake_name = "fake_nighthawk"
-shots = 1024
+fake_name = "fake_miami"
+shots = 1024               # shots per Estimator job row: one lap decision, or one replay sample of a sprint's loss evaluation
+# decision_shots = 4096    # laps only: shots per decision when the caller names none — the CLI without --shots, a client message without `shots`; the web panel always sends its own shots field (default: shots)
 spsa_iterations = 30
-resilience_level = 0       # Estimator error mitigation: 0 raw device noise (honest default) | 1 TREX readout mitigation | 2 ZNE + gate twirling
+# spsa_groups = ["head"]   # parameter groups the SPSA sprint moves, out of "lam" | "theta" | "head" (default: the output head w, b — it can absorb a per-readout device error, and a noisy two-evaluation gradient over all 56 parameters can wreck a driver with thin action gaps in a single step)
+# spsa_blocking = true     # take an SPSA step only if the hardware loss at the new parameters is not worse (one more job per iteration); false: take every step
+# spsa_guard = 0.9         # refuse an SPSA step (before any job is spent on it) if the driver would keep less than this share of its greedy return on the exact simulator; 0 = no guard
+resilience_level = 0       # Estimator error mitigation: 0 raw device noise (honest default) | 1 TREX readout mitigation | 2 TREX + ZNE with gate twirling
 prune_light_cone = true    # transpile only the gates inside the readouts' light cone: identical expectation values, fewer two-qubit gates (12 instead of 16 CZ at 4 qubits)
+# Attenuation rescale (default off): one extra calibration job before a lap / sprint compares the device with the exact simulator
+# on random inputs, then every measured <Z_a> is corrected before the output head: "global" (or true) divides by the one fitted
+# attenuation f (<Z>_device ~ f * <Z>_exact, the global-depolarizing picture); "readout" removes each readout's own bias and slope.
+# rescale = false          # false | "global" | "readout"
+# calibration_samples = 64 # random inputs of the calibration job
+# calibration_shots = 8192 # its shots per input (at least; never fewer than the run's own shots)

@@ -412,6 +412,339 @@ def test_circuit_spec_light_cone_at_the_shipped_sizes():
     odd = circuit_spec({"n_qubits": 4, "n_actions": 6})
     assert odd["visibility"] is None and odd["dead_params"] is None
     assert odd["min_layers_full_visibility"] is None and odd["n_actions"] == 6
+    assert odd["dead_gates"] is None and all(g["live"] is None for g in odd["gates"])
+    # 4 qubits: the last block's RZs and CZ ring never reach a readout (12 of 16 CZ live)
+    assert circuit_spec({"n_qubits": 4})["dead_gates"] == {
+        "ry_enc": 0, "ry": 0, "rz": 4, "cz": 4, "total": 8}
+    assert circuit_spec({"n_qubits": 10})["dead_gates"] == {
+        "ry_enc": 12, "ry": 12, "rz": 22, "cz": 19, "total": 65}
+
+
+_SPEC_KIND = {"ry_enc": "enc", "ry": "ry", "rz": "rz", "cz": "cz"}  # spec gate type -> lightcone
+
+
+@pytest.mark.parametrize("n, layers, n_actions",
+                         [(4, 4, 4), (6, 4, 4), (8, 4, 4), (10, 4, 4), (8, 5, 6), (10, 2, 8)])
+def test_circuit_spec_flags_every_gate_live_or_dead(n, layers, n_actions):
+    from traqmania.agents.quantum.circuit import circuit_spec
+
+    spec = circuit_spec({"circuit": {"n_qubits": n, "n_layers": layers,
+                                     "n_actions": n_actions}})
+    live = lightcone.live_gates(n, layers, n_actions)
+    assert len(spec["gates"]) == spec["counts"]["total"]
+    for gate in spec["gates"]:
+        qubit = gate["q0"] if gate["type"] == "cz" else gate["qubit"]
+        assert gate["live"] is bool(live[_SPEC_KIND[gate["type"]]][gate["layer"], qubit])
+    dead = spec["dead_gates"]
+    assert set(dead) == set(spec["counts"])  # same keys as the per-type gate counts
+    for key, kind in _SPEC_KIND.items():
+        assert dead[key] == int((~live[kind]).sum())
+        assert dead[key] == sum(g["type"] == key and not g["live"] for g in spec["gates"])
+    assert dead["total"] == sum(not g["live"] for g in spec["gates"])
+    # every dead parameter sits in a dead rotation gate, and vice versa
+    assert spec["dead_params"] == dead["ry_enc"] + dead["ry"] + dead["rz"]
+
+
+@pytest.mark.parametrize("n, layers, n_actions", [(4, 4, 4), (10, 4, 4), (8, 5, 6)])
+def test_circuit_spec_live_gates_are_the_pruned_hardware_circuit(n, layers, n_actions):
+    """What the diagram leaves undimmed is, gate for gate, what hardware runs."""
+    from traqmania.agents.quantum.circuit import circuit_spec
+
+    spec = circuit_spec({"circuit": {"n_qubits": n, "n_layers": layers,
+                                     "n_actions": n_actions}})
+    drawn = [
+        ("cz", (g["q0"], g["q1"])) if g["type"] == "cz"
+        else ("rz" if g["type"] == "rz" else "ry", (g["qubit"],))
+        for g in spec["gates"] if g["live"]
+    ]
+    pruned = lightcone.pruned_circuit(n, layers, n_actions).circuit
+    assert [op[:2] for op in _ops(pruned)] == drawn
+
+
+def test_circuit_spec_keeps_the_keys_older_clients_read():
+    from traqmania.agents.quantum.circuit import circuit_spec
+
+    spec = circuit_spec({"circuit": {"n_qubits": 6, "n_layers": 4}})
+    assert spec["n_qubits"] == 6 and spec["n_layers"] == 4 and spec["n_actions"] == 4
+    assert spec["counts"] == {"ry_enc": 24, "ry": 24, "rz": 24, "cz": 24, "total": 96}
+    assert spec["n_params"] == {"lam": 24, "theta": 48, "w": 4, "b": 4, "total": 80}
+    assert spec["param_layout"] == ["lam", "theta", "w", "b"]
+    assert spec["readout"] == ["Z_0", "Z_1", "Z_2", "Z_3"]
+    assert spec["action_labels"] == ["Right", "Straight", "Left", "Brake"]
+    # the gate list minus the new flag is the pre-light-cone list, in the same order
+    legacy = [{k: v for k, v in g.items() if k != "live"} for g in spec["gates"]]
+    assert legacy[0] == {"type": "ry_enc", "qubit": 0, "layer": 0}
+    assert legacy[6:8] == [{"type": "ry", "qubit": 0, "layer": 0},
+                           {"type": "rz", "qubit": 0, "layer": 0}]
+    assert legacy[23] == {"type": "cz", "q0": 5, "q1": 0, "layer": 0}
+    assert [g["type"] for g in legacy[:24]] == ["ry_enc"] * 6 + ["ry", "rz"] * 6 + ["cz"] * 6
+    assert [g["layer"] for g in legacy] == [layer for layer in range(4) for _ in range(24)]
+
+
+def test_circuit_spec_says_whether_hardware_prunes_the_dead_gates():
+    """"Skipped on hardware" in the page is only true while the hardware path
+    prunes: the spec carries ``[hardware] prune_light_cone``."""
+    from traqmania.agents.quantum.circuit import circuit_spec
+    from traqmania.config import load_config
+
+    assert circuit_spec({"n_qubits": 4})["pruned_on_hardware"] is True  # [circuit] alone
+    config = load_config()
+    assert circuit_spec(config)["pruned_on_hardware"] is True  # the shipped default
+    config["hardware"]["prune_light_cone"] = False
+    assert circuit_spec(config)["pruned_on_hardware"] is False
+    assert circuit_spec(config)["dead_gates"]["total"] == 8  # the analysis itself is unchanged
+
+
+def _run_node(probe: str, js_file: str, payload) -> list:
+    """Run a web/js module's builders under node (skip without node): ``probe``
+    gets the module path as argv[1] and the JSON payload on stdin."""
+    import json
+    import shutil
+
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not installed")
+    run = subprocess.run(
+        [node, "--input-type=module", "-e", probe,
+         str(REPO_ROOT / "traqmania" / "web" / "js" / js_file)],
+        input=json.dumps(payload), capture_output=True, text=True, timeout=120,
+    )
+    assert run.returncode == 0, run.stderr
+    return json.loads(run.stdout)
+
+
+# One diagram / legend / "who sees what" element for every case, like the page:
+# each welcome re-renders into the same nodes, so anything stale would show.
+_WEB_PROBE = """
+import fs from "node:fs";
+const src = fs.readFileSync(process.argv[1]);
+const C = await import("data:text/javascript;base64," + src.toString("base64"));
+const diagram = { innerHTML: "" }, legend = { innerHTML: "" };
+const section = { innerHTML: "", hidden: true };
+const out = JSON.parse(fs.readFileSync(0, "utf8")).map(({ spec, labels }) => {
+  C.renderCircuit(spec, diagram, legend);
+  C.renderVisibility(spec, labels, section);
+  return {
+    svg: C.circuitSvg(spec),
+    caption: C.parameterCaption(spec),
+    blind: C.blindSpots(spec, labels),
+    note: C.visibilityNote(spec, labels),
+    table: C.visibilityMatrixHtml(spec, labels),
+    diagram: diagram.innerHTML,
+    legend: legend.innerHTML,
+    section: section.innerHTML,
+    sectionHidden: section.hidden,
+  };
+});
+process.stdout.write(JSON.stringify(out));
+"""
+
+
+def _matrix_cells(table: str) -> tuple[list[str], list[tuple[str, list[dict]]]]:
+    """Parse the matrix the way a browser would: ``(column heads, [(row head,
+    [cell attributes])])``. Fails on any element or attribute the builder does
+    not write itself — a label that escaped its text/attribute would add one."""
+    from html.parser import HTMLParser
+
+    heads: list[str] = []
+    rows: list[tuple[str, list[dict]]] = []
+
+    class Matrix(HTMLParser):
+        where = None  # "col" / "row": the header cell whose text is being read
+
+        def handle_starttag(self, tag, attrs):
+            names = [name for name, _ in attrs]
+            assert tag in ("table", "thead", "tbody", "tr", "th", "td", "span"), tag
+            if tag == "th":
+                assert names == ["scope"]
+                self.where = dict(attrs)["scope"]
+                if self.where == "row":
+                    rows.append(("", []))
+                else:
+                    heads.append("")
+            elif tag == "td" and rows:  # (the corner cell of the head row has no attributes)
+                assert names == ["class", "data-tip", "aria-label"]
+                rows[-1][1].append(dict(attrs))
+            else:
+                assert names in ([], ["class"]), (tag, names)
+
+        def handle_endtag(self, tag):
+            if tag == "th":
+                self.where = None
+
+        def handle_data(self, data):
+            if self.where == "col":
+                heads[-1] += data
+            elif self.where == "row":
+                rows[-1] = (rows[-1][0] + data, rows[-1][1])
+
+    Matrix().feed(table)
+    return heads, rows
+
+
+def test_web_diagram_and_matrix_render_the_spec():
+    """The browser's builders (web/js/circuit.js, run under node) against the
+    structural analysis: the diagram dims exactly the dead gates, and the
+    "who sees what" matrix and its one-line note say what ``blind_spots`` says
+    — an action/feature transposition in the page would fail here."""
+    import collections
+    import re
+    import xml.etree.ElementTree as ET
+
+    from traqmania.agents.quantum.circuit import circuit_spec
+
+    gp10 = ["ray -60°", "ray -30°", "ray 0°", "ray +30°", "ray +60°", "speed",
+            "curvature ahead", "lateral offset", "heading error", "corner speed"]
+    hostile = ['<img src=x onerror=1>', '"><b>', "a&b", "it's", 'x" onmouseover="y', "f", "g", "h"]
+    cases = [
+        ({"n_qubits": 4}, ["ray -60°", "ray 0°", "ray +60°", "speed"]),
+        ({"n_qubits": 10}, gp10),  # the bundled gp driver's observation at 10 qubits
+        ({"n_qubits": 8, "n_actions": 6}, hostile),
+        ({"n_qubits": 10, "n_layers": 6, "n_actions": 8}, None),  # no labels: wire names
+        ({"n_qubits": 4, "n_actions": 6}, ["a", "b", "c", "d"]),  # rejected by the analysis
+        ({"n_qubits": 8}, ["stale", "labels", "of another size"]),  # mismatch: wire names
+    ]
+    specs = [circuit_spec({"circuit": cfg}) for cfg, _ in cases]
+    specs[2]["action_labels"] = ["<i>R</i>", 'S" onclick="z', "L&R", "B's", "E", "F"]
+    # same circuit as the first case, hardware pruning switched off in the config
+    specs.append(circuit_spec({"circuit": {"n_qubits": 4},
+                               "hardware": {"prune_light_cone": False}}))
+    cases.append(({}, cases[0][1]))
+    payload = [{"spec": spec, "labels": labels}
+               for spec, (_, labels) in zip(specs, cases, strict=True)]
+    rendered = _run_node(_WEB_PROBE, "circuit.js", payload)
+
+    for spec, (_, labels), page in zip(specs, cases, rendered, strict=True):
+        n, layers, n_actions = spec["n_qubits"], spec["n_layers"], spec["n_actions"]
+        assert page["diagram"] == page["svg"]
+        svg = ET.fromstring(page["svg"])  # well-formed, whatever the labels
+        marked = list(svg.iter("{http://www.w3.org/2000/svg}g"))
+        groups = collections.Counter(g.get("class") for g in marked)
+        # grey <Z> boxes: the qubits no action reads
+        assert groups["meas-gauge-only"] == max(n - n_actions, 0)
+        dimmed = collections.Counter(
+            "ry_enc" if "λx" in body else "rz" if ">RZ<" in body
+            else "ry" if ">RY<" in body else "cz"
+            for body in re.findall(r'<g class="gate-dead"[^>]*>(.*?)</g>', page["svg"]))
+        if spec["visibility"] is None:  # nothing to show: plain diagram, no matrix
+            assert not dimmed and page["blind"] is None and page["note"] is None
+            assert page["table"] == ""
+            assert page["caption"] == f"{spec['n_params']['total']} trainable parameters"
+            # ... and the matrix of the previous welcome is gone, not left standing
+            assert page["sectionHidden"] is True and page["section"] == ""
+            assert "Dimmed" not in page["legend"]
+            continue
+        dead = spec["dead_gates"]
+        assert dimmed == {k: v for k, v in dead.items() if k != "total" and v}
+        assert groups["gate-dead"] == dead["total"]
+        assert page["caption"] == (f"{spec['n_params']['total']} trainable parameters, "
+                                   f"{spec['dead_params']} structurally dead")
+        assert page["caption"] in page["legend"] and "Dimmed gate" in page["legend"]
+        # "skipped on hardware" only while the hardware path really prunes
+        tips = {g.get("data-tip") for g in marked if g.get("class") == "gate-dead"}
+        assert len(tips) == 1 and "cannot influence any action" in next(iter(tips))
+        claims = [text.count("skipped on hardware") for text in (*tips, page["legend"])]
+        assert claims == [int(spec["pruned_on_hardware"])] * 2
+
+        usable = labels is not None and len(labels) == n
+        names = labels if usable else [f"q{j}" for j in range(n)]
+        expected = lightcone.blind_spots(names, layers, n_actions, spec["action_labels"])
+        spoken = [f"{b['action']} cannot see: {', '.join(b['hidden'])}" for b in page["blind"]]
+        assert spoken == [re.sub(r" \(Z_\d+\)", "", line) for line in expected]
+        assert page["sectionHidden"] is False and page["table"] in page["section"]
+        if expected:
+            assert page["note"]["kind"] == "warn" and spoken[-1] in page["note"]["text"]
+            assert (f"full visibility needs {spec['min_layers_full_visibility']} layers"
+                    in page["note"]["text"])
+        else:
+            assert page["note"]["kind"] == "ok"
+        # amber note and the "empty cell" legend row only when something is hidden
+        assert ("cone-warn" in page["section"]) == bool(expected)
+        assert ("vis-mark-off" in page["section"]) == bool(expected)
+
+        # one row per feature (qubit order), one cell per action (readout order);
+        # labels come from config/weights sidecars and stay text, never markup
+        heads, rows = _matrix_cells(page["table"])
+        assert heads == spec["action_labels"]
+        assert [head for head, _ in rows] == [
+            f"q{j} {names[j]}" if usable else f"q{j}" for j in range(n)]
+        for j, (_, cells) in enumerate(rows):
+            assert [cell["class"] for cell in cells] == [
+                "vis-on" if row[j] else "vis-off" for row in spec["visibility"]]
+            for a, cell in enumerate(cells):
+                tip, action = cell["data-tip"], spec["action_labels"][a]
+                assert cell["aria-label"] == tip
+                if spec["visibility"][a][j]:
+                    assert tip == f"{action} can see {names[j]}."
+                    continue
+                # a blind cell says why: the feature sits too far around the ring
+                steps = min(abs(a - j), n - abs(a - j))
+                assert steps > layers - 1
+                assert tip.startswith(f"{action} cannot see {names[j]}: ")
+                assert f"qubit {j}, {steps} steps around the ring from readout qubit {a}" in tip
+                assert f"{layers} layers only reach {layers - 1}" in tip
+
+
+# explain.js imports the documentation browser (fetch + DOM); the probe swaps
+# that import for a stub and gives initExplain the few DOM calls it makes.
+_EXPLAIN_PROBE = """
+import fs from "node:fs";
+const src = fs.readFileSync(process.argv[1], "utf8")
+  .replace('import { initDocs } from "./docs.js";', "const initDocs = () => {};");
+class El {
+  constructor() {
+    this.children = []; this.dataset = {}; this.innerHTML = ""; this.active = false;
+    this.classList = { toggle: (name, on) => { this.active = on; } };
+  }
+  addEventListener(type, fn) { this.click = fn; }
+  append(...kids) { this.children.push(...kids); }
+  replaceChildren(...kids) { this.children = kids; }
+  querySelectorAll() { return this.children; }
+}
+globalThis.document = { createElement: () => new El() };
+const E = await import("data:text/javascript;base64," + Buffer.from(src).toString("base64"));
+const root = new El();
+const look = () => {
+  const [nav, body] = root.children;
+  return { active: nav.children.filter((b) => b.active).map((b) => b.dataset.section),
+           body: body.innerHTML.replace(/\\s+/g, " ") };
+};
+const out = [];
+E.initExplain(root);  // boot: no spec yet
+out.push(look());
+root.children[0].children.find((b) => b.dataset.section === "circuit").click();
+out.push(look());
+for (const spec of JSON.parse(fs.readFileSync(0, "utf8"))) {
+  E.initExplain(root, spec);  // a welcome: qubit or driver switch
+  out.push(look());
+}
+process.stdout.write(JSON.stringify(out));
+"""
+
+
+def test_web_explain_light_cone_paragraph_follows_the_spec():
+    """Explain -> "The quantum circuit" (web/js/explain.js under node): the
+    light-cone paragraph states what the spec says about this circuit size,
+    and a welcome re-templates the copy without closing the open sub-tab."""
+    from traqmania.agents.quantum.circuit import circuit_spec
+
+    specs = [circuit_spec({"n_qubits": 4}), circuit_spec({"n_qubits": 10}),
+             circuit_spec({"n_qubits": 10, "n_layers": 6}),
+             circuit_spec({"n_qubits": 4, "n_actions": 6})]  # rejected: no verdict
+    boot, opened, q4, q10, q10_deep, rejected = _run_node(_EXPLAIN_PROBE, "explain.js", specs)
+
+    full, short = "every action can see every input", "the cones are too short"
+    assert boot["active"] == ["what"] and "light cone" not in boot["body"]
+    assert opened["active"] == ["circuit"] and "<strong>light cone</strong>" in opened["body"]
+    assert full not in opened["body"] and short not in opened["body"]  # no spec, no verdict
+    for page in (q4, q10, q10_deep, rejected):
+        assert page["active"] == ["circuit"]  # the open sub-tab survives the rebuild
+        assert "<strong>light cone</strong>" in page["body"]
+    assert f"With 4 qubits and 4 layers {full}." in q4["body"] and short not in q4["body"]
+    assert f"With 10 qubits and 4 layers {short}" in q10["body"] and full not in q10["body"]
+    assert "(that would take 6 layers)" in q10["body"] and "Who sees what" in q10["body"]
+    assert f"With 10 qubits and 6 layers {full}." in q10_deep["body"]
+    assert full not in rejected["body"] and short not in rejected["body"]
 
 
 # ------------------------------------------------------------- pruned circuit

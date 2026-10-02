@@ -1,6 +1,9 @@
 # 8-qubit profile: 7 lidar rays + speed = 8 features, one per qubit.
-# UNTRAINED OPTION: no quantum_<track>_q8.npz weights are bundled; train first
-# (attract/race/evolution/hardware stay unavailable until weights exist).
+# Bundled weights (quantum_<track>_q8.npz): oval and chicane; on other tracks
+# attract/race/evolution/hardware stay unavailable until you train.
+# n_layers stays at the default 4, which at 8 qubits hides one feature from
+# every action (Brake cannot see speed); full visibility needs 5 blocks —
+# python -m traqmania.agents.quantum.lightcone --qubits 8 --layers 4
 
 [circuit]
 n_qubits = 8

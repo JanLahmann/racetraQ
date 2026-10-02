@@ -17,6 +17,7 @@ in background threads and samples its live envs via
 from __future__ import annotations
 
 import asyncio
+import copy
 import logging
 import math
 import threading
@@ -96,16 +97,22 @@ def _hardware_run_fields(info: dict) -> dict:
     run info of ``hardware.run_hardware_lap`` / ``spsa_sprint`` (their
     ``on_start`` payload and result): where the circuit runs, the execution
     mode (session | batch | job), the note explaining a mode fallback, and
-    the transpiled circuit's two-qubit gate count and depth. Absent or null
-    entries are left out."""
+    the transpiled circuit's two-qubit gate count and depth, the shots per
+    job and — when the attenuation rescale is on — its kind (global |
+    readout) and the calibrated attenuation. Absent or null entries are left
+    out."""
     fields: dict[str, Any] = {}
     for key, wire, cast in (("backend_name", "backend_name", str),
                             ("mode", "execution_mode", str),
                             ("note", "note", str),
                             ("two_qubit_gates", "two_qubit_gates", int),
-                            ("depth", "circuit_depth", int)):
+                            ("depth", "circuit_depth", int),
+                            ("shots", "shots", int),
+                            ("rescale", "rescale", str)):
         if info.get(key) is not None:
             fields[wire] = cast(info[key])
+    if "rescale" in fields and info.get("attenuation") is not None:
+        fields["attenuation"] = float(info["attenuation"])
     return fields
 
 
@@ -115,7 +122,9 @@ RANDOM_TRACK = "random"  # set_track name that triggers procedural generation
 def random_track_weights(n_qubits: int, suffix: str = "") -> tuple[Path, str]:
     """(weights path, honest driver label) for a generated random track:
     the trained ``quantum_universal*`` weights when bundled, else the gp
-    specialist (measured to lap all three bundled tracks zero-shot)."""
+    specialist (under the current physics it was measured to lap the oval
+    and combo zero-shot, but not the chicane — docs/SCIENCE.md, "One driver,
+    every track")."""
     universal = quantum_weights_path("universal", n_qubits, suffix)
     if universal.is_file():
         return universal, "universal"
@@ -259,6 +268,10 @@ class DemoSession:
             # a test/host that isolates ghosts wants leaderboards isolated too
             leaderboard_dir = Path(ghosts_dir) / "leaderboard"
         self._leaderboard_dir = leaderboard_dir  # None -> data/leaderboard
+        # the config the server was started with (profile + --config overlay),
+        # untouched by per-driver adoption: a live qubit switch keeps every
+        # section of it except the two a q{n} profile is about
+        self._startup_config = copy.deepcopy(config)
         self._apply_config(config)
 
         self.t = 0.0
@@ -488,12 +501,33 @@ class DemoSession:
         qfunc.set_params(np.load(path)["params"])
         return qfunc
 
+    def _weights_shape_mismatch(self, path: Path) -> str | None:
+        """Why quantum weights at ``path`` cannot be loaded into the configured
+        circuit (or None): the loaders adopt a driver's recorded observation
+        and action count, but not its depth, so weights trained with another
+        ``[circuit] n_layers`` must be refused here rather than crash
+        ``set_params``."""
+        circuit_cfg = self.config.get("circuit", {})
+        n_layers = int(circuit_cfg.get("n_layers", 4))
+        n_actions = weights_actions(path) or min(4, self.n_qubits)
+        expected = 3 * n_layers * self.n_qubits + 2 * n_actions
+        try:
+            found = int(np.load(path)["params"].size)
+        except (OSError, KeyError, ValueError) as exc:
+            return f"cannot read weights '{path.name}' ({type(exc).__name__}: {exc})"
+        if found == expected:
+            return None
+        return (f"weights '{path.name}' hold {found} parameters, but the configured "
+                f"circuit ({self.n_qubits} qubits, {n_layers} blocks, {n_actions} "
+                f"actions) has {expected} — set [circuit] n_layers to the depth they "
+                "were trained with, or retrain")
+
     def _agent_unavailable(self, kind: str) -> str | None:
         """Why the bundled ``kind`` weights cannot drive the current track (or None)."""
         if kind == "quantum":
             path = self._quantum_weights_path()
             if path.is_file():
-                return None
+                return self._weights_shape_mismatch(path)
             trained = [name for name in ("oval", "chicane", "gp", "combo", "universal")
                        if quantum_weights_path(name, self.n_qubits).is_file()]
             hint = (f"bundled at {self.n_qubits} qubits: {', '.join(trained)}"
@@ -705,9 +739,12 @@ class DemoSession:
         self._outbox.append(self.welcome_payload())
 
     def _handle_qubits(self, msg: protocol.Qubits) -> None:
-        """Live circuit-size switch: overlay the packaged q{n} profile (plain
-        default config at n=4), rebuild track/agents/spec state in place, reset
-        to attract mode, and re-broadcast the welcome payload."""
+        """Live circuit-size switch: take ``[circuit]`` and ``[observation]``
+        from the packaged q{n} profile (the plain default config at n=4), keep
+        every other section as the server was started (a kiosk stays a kiosk,
+        ``[hardware]`` / ``[server]`` / ``[training]`` overlays survive),
+        rebuild track/agents/spec state in place, reset to attract mode, and
+        re-broadcast the welcome payload."""
         if self._training_alive():
             self._error("cannot change qubit count while training is running")
             return
@@ -719,6 +756,9 @@ class DemoSession:
         except FileNotFoundError:
             self._error(f"unknown qubit count {msg.n} (no packaged q{msg.n} profile)")
             return
+        for section, value in self._startup_config.items():
+            if section not in ("circuit", "observation"):  # the size switch itself
+                config[section] = copy.deepcopy(value)
         self._apply_config(config)
         if not self.track_is_random:  # a generated track keeps its geometry
             self.track = load_track(config, self.track_name)
@@ -870,6 +910,10 @@ class DemoSession:
                             "training quantum from scratch")
                 warm_path, warm = None, False
         tcfg = resolve_training_cfg(self.config, self.track_name, warm)
+        if agent != "quantum":
+            # [training] act_noise is noise on the circuit's readout
+            # expectations; the classical baseline trains without it
+            tcfg.pop("act_noise", None)
         episodes = int(episodes) if episodes is not None else int(tcfg["episodes"])
         seed = int(tcfg.get("seed", 0)) + seed_offset
 
@@ -1036,7 +1080,11 @@ class DemoSession:
             self.cars = [self._make_agent_car("quantum")]
 
         hw_cfg = self.config.get("hardware", {})
-        shots = int(msg.shots) if msg.shots is not None else int(hw_cfg.get("shots", 1024))
+        shots = int(hw_cfg.get("shots", 1024))
+        if msg.action == "lap":  # one job per decision: its own shots setting
+            shots = int(hw_cfg.get("decision_shots", shots))
+        if msg.shots is not None:
+            shots = int(msg.shots)
         iterations = (int(msg.iterations) if msg.iterations is not None
                       else int(hw_cfg.get("spsa_iterations", 30)))
         use_fake = msg.backend == "fake"
@@ -1070,7 +1118,7 @@ class DemoSession:
                     # transpiled, execution mode open: where and how it runs
                     # (this message stays up while the job runs)
                     shown["name"] = str(info["backend_name"])
-                    mitigation = hardware.RESILIENCE_LEVELS[info["resilience_level"]]
+                    mitigation = hardware.mitigation_text(info)
                     job.push("transpiling",
                              message=f"circuit transpiled: {info['two_qubit_gates']} "
                                      f"two-qubit gates, depth {info['depth']}"
@@ -1126,12 +1174,20 @@ class DemoSession:
         elif job.kind == "lap":
             self._finish_hardware_lap(job.result)
         else:
+            from traqmania import hardware
+
+            result = job.result
             self._outbox.append({
                 "type": "hardware_status",
                 "phase": "done",
-                "eval_return_before": float(job.result["return_before"]),
-                "eval_return_after": float(job.result["return_after"]),
-                **_hardware_run_fields(job.result),
+                # what the sprint moved, which steps it took and why not the rest
+                "message": f"SPSA on {' + '.join(result['groups'])}: steps taken "
+                           f"{hardware.sprint_steps_text(result)}; hardware loss "
+                           f"{result['loss_before']:.2f} → {result['loss_after']:.2f} "
+                           f"({result['jobs']} jobs)",
+                "eval_return_before": float(result["return_before"]),
+                "eval_return_after": float(result["return_after"]),
+                **_hardware_run_fields(result),
             })
 
     def _finish_hardware_lap(self, result: dict) -> None:

@@ -23,6 +23,7 @@ HARDWARE_ACTIONS = ("lap", "sprint", "abort")
 HARDWARE_BACKENDS = ("fake", "real")
 HARDWARE_PHASES = ("idle", "connecting", "transpiling", "running", "replay", "done", "error")
 HARDWARE_EXECUTION_MODES = ("session", "batch", "job")
+HARDWARE_RESCALES = ("global", "readout")  # attenuation rescale kinds ([hardware] rescale)
 
 # input.keys bitmask
 KEY_THROTTLE, KEY_BRAKE, KEY_LEFT, KEY_RIGHT = 1, 2, 4, 8
@@ -244,6 +245,9 @@ class HardwareStatus:
     note: str | None = None  # why a more exclusive execution mode was refused
     two_qubit_gates: int | None = None  # of the transpiled (ISA) circuit
     circuit_depth: int | None = None  # of the transpiled (ISA) circuit
+    shots: int | None = None  # shots per Estimator job of this run
+    rescale: str | None = None  # one of HARDWARE_RESCALES; only when the rescale is applied
+    attenuation: float | None = None  # with rescale: the calibrated attenuation f
     TYPE: ClassVar[str] = "hardware_status"
 
 
@@ -299,7 +303,7 @@ _OMIT_IF_NONE: dict[str, set[str]] = {
     HardwareStatus.TYPE: {"backend_name", "message", "decision", "seconds_per_decision",
                           "iteration", "loss", "eval_return_before", "eval_return_after",
                           "lap_time", "execution_mode", "note", "two_qubit_gates",
-                          "circuit_depth"},
+                          "circuit_depth", "shots", "rescale", "attenuation"},
     CarState.__name__: {"rays", "label", "ghost"},
 }
 
@@ -657,6 +661,10 @@ def _parse_hardware_status(d: dict) -> HardwareStatus:
         note=_str(d["note"], "note") if d.get("note") is not None else None,
         two_qubit_gates=_opt_int(d, "two_qubit_gates", 0),
         circuit_depth=_opt_int(d, "circuit_depth", 0),
+        shots=_opt_int(d, "shots", 1),
+        rescale=_enum(d["rescale"], "rescale", HARDWARE_RESCALES)
+        if d.get("rescale") is not None else None,
+        attenuation=_opt_float(d, "attenuation"),
     )
 
 

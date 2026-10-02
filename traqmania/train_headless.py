@@ -271,6 +271,9 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
                          env_factory=env_factory)
 
     print(f"training agent={agent} track={save_name} episodes={episodes} seed={seed}")
+    if trainer.act_noise is not None:
+        print(f"acting noise: {trainer.act_noise.describe()} (rollouts and snapshot evals "
+              "act on noisy expectations; TD targets and gradients stay exact)")
     t0 = time.perf_counter()
     returns: list[float] = []
 
@@ -342,8 +345,8 @@ def main() -> None:
     parser.add_argument("--agent", default="mlp", choices=["mlp", "quantum"],
                         help="Q-function backend")
     parser.add_argument("--track", default="oval",
-                        help="track name (oval | chicane | gp), 'multi' (oval+chicane+gp "
-                             "mixture) or 'random' (pool of generated tracks from --seed)")
+                        help="track name (oval | chicane | gp | combo), 'multi' (mixture of "
+                             "all four) or 'random' (pool of generated tracks from --seed)")
     parser.add_argument("--episodes", type=int, default=None,
                         help="sub-env episodes (default: [training].episodes)")
     parser.add_argument("--seed", type=int, default=None,

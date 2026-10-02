@@ -20,10 +20,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# 0.44 is the first release with FakeNighthawk, the default fake backend (0.47
-# adds the fake_miami / fake_berlin / fake_kingston ... snapshots, 0.48 the
-# client-side Estimator; older ones fall back to the legacy EstimatorV2).
-hardware = ["qiskit-ibm-runtime>=0.44"]
+# 0.47 is the first release with FakeMiami, the default fake backend (a real
+# Nighthawk calibration snapshot); 0.50 adds the client-side Estimator, older
+# ones fall back to the legacy EstimatorV2.
+hardware = ["qiskit-ibm-runtime>=0.47"]
 notebooks = ["jupyter", "matplotlib", "pylatexenc"]
 dev = ["pytest>=8", "ruff>=0.16,<0.17", "httpx>=0.27", "pytest-asyncio>=0.24"]
 

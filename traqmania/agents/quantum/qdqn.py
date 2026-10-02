@@ -75,6 +75,13 @@ class QuantumQFunction:
         obs = np.asarray(obs, dtype=np.float64)
         return self._sim.forward(obs, self.lam, self.theta)[:, : self.n_actions]
 
+    def noisy_q_values(self, obs: np.ndarray, noise, rng: np.random.Generator) -> np.ndarray:
+        """Q-values from NOISY readout expectations: ``noise`` (an
+        ``ExpectationNoise``: attenuation, shot noise, bias — what a device
+        does to <Z_a>) is applied before the output head, one fresh draw from
+        ``rng`` per call.  What ``[training] act_noise`` acts on."""
+        return noise.apply(self.expectations(obs), rng) * self.w + self.b
+
     def all_expectations(self, obs: np.ndarray) -> np.ndarray:
         """<Z_i> of EVERY qubit, (B, F) -> (B, n_qubits) — the first
         ``n_actions`` columns are the readout the output head consumes; the

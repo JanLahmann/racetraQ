@@ -4,9 +4,9 @@ This module is the bridge from traQmania's numpy fast path to actual quantum
 processors (or their local fake twins) via ``qiskit-ibm-runtime``:
 
 - :func:`get_backend` — a real IBMBackend through ``QiskitRuntimeService`` or a
-  local noise-model twin from the fake provider (default: ``fake_nighthawk``,
-  the 120-qubit square-lattice, CZ-based processor family the circuit's CZ
-  ring embeds into with zero SWAPs).
+  local noise-model twin from the fake provider (default: ``fake_miami``, a
+  calibration snapshot of a 120-qubit square-lattice, CZ-based Nighthawk
+  processor — the family the circuit's CZ ring embeds into with zero SWAPs).
 - :func:`local_simulator` — the Aer twin a fake device is actually simulated
   on, noise model built ONCE: the whole device for the 5-7 qubit fakes, an
   n-qubit "device patch" (only the physical qubits the routed circuit touches)
@@ -25,11 +25,17 @@ processors (or their local fake twins) via ``qiskit-ibm-runtime``:
   account allows one (else a ``Batch``, else plain job mode).
 - :func:`spsa_sprint` — a short TD-loss fine-tune: replay batch and double-DQN
   targets are computed ONCE in the exact fastsim simulator, then SPSA descends
-  the hardware-evaluated MSE loss at 2 Estimator jobs per iteration.
+  the hardware-evaluated MSE loss — by default on the output head only, with
+  a blocking rule that refuses steps the hardware loss does not confirm and
+  a guard that refuses steps which would cost the policy its return on the
+  exact simulator.
 
 Error mitigation is explicit: ``resilience_level`` 0 (the default here) shows
 the raw device noise, 1 adds TREX readout mitigation, 2 adds ZNE with gate
-twirling — the runtime's own default would be 1.
+twirling on top of TREX — the runtime's own default would be 1. ``rescale`` (default off)
+divides the measured expectations by an attenuation calibrated against the
+exact simulator with one extra job, globally or per readout
+(``traqmania.agents.quantum.noise`` has the model behind it).
 
 Import hygiene: importing this module must NOT import qiskit — all qiskit /
 qiskit-ibm-runtime imports live inside functions. Run the CLI with
@@ -53,12 +59,12 @@ from traqmania.agents.training import spsa
 
 WEIGHTS_DIR = Path(__file__).resolve().parent / "weights"
 
-# Default local twin: the Nighthawk square lattice (CZ, 120 qubits). Its error
-# values are IBM's placeholders ("not intended to represent typical Nighthawk
-# error values"); fake_miami / fake_berlin (qiskit-ibm-runtime >= 0.47) are
-# calibration snapshots of real Nighthawk processors, fake_fez / fake_marrakesh
-# / fake_kingston / ... of heavy-hex Herons.
-DEFAULT_FAKE = "fake_nighthawk"
+# Default local twin: fake_miami, a calibration snapshot of a real Nighthawk
+# processor (square lattice, CZ, 120 qubits; qiskit-ibm-runtime >= 0.47, as is
+# fake_berlin). fake_nighthawk (>= 0.44) has the same lattice but IBM's
+# placeholder error values ("not intended to represent typical Nighthawk error
+# values"); fake_fez / fake_marrakesh / fake_kingston / ... are heavy-hex Herons.
+DEFAULT_FAKE = "fake_miami"
 
 # Fakes with more qubits than this are simulated as a device patch (see
 # local_simulator). Simulating the whole device costs 4-30 s per evaluation on
@@ -81,8 +87,32 @@ EXECUTION_MODES = ("session", "batch", "job")
 RESILIENCE_LEVELS = {
     0: "raw device noise, no error mitigation",
     1: "TREX readout-error mitigation",
-    2: "ZNE + gate twirling",
+    2: "TREX + ZNE with gate twirling",
 }
+
+# Attenuation calibration (HardwareQFunction.calibrate): one extra job of this
+# many random inputs, at no fewer shots than this.
+CALIBRATION_SAMPLES = 64
+CALIBRATION_MIN_SHOTS = 8192
+# Below this fitted attenuation the rescale is refused: most of the signal is
+# gone and dividing by f would mainly amplify shot noise.
+MIN_ATTENUATION = 0.3
+
+# SPSA sprint (spsa_sprint): the parameter groups it moves by default, the
+# probe size per group (circuit angles in rad; the head as a fraction of mean
+# |w|), the first-step size in probe sizes, the probe pairs the gain is
+# calibrated on, the greedy episodes behind return_before / return_after (and
+# behind the guard), the share of its exact-simulator return a step must keep
+# (the guard; 0 = off) and the fresh evaluations averaged into loss_before /
+# loss_after.
+SPRINT_GROUPS = ("head",)
+SPRINT_ANGLE_PROBE = 0.05
+SPRINT_HEAD_PROBE = 0.02
+SPRINT_STEP_TARGET = 0.3
+SPRINT_CALIBRATION_PAIRS = 4
+SPRINT_EVAL_EPISODES = 12
+SPRINT_GUARD = 0.9
+SPRINT_LOSS_EVALUATIONS = 3
 
 # Layout seeds tried per transpilation; the fewest two-qubit gates wins.
 _TRANSPILE_SEEDS = tuple(range(8))
@@ -236,8 +266,8 @@ def get_backend(
     of an IBM device, simulated locally — no account needed). ``fake_name``
     takes any spelling ('fake_fez', 'FakeFez', 'fake_manila', 'FakeManilaV2');
     an unknown name raises ``ValueError`` listing the available fakes. Current
-    devices are CZ-based: 'fake_nighthawk' (default; square lattice, 120
-    qubits — the CZ ring needs no SWAPs) and the heavy-hex Herons ('fake_fez',
+    devices are CZ-based: 'fake_miami' (default; a Nighthawk, square lattice,
+    120 qubits — the CZ ring needs no SWAPs) and the heavy-hex Herons ('fake_fez',
     'fake_marrakesh', 'fake_torino', ...); 'fake_manila', 'fake_lagos' and the
     other ``...V2`` classes are retired CX-era Falcon devices. A named fake
     with fewer than ``min_qubits`` qubits is replaced by the smallest
@@ -478,9 +508,10 @@ def _is_ibm_backend(backend) -> bool:
 def _make_estimator(mode, backend, shots: int, resilience_level: int):
     """Estimator primitive for ``mode`` (a Session/Batch, or the backend itself).
 
-    The client-side ``executor_estimator.Estimator`` (qiskit-ibm-runtime >=
-    0.48; it honours ``resilience_level`` on fake backends too) when
-    available, else the server-side ``EstimatorV2`` that 0.50 deprecates.
+    The client-side ``executor_estimator.Estimator`` (added in
+    qiskit-ibm-runtime 0.50.0; it honours ``resilience_level`` on fake
+    backends too) when available, else the server-side ``EstimatorV2`` that
+    0.50 deprecates.
     """
     try:
         from qiskit_ibm_runtime.executor_estimator import Estimator
@@ -518,7 +549,14 @@ class HardwareQFunction:
     are dropped, the expectation values are mathematically identical and the
     device executes fewer two-qubit gates (12 instead of 16 CZ at 4 qubits).
     ``resilience_level`` is the Estimator's error mitigation: 0 (default) raw
-    device noise, 1 TREX, 2 ZNE + gate twirling. Without a ``session`` a fake
+    device noise, 1 TREX, 2 TREX + ZNE with gate twirling. ``rescale`` (default off)
+    corrects the measured expectations before the output head with an
+    attenuation fitted by :meth:`calibrate`: ``"global"`` (or true) reads
+    ``Q_a = w[a] * <Z_a> / f + b[a]`` with one f for all readouts — the
+    global-depolarizing picture — and ``"readout"`` ``Q_a = w[a] * (<Z_a> -
+    bias_a) / slope_a + b[a]`` with each readout's own fit (readout error
+    differs from qubit to qubit, and it is that difference which re-ranks
+    actions). Without a ``session`` a fake
     device is swapped for its Aer twin (:func:`execution_backend`) and jobs
     run in job mode; with one (a runtime Session or Batch), ``backend`` must
     be the backend it was opened on. ``two_qubit_gates`` / ``depth`` describe
@@ -536,12 +574,23 @@ class HardwareQFunction:
         session=None,
         resilience_level: int = 0,
         prune_light_cone: bool = True,
+        rescale: bool | str | None = False,
     ):
         cfg = circuit_cfg.get("circuit", circuit_cfg)
         self.n_qubits = int(cfg.get("n_qubits", 4))
         self.n_layers = int(cfg.get("n_layers", 4))
         self.seed = int(cfg.get("seed", 7))
         self.shots = int(shots)
+        from traqmania.agents.quantum import noise as noise_mod
+
+        # Attenuation mitigation: None (off) | "global" | "readout". The
+        # correction itself is fitted by calibrate() — one extra job.
+        self.rescale = noise_mod.rescale_mode(rescale)
+        self.correction = None  # noise.ReadoutCorrection once calibrated
+        self.calibration: dict | None = None  # the fit behind it
+        self.rescale_note: str | None = None  # why a requested rescale is off
+        self.jobs = 0  # Estimator jobs run (since the last seed_simulator call)
+        self._simulator_seed: int | None = None
         self.resilience_level = int(resilience_level)
         if self.resilience_level not in RESILIENCE_LEVELS:
             raise ValueError(
@@ -614,20 +663,100 @@ class HardwareQFunction:
         """Raw readout expectations <Z_a> from the backend: (B, F) -> (B, A)."""
         obs = np.atleast_2d(np.asarray(obs, dtype=np.float64))
         batch = obs.shape[0]
+        if self._simulator_seed is not None:
+            simulator = getattr(self._estimator.options, "simulator", None)
+            if simulator is not None:
+                simulator.seed_simulator = self._simulator_seed + self.jobs
+        self.jobs += 1
         result = self._estimator.run([self._pub(obs)]).result()[0]
         evs = np.asarray(result.data.evs, dtype=np.float64).reshape(self.n_actions, batch)
         return evs.T
 
     def q_values(self, obs: np.ndarray) -> np.ndarray:
-        """Q-values for a batch of observations: (B, F) -> (B, A)."""
-        return self.expectations(obs) * self.w + self.b
+        """Q-values for a batch of observations: (B, F) -> (B, A).
+
+        With ``rescale`` the expectations pass through the calibrated
+        correction first (calibrating on the first call if need be).
+        """
+        if self.rescale is not None and self.correction is None:
+            self.calibrate()  # may refuse and turn the rescale off
+        expectations = self.expectations(obs)
+        if self.correction is not None:
+            expectations = self.correction.apply(expectations)
+        return expectations * self.w + self.b
+
+    def seed_simulator(self, seed: int | None) -> None:
+        """Make a LOCAL simulation reproducible (no effect on a real device).
+
+        Job ``k`` from now on samples with ``seed + k``: one fixed seed would
+        hand every job the same random numbers and so correlate the shot
+        noise of consecutive, similar decisions. ``None`` leaves the
+        simulator unseeded again.
+        """
+        self._simulator_seed = None if seed is None else int(seed)
+        self.jobs = 0
+
+    def calibrate(
+        self, samples: int = CALIBRATION_SAMPLES, shots: int | None = None, seed: int = 0
+    ) -> dict:
+        """Fit the device's attenuation with ONE extra job; returns the fit.
+
+        Runs ``samples`` random observations through the backend with the
+        CURRENT parameters and compares them with the exact fastsim values
+        (``noise.fit_attenuation``): ``<Z>_device ~ f * <Z>_exact`` over all
+        readouts — a global-depolarizing summary of gate and readout error —
+        and a slope and bias per readout. The job uses ``shots`` shots per
+        input (default: the Q-function's, but at least
+        ``CALIBRATION_MIN_SHOTS``). Stores the fit as ``calibration`` and,
+        when ``rescale`` is on, the ``correction`` that ``q_values`` applies:
+        ``<Z> / f`` ("global") or ``(<Z> - bias_a) / slope_a`` ("readout").
+        A fitted slope below ``MIN_ATTENUATION`` (the signal is mostly gone;
+        dividing by it would only amplify noise) turns ``rescale`` off and
+        says so in ``rescale_note``. The attenuation is a property of
+        (backend, circuit), so one calibration serves a whole lap or sprint.
+        It needs the classical simulator — a tool for circuits small enough
+        to simulate, which every traQmania circuit is.
+        """
+        from traqmania.agents.quantum import noise
+        from traqmania.agents.quantum.qdqn import QuantumQFunction
+
+        fast = QuantumQFunction(
+            {"n_qubits": self.n_qubits, "n_layers": self.n_layers, "n_actions": self.n_actions},
+            seed=self.seed,
+        )
+        fast.set_params(self.get_params())
+        obs = noise.calibration_inputs(self.n_features, samples, seed)
+        shots = max(self.shots, CALIBRATION_MIN_SHOTS) if shots is None else int(shots)
+        options = self._estimator.options
+        options.default_shots = shots
+        try:
+            measured = self.expectations(obs)
+        finally:
+            options.default_shots = self.shots
+        fit = noise.fit_attenuation(measured, fast.expectations(obs), shots=shots)
+        self.calibration = fit
+        if self.rescale is not None:
+            try:
+                correction = noise.ReadoutCorrection.from_fit(fit, self.rescale)
+            except ValueError:  # a non-positive slope: nothing left to rescale
+                correction = None
+            if correction is None or correction.min_slope < MIN_ATTENUATION:
+                self.rescale_note = (
+                    f"rescale off: calibrated attenuation {fit['attenuation']:.2f} is below "
+                    f"{MIN_ATTENUATION} (too little signal left to rescale)"
+                )
+                self.rescale, self.correction = None, None
+            else:
+                self.correction = correction
+        return fit
 
     def grad_selected(
         self, obs: np.ndarray, action_idx: np.ndarray, upstream: np.ndarray
     ) -> np.ndarray:
         raise NotImplementedError(
             "HardwareQFunction is inference-only: a parameter-shift gradient needs "
-            f"2 evaluations per circuit parameter = {2 * self.theta.size} extra Estimator "
+            "2 evaluations per circuit parameter = "
+            f"{2 * (self.lam.size + self.theta.size)} extra Estimator "
             "jobs per batch on real hardware (minutes of QPU time per DQN update). "
             "Fine-tune on hardware with traqmania.hardware.spsa_sprint instead, which "
             "needs exactly 2 jobs per iteration regardless of parameter count."
@@ -672,28 +801,55 @@ def _start_execution(
     shots: int,
     resilience_level: int | None,
     prune_light_cone: bool | None,
+    rescale: bool | str | None = None,
+    params: np.ndarray | None = None,
+    seed_simulator: int | None = None,
 ) -> tuple[HardwareQFunction, Any, dict]:
     """Open an execution mode on ``backend`` and build the Q-function in it.
 
-    ``resilience_level`` / ``prune_light_cone`` default to ``[hardware]
-    resilience_level`` (0) and ``prune_light_cone`` (true) of ``config``.
-    Returns ``(qfunc, mode, info)``: ``mode`` is the Session/Batch to close
-    afterwards (``None`` in job mode), ``info`` the facts a caller reports —
-    ``{backend_name, mode, note, two_qubit_gates, depth, resilience_level,
-    pruned}``.
+    ``resilience_level`` / ``prune_light_cone`` / ``rescale`` default to
+    ``[hardware] resilience_level`` (0), ``prune_light_cone`` (true) and
+    ``rescale`` (false) of ``config``. ``params`` are loaded into the
+    Q-function; with ``rescale`` on, the attenuation is then calibrated — one
+    extra job of ``[hardware] calibration_samples`` inputs at no fewer than
+    ``calibration_shots`` shots. ``seed_simulator`` pins a local simulation's
+    shot noise. Returns ``(qfunc, mode, info)``: ``mode`` is the
+    Session/Batch to close afterwards (``None`` in job mode), ``info`` the
+    facts a caller reports — ``{backend_name, mode, note, two_qubit_gates,
+    depth, resilience_level, pruned, shots, rescale, attenuation}`` with
+    ``rescale`` None | "global" | "readout" (what is actually applied) and
+    ``attenuation`` the calibrated f (None without a calibration).
     """
+    from traqmania.agents.quantum import noise as noise_mod
+
     hw_cfg = config.get("hardware", {})
     if resilience_level is None:
         resilience_level = int(hw_cfg.get("resilience_level", 0))
     if prune_light_cone is None:
         prune_light_cone = bool(hw_cfg.get("prune_light_cone", True))
+    if rescale is None:
+        rescale = hw_cfg.get("rescale", False)
+    rescale = noise_mod.rescale_mode(rescale)
     backend = execution_backend(backend, config["circuit"], prune_light_cone)
     mode, mode_name, note = open_execution_mode(backend)
     try:
         qfunc = HardwareQFunction(
             config["circuit"], backend, shots=shots, session=mode,
             resilience_level=resilience_level, prune_light_cone=prune_light_cone,
+            rescale=rescale,
         )
+        if seed_simulator is not None:
+            qfunc.seed_simulator(seed_simulator)
+        if params is not None:
+            qfunc.set_params(params)
+        if qfunc.rescale is not None:
+            qfunc.calibrate(
+                samples=int(hw_cfg.get("calibration_samples", CALIBRATION_SAMPLES)),
+                shots=max(qfunc.shots,
+                          int(hw_cfg.get("calibration_shots", CALIBRATION_MIN_SHOTS))),
+            )
+            if qfunc.rescale_note:
+                note = f"{note}; {qfunc.rescale_note}" if note else qfunc.rescale_note
     except BaseException:
         if mode is not None:
             mode.close()
@@ -706,8 +862,23 @@ def _start_execution(
         "depth": qfunc.depth,
         "resilience_level": qfunc.resilience_level,
         "pruned": qfunc.pruned,
+        "shots": qfunc.shots,
+        "rescale": qfunc.rescale,
+        "attenuation": None if qfunc.calibration is None
+        else float(qfunc.calibration["attenuation"]),
     }
     return qfunc, mode, info
+
+
+def mitigation_text(info: dict) -> str:
+    """One line on the error mitigation of a run, from its ``on_start`` info:
+    the Estimator's resilience level plus the attenuation rescale, if any."""
+    text = RESILIENCE_LEVELS[info["resilience_level"]]
+    if info.get("rescale"):
+        text = text.removesuffix(", no error mitigation")  # the rescale is one
+        kind = "per-readout" if info["rescale"] == "readout" else "global"
+        text += f" + {kind} attenuation rescale (calibrated f = {info['attenuation']:.3f})"
+    return text
 
 
 def run_hardware_lap(
@@ -722,6 +893,8 @@ def run_hardware_lap(
     resilience_level: int | None = None,
     prune_light_cone: bool | None = None,
     on_start: Callable[[dict], None] | None = None,
+    rescale: bool | str | None = None,
+    seed_simulator: int | None = None,
 ) -> dict:
     """Drive ONE car greedily with every decision evaluated on ``backend``.
 
@@ -730,19 +903,25 @@ def run_hardware_lap(
     backend refuses one — the mode used is returned as ``mode``, the reason
     for any fallback as ``note`` — and rolls out until the first completed
     lap, the episode ending, or ``max_decisions``. ``on_start(info)`` fires
-    once the circuit is transpiled, before the first job, with
-    ``{backend_name, mode, note, two_qubit_gates, depth, resilience_level,
-    pruned}``. ``on_decision(i, info)`` fires after each decision with the
+    once the circuit is transpiled (and, with ``rescale``, calibrated), before
+    the first decision, with ``{backend_name, mode, note, two_qubit_gates,
+    depth, resilience_level, pruned, shots, rescale, attenuation}``.
+    ``on_decision(i, info)`` fires after each decision with the
     action taken, the Q-values, the car state and per-decision latency.
     ``stop_event`` (optional): ``threading.Event``-like; when set, the rollout
     stops between decisions (cooperative cancellation) and ``aborted`` is
     True. ``config`` (optional) is the fully-resolved config the weights were
     trained under (circuit size + observation geometry); defaults to
-    ``load_config()``. ``resilience_level`` (0 raw noise | 1 TREX | 2 ZNE +
-    gate twirling) and ``prune_light_cone`` default to the config's
-    ``[hardware]`` values (0 / true). Returns ``{lapped, best_lap_s,
-    decisions, seconds_per_decision, trajectory, aborted}`` plus the
-    ``on_start`` fields.
+    ``load_config()``. ``resilience_level`` (0 raw noise | 1 TREX | 2 TREX +
+    ZNE with gate twirling) and ``prune_light_cone`` default to the config's
+    ``[hardware]`` values (0 / true). ``rescale`` (default ``[hardware]
+    rescale``, false) divides the measured expectations by an attenuation
+    calibrated with one extra job before the first decision: ``"global"`` (or
+    true) by the one fitted f, ``"readout"`` by each readout's own slope after
+    removing its bias — see ``HardwareQFunction.calibrate``. ``shots`` is the
+    number of shots PER DECISION. ``seed_simulator`` pins the shot noise of a
+    local simulation. Returns ``{lapped, best_lap_s, decisions,
+    seconds_per_decision, trajectory, aborted}`` plus the ``on_start`` fields.
     """
     if config is None:
         from traqmania.config import load_config
@@ -755,10 +934,10 @@ def run_hardware_lap(
     params = np.load(weights_path)["params"]
 
     qfunc, mode, run_info = _start_execution(
-        config, backend, shots, resilience_level, prune_light_cone
+        config, backend, shots, resilience_level, prune_light_cone, rescale, params,
+        seed_simulator,
     )
     try:
-        qfunc.set_params(params)
         if on_start is not None:
             on_start(dict(run_info))
 
@@ -819,33 +998,68 @@ def run_hardware_lap(
 # ---------------------------------------------------------------- SPSA sprint
 
 
-def _greedy_return(qfunc, track_name: str, config: dict, seed: int, max_steps: int = 600) -> float:
-    """Total reward of one greedy episode (n_envs=1, fixed seed) under ``qfunc``."""
-    env = _build_env(track_name, config, n_envs=1, seed=seed)
+def _greedy_return(
+    qfunc, track_name: str, config: dict, seed: int, max_steps: int = 600, episodes: int = 1
+) -> float:
+    """Mean total reward of ``episodes`` distinct greedy episodes under ``qfunc``
+    (one env per episode, each from its own spawn jitter, fixed seed)."""
+    env = _build_env(track_name, config, n_envs=episodes, seed=seed)
     obs = env.reset()
-    total = 0.0
+    total = np.zeros(episodes)
+    alive = np.ones(episodes, dtype=bool)
     for _ in range(max_steps):
         action = np.argmax(qfunc.q_values(obs), axis=1)
         obs, reward, done, _info = env.step(action)
-        total += float(reward[0])
-        if done[0]:
+        total[alive] += np.asarray(reward)[alive]
+        alive &= ~np.asarray(done, dtype=bool)
+        if not alive.any():
             break
-    return total
+    return float(total.mean())
+
+
+def _td_recipe(weights_path: str | Path, config: dict) -> dict:
+    """What defines the TD target the weights were trained on: ``{gamma,
+    action_gap, reward_scale}`` from the ``training`` table of the weights'
+    ``.meta.json`` sidecar (``train_headless`` records the resolved recipe
+    there), else from ``config["training"]``. A sprint that fine-tuned an
+    advantage-learning driver (``action_gap``) on the plain double-DQN target
+    would spend its steps closing the action gaps the training opened."""
+    import json
+
+    training = dict(config["training"])
+    meta_path = Path(weights_path).with_suffix("").with_suffix(".meta.json")
+    if meta_path.is_file():
+        recorded = json.loads(meta_path.read_text(encoding="utf-8")).get("training")
+        if isinstance(recorded, dict):
+            training.update(recorded)
+    return {
+        "gamma": float(training["gamma"]),
+        "action_gap": float(training.get("action_gap", 0.0)),
+        "reward_scale": float(training.get("reward_scale", 1.0)),
+    }
 
 
 def _collect_batch(
-    qfunc, track_name: str, config: dict, batch: int, seed: int, epsilon: float = 0.2
+    qfunc, track_name: str, config: dict, batch: int, seed: int, epsilon: float = 0.2,
+    recipe: dict | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Replay batch from a fastsim rollout: (obs, action, double-DQN TD target).
 
     States come from a greedy rollout with epsilon-greedy noise mixed in (so the
     batch covers more than the on-policy tube); targets use the same parameter
     snapshot as both online and target network — fine for a short sprint.
+    ``recipe`` (:func:`_td_recipe`; default: ``[training] gamma`` alone) makes
+    them the targets of the trainer that produced the weights: its discount,
+    its reward scale and its advantage-learning term.
     """
     n_envs = 4
     env = _build_env(track_name, config, n_envs=n_envs, seed=seed)
     rng = np.random.default_rng(seed)
-    gamma = float(config["training"]["gamma"])
+    if recipe is None:
+        recipe = {"gamma": float(config["training"]["gamma"])}
+    gamma = recipe["gamma"]
+    action_gap = recipe.get("action_gap", 0.0)
+    reward_scale = recipe.get("reward_scale", 1.0)
 
     obs_list, act_list, rew_list, next_list, done_list = [], [], [], [], []
     obs = env.reset()
@@ -875,8 +1089,31 @@ def _collect_batch(
     rows = np.arange(batch)
     a_star = np.argmax(qfunc.q_values(all_next[idx]), axis=1)
     q_next = qfunc.q_values(all_next[idx])[rows, a_star]
-    target_b = all_rew[idx] + gamma * (1.0 - all_done[idx]) * q_next
+    reward = all_rew[idx] if reward_scale == 1.0 else all_rew[idx] * reward_scale
+    target_b = reward + gamma * (1.0 - all_done[idx]) * q_next
+    if action_gap > 0.0:  # advantage learning, as in DQNTrainer._update
+        q_now = qfunc.q_values(obs_b)
+        target_b = target_b - action_gap * (q_now.max(axis=1) - q_now[rows, act_b])
     return obs_b, act_b, target_b
+
+
+def _sprint_scale(fast, groups: Sequence[str]) -> np.ndarray:
+    """Per-parameter probe size of the sprint: ``SPRINT_ANGLE_PROBE`` rad for
+    the circuit groups, ``SPRINT_HEAD_PROBE * mean|w|`` for the output head,
+    0 (frozen) for every group not in ``groups``."""
+    slices = fast.param_groups()
+    unknown = sorted(set(groups) - set(slices))
+    if unknown or not groups:
+        raise ValueError(
+            f"spsa groups must be a non-empty subset of {sorted(slices)}, got {list(groups)}"
+        )
+    scale = np.zeros(fast.n_params)
+    for name in groups:
+        if name == "head":
+            scale[slices[name]] = SPRINT_HEAD_PROBE * max(float(np.mean(np.abs(fast.w))), 1.0)
+        else:
+            scale[slices[name]] = SPRINT_ANGLE_PROBE
+    return scale
 
 
 def spsa_sprint(
@@ -887,45 +1124,110 @@ def spsa_sprint(
     shots: int = 1024,
     batch: int = 16,
     on_iter: Callable[[int, dict], None] | None = None,
-    step_target: float = 0.01,
+    step_target: float = SPRINT_STEP_TARGET,
     stop_event: Any = None,
     config: dict | None = None,
     resilience_level: int | None = None,
     prune_light_cone: bool | None = None,
     on_start: Callable[[dict], None] | None = None,
+    rescale: bool | str | None = None,
+    groups: Sequence[str] | None = None,
+    blocking: bool | None = None,
+    seed_simulator: int | None = None,
+    guard: float | None = None,
 ) -> dict:
     """Short TD-loss SPSA fine-tune of trained weights ON the backend.
 
+    The expensive-but-exact parts run ONCE in fastsim (replay batch collection
+    and double-DQN targets — with the discount, reward scale and
+    advantage-learning term the weights' ``.meta.json`` sidecar records, else
+    the config's); the hardware only evaluates the MSE TD loss, one Estimator
+    job of ``batch`` parameter bindings x A observables per evaluation.
+
+    The first version of this sprint — plain SPSA over all 56 parameters, the
+    gain calibrated on one probe pair — wrecked the bundled oval driver: of 16
+    seeded ten-iteration runs on the default fake, 10 lost more than a fifth
+    of their simulator return, one of them after a mis-calibrated gain moved
+    the circuit angles by radians. Two things come together. One evaluation
+    of the loss (16 rows x 1024 shots) scatters by 10-17 %, about as much as
+    the two probes differ, so a step is largely a random walk. And a driver
+    trained without noise can sit on action gaps so thin that a random step
+    of a hundredth of a radian reshuffles which episodes it finishes. What
+    keeps a short sprint from wrecking it:
+
+    - ``groups`` (default ``[hardware] spsa_groups``, else ``("head",)``):
+      the parameter groups SPSA moves, out of ``lam`` | ``theta`` | ``head``
+      (``QuantumQFunction.param_groups``). The output head ``w, b`` is the
+      default because a device's error is, to first order, a slope and a bias
+      per readout — exactly what the head can absorb — and 2A parameters are
+      few enough for two-evaluation gradients to mean something. Probes are
+      sized per group: ``SPRINT_HEAD_PROBE`` of mean |w| for the head,
+      ``SPRINT_ANGLE_PROBE`` rad for circuit angles.
+    - gain calibration over ``SPRINT_CALIBRATION_PAIRS`` probe pairs (one
+      pair can land on a flat direction and inflate every later step), so the
+      first step moves each parameter by about ``step_target`` probe sizes,
+      plus a trust region of twice that.
+    - ``blocking`` (default ``[hardware] spsa_blocking``, else true): a step
+      is only taken if the hardware loss at the proposed parameters is not
+      worse than at the current ones — one more job per iteration.
+    - ``guard`` (default ``[hardware] spsa_guard``, else ``SPRINT_GUARD``; 0
+      turns it off): a step is refused — before any job is spent on it — if
+      it would take the policy's greedy return on the EXACT simulator below
+      ``guard`` times its starting value. The loss only sees a few replay
+      rows; whether the car still drives is a different question, and for
+      circuits this small the simulator answers it for the price of a few
+      rollouts. The guard evaluates the very episodes ``return_before`` /
+      ``return_after`` report, so ``return_after >= guard * return_before``
+      holds BY CONSTRUCTION: it is a safety rule, not a measurement of how
+      the sprint generalizes to other episodes.
+
+    Jobs: 2 per calibration pair, 2 per iteration, with blocking 1 more per
+    iteration that passed the guard and 1 for the starting point, then
+    ``SPRINT_LOSS_EVALUATIONS`` each for the before/after loss — plus the
+    rescale calibration, if on (``jobs`` in the result counts them).
+    ``loss_history[k]`` is the hardware loss at the iterate after iteration
+    ``k`` (without blocking: the mean of that iteration's two probes);
+    ``loss_before`` / ``loss_after`` are means of FRESH evaluations at the
+    initial and final parameters, so their difference is not biased by the
+    blocking rule having selected on a noisy measurement (they are one and
+    the same number when no step was taken).
+
+    ``return_before`` / ``return_after`` are exact-simulator greedy returns,
+    the mean over ``SPRINT_EVAL_EPISODES`` distinct episodes (a single episode
+    of a marginal driver flips between a full run and an early crash on the
+    smallest parameter change). Note the deliberate asymmetry: the loss is
+    evaluated on the NOISY backend while the returns use the exact simulator,
+    so a sprint that compensates hardware noise can trade away fastsim return
+    — the guard bounds how much.
+
     ``stop_event`` (optional): ``threading.Event``-like; when set, the SPSA
     loop stops between iterations (cooperative cancellation) and the result
-    reflects the iterations completed so far.
-
-    The expensive-but-exact parts run ONCE in fastsim (replay batch collection
-    and double-DQN targets); the hardware only evaluates the MSE TD loss at the
-    two SPSA probe points per iteration — 2 Estimator jobs each of ``batch``
-    parameter bindings x 4 observables (plus TWO up-front calibration jobs).
-    The SPSA gain ``a`` is CALIBRATED from one probe pair (Spall's rule):
-    trained output heads have |w| in the hundreds, so the raw TD-loss gradient
-    magnitude varies over orders of magnitude between weight files — the
-    calibration picks ``a`` such that the first iteration moves each parameter
-    by about ``step_target`` (0.01 rad by default), whatever that scale is.
-    Greedy-eval returns (fastsim) before and after quantify what the sprint
-    did to the policy. Note the deliberate asymmetry: the loss is evaluated on
-    the NOISY backend while the returns use the exact simulator, so a sprint
-    that compensates hardware noise (loss goes down) can trade away fastsim
-    return — the parameters have specialized to the device. ``config``
-    (optional) is the fully-resolved config the weights were trained under;
-    defaults to ``load_config()``. Execution mode (Session, else Batch, else
-    job mode), ``resilience_level``, ``prune_light_cone`` and ``on_start``
-    work as in :func:`run_hardware_lap`. Returns ``{loss_history,
-    return_before, return_after, params, iterations, seconds}`` plus the
-    ``on_start`` fields ``{backend_name, mode, note, two_qubit_gates, depth,
-    resilience_level, pruned}``.
+    reflects the iterations completed so far. ``config`` (optional) is the
+    fully-resolved config the weights were trained under; defaults to
+    ``load_config()``. Execution mode (Session, else Batch, else job mode),
+    ``resilience_level``, ``prune_light_cone``, ``rescale``,
+    ``seed_simulator`` and ``on_start`` work as in :func:`run_hardware_lap`.
+    Returns ``{loss_history, loss_before, loss_after, accepted, vetoed,
+    params, return_before, return_after, iterations, seconds, jobs, groups,
+    blocking, guard}`` plus the ``on_start`` fields; ``accepted[k]`` says
+    whether iteration ``k``'s step was taken, ``vetoed[k]`` whether the guard
+    refused it.
     """
     if config is None:
         from traqmania.config import load_config
 
         config = load_config()
+    hw_cfg = config.get("hardware", {})
+    if groups is None:
+        groups = hw_cfg.get("spsa_groups", SPRINT_GROUPS)
+    groups = (groups,) if isinstance(groups, str) else tuple(groups)
+    if blocking is None:
+        blocking = bool(hw_cfg.get("spsa_blocking", True))
+    if guard is None:
+        guard = hw_cfg.get("spsa_guard", SPRINT_GUARD)
+    if isinstance(guard, (bool, str)) or not 0.0 <= float(guard) <= 1.0:
+        raise ValueError(f"spsa guard must be a number in [0, 1] (0 = off), got {guard!r}")
+    guard = float(guard)
     seed = int(config["training"]["seed"])
     params0 = np.load(init_weights_path)["params"]
 
@@ -933,13 +1235,29 @@ def spsa_sprint(
 
     fast = QuantumQFunction(config["circuit"], seed=seed)
     fast.set_params(params0)
+    scale = _sprint_scale(fast, groups)
 
-    obs_b, act_b, target_b = _collect_batch(fast, track_name, config, batch, seed)
-    return_before = _greedy_return(fast, track_name, config, seed)
+    obs_b, act_b, target_b = _collect_batch(
+        fast, track_name, config, batch, seed,
+        recipe=_td_recipe(init_weights_path, config),
+    )
+
+    def exact_return(params: np.ndarray) -> float:
+        fast.set_params(params)
+        return _greedy_return(fast, track_name, config, seed, episodes=SPRINT_EVAL_EPISODES)
+
+    return_before = exact_return(params0)
+    keeps_driving = None
+    if guard > 0.0:
+        floor = return_before - (1.0 - guard) * abs(return_before)
+
+        def keeps_driving(candidate: np.ndarray) -> bool:
+            return exact_return(candidate) >= floor
 
     rows = np.arange(batch)
     hw, mode, run_info = _start_execution(
-        config, backend, shots, resilience_level, prune_light_cone
+        config, backend, shots, resilience_level, prune_light_cone, rescale, params0,
+        seed_simulator,
     )
     t0 = time.perf_counter()
     try:
@@ -951,45 +1269,81 @@ def spsa_sprint(
             q_sel = hw.q_values(obs_b)[rows, act_b]
             return float(np.mean((q_sel - target_b) ** 2))
 
-        # Gain calibration (Spall): one probe pair estimates the per-coordinate
-        # gradient magnitude |g0|; choose `a` so the FIRST step moves each
-        # parameter by ~step_target regardless of the loss scale (|w| in the
-        # hundreds makes the raw TD-loss gradient enormous for trained heads).
-        c = 0.1
+        # Gain calibration (Spall): a few probe pairs estimate the gradient
+        # magnitude along random directions; choose `a` so the FIRST step
+        # moves each parameter by ~step_target probe sizes whatever the loss
+        # scale is (it varies over orders of magnitude between weight files).
         stability = iterations / 10.0
-        rng = np.random.default_rng(seed)
-        delta0 = rng.choice(np.array([-1.0, 1.0]), size=params0.shape)
-        g0 = abs(loss(params0 + c * delta0) - loss(params0 - c * delta0)) / (2.0 * c)
-        a = step_target * (stability + 1.0) ** 0.602 / max(g0, 1e-12)
-
+        a, _magnitude = spsa.calibrate_gain(
+            loss, params0, c=1.0, target_step=step_target, A=stability,
+            pairs=SPRINT_CALIBRATION_PAIRS, seed=seed, scale=scale,
+        )
         result = spsa.minimize(
             loss,
             params0,
             iterations=iterations,
             a=a,
-            c=c,
+            c=1.0,
             A=stability,
             seed=seed,
             callback=on_iter,
             stop_event=stop_event,
+            scale=scale,
+            max_step=2.0 * step_target,
+            blocking=blocking,
+            accept=keeps_driving,
         )
+        history = result["loss_history"]
+        if stop_event is not None and stop_event.is_set():  # aborted: no further jobs
+            loss_before = result.get("loss_start", history[0] if history else float("nan"))
+            loss_after = history[-1] if history else loss_before
+        elif not any(result["accepted"]):  # nothing moved: one point, one number
+            loss_before = loss_after = float(
+                np.mean([loss(params0) for _ in range(SPRINT_LOSS_EVALUATIONS)]))
+        else:
+            # interleaved, so a drifting device biases neither side
+            fresh = [(loss(params0), loss(result["x"]))
+                     for _ in range(SPRINT_LOSS_EVALUATIONS)]
+            loss_before, loss_after = (float(v) for v in np.mean(fresh, axis=0))
     finally:
         if mode is not None:
             mode.close()
     seconds = time.perf_counter() - t0
 
-    fast.set_params(result["x"])
-    return_after = _greedy_return(fast, track_name, config, seed)
+    return_after = exact_return(result["x"])
 
     return {
         "loss_history": result["loss_history"],
+        "loss_before": loss_before,
+        "loss_after": loss_after,
+        "accepted": result["accepted"],
+        "vetoed": result["vetoed"],
         "params": result["x"],
         "return_before": return_before,
         "return_after": return_after,
         "iterations": int(iterations),
         "seconds": seconds,
+        "jobs": hw.jobs,
+        "groups": list(groups),
+        "blocking": blocking,
+        "guard": guard,
         **run_info,
     }
+
+
+def sprint_steps_text(result: dict) -> str:
+    """One line on what a sprint did with its steps, from its result: how many
+    were taken and why the others were not."""
+    accepted, vetoed = result["accepted"], result["vetoed"]
+    text = f"{sum(map(bool, accepted))}/{len(accepted)}"
+    reasons = []
+    if any(vetoed):
+        reasons.append(f"{sum(map(bool, vetoed))} refused by the simulator guard (the policy "
+                       f"would keep less than {result['guard']:.0%} of its return)")
+    blocked = len(accepted) - sum(map(bool, accepted)) - sum(map(bool, vetoed))
+    if blocked:
+        reasons.append(f"{blocked} did not lower the hardware loss")
+    return text + (f" ({'; '.join(reasons)})" if reasons else "")
 
 
 # ------------------------------------------------------------------------ CLI
@@ -1011,7 +1365,8 @@ def main(argv: list[str] | None = None) -> None:
         ("sprint", "SPSA TD-loss fine-tune on the backend"),
     ):
         p = sub.add_parser(name, help=help_text)
-        p.add_argument("--track", default="oval", help="track name (oval | chicane | gp)")
+        p.add_argument("--track", default="oval",
+                       help="track name (oval | chicane | gp | combo)")
         p.add_argument("--profile", default=None,
                        help="config profile overlay (e.g. q6; picks circuit size, "
                             "observation geometry and the default weights file)")
@@ -1024,10 +1379,19 @@ def main(argv: list[str] | None = None) -> None:
                        help="real backend name (default: [hardware] backend_name, else "
                             "least busy)")
         p.add_argument("--weights", default=None, help="weights .npz (default: bundled)")
-        p.add_argument("--shots", type=int, default=1024)
+        p.add_argument("--shots", type=int, default=None,
+                       help="shots per Estimator job (default: [hardware] "
+                            + ("decision_shots, else shots" if name == "lap" else "shots")
+                            + ", else 1024)")
+        p.add_argument("--rescale", choices=["off", "global", "readout"], default=None,
+                       help="attenuation rescale, calibrated with one extra job: global "
+                            "divides <Z> by the fitted attenuation f, readout corrects each "
+                            "readout's own slope and bias (default: [hardware] rescale, "
+                            "else off)")
         p.add_argument("--resilience", type=int, choices=sorted(RESILIENCE_LEVELS), default=None,
-                       help="Estimator error mitigation: 0 raw device noise, 1 TREX, 2 ZNE + "
-                            "gate twirling (default: [hardware] resilience_level, else 0)")
+                       help="Estimator error mitigation: 0 raw device noise, 1 TREX, 2 TREX + "
+                            "ZNE with gate twirling (default: [hardware] resilience_level, "
+                            "else 0)")
         p.add_argument("--no-prune", action="store_true",
                        help="run the full circuit instead of the light-cone-pruned one "
                             "(same expectation values, more two-qubit gates)")
@@ -1037,6 +1401,17 @@ def main(argv: list[str] | None = None) -> None:
         else:
             p.add_argument("--iterations", type=int, default=30, help="SPSA iterations")
             p.add_argument("--batch", type=int, default=16, help="replay batch size")
+            p.add_argument("--groups", default=None,
+                           help="comma-separated parameter groups SPSA moves, out of "
+                                "lam,theta,head (default: [hardware] spsa_groups, else "
+                                f"{','.join(SPRINT_GROUPS)})")
+            p.add_argument("--no-blocking", action="store_true",
+                           help="take every SPSA step (default: only steps the hardware "
+                                "loss does not get worse on)")
+            p.add_argument("--no-guard", action="store_true",
+                           help="do not refuse steps that cost the policy its return on "
+                                "the exact simulator (default: [hardware] spsa_guard, else "
+                                f"keep {100 * SPRINT_GUARD:.0f} %% of it)")
     args = parser.parse_args(argv)
 
     from traqmania.config import load_config
@@ -1063,6 +1438,11 @@ def main(argv: list[str] | None = None) -> None:
     print(f"weights: {weights}")
     # None leaves the choice to the config's [hardware] table (see _start_execution).
     prune = False if args.no_prune else None
+    shots = args.shots
+    if shots is None:
+        shots = int(hw_cfg.get("shots", 1024))
+        if args.command == "lap":
+            shots = int(hw_cfg.get("decision_shots", shots))
 
     def on_start(info: dict) -> None:
         level = info["resilience_level"]
@@ -1072,7 +1452,9 @@ def main(argv: list[str] | None = None) -> None:
             print(f"note: {info['note']}")
         print(f"circuit: {info['two_qubit_gates']} two-qubit gates, depth {info['depth']}"
               f"{' (light-cone pruned)' if info['pruned'] else ''}")
-        print(f"error mitigation: resilience level {level} ({RESILIENCE_LEVELS[level]})")
+        print(f"shots: {info['shots']} per "
+              f"{'decision' if args.command == 'lap' else 'loss evaluation row'}")
+        print(f"error mitigation: resilience level {level} ({mitigation_text(info)})")
 
     if args.command == "lap":
         def on_decision(i: int, info: dict) -> None:
@@ -1080,28 +1462,41 @@ def main(argv: list[str] | None = None) -> None:
             print(f"decision {i + 1:>3}  action={info['action']}  Q=[{q}]  "
                   f"lap={info['lap']}  {info['seconds']:.2f}s")
 
-        result = run_hardware_lap(args.track, weights, backend, shots=args.shots,
+        result = run_hardware_lap(args.track, weights, backend, shots=shots,
                                   max_decisions=args.max_decisions, on_decision=on_decision,
                                   config=config, resilience_level=args.resilience,
-                                  prune_light_cone=prune, on_start=on_start)
+                                  prune_light_cone=prune, on_start=on_start,
+                                  rescale=args.rescale)
         lap_txt = f"{result['best_lap_s']:.2f}s" if result["lapped"] else "no (rollout ended)"
         print(f"\nlap completed: {lap_txt}")
         print(f"decisions: {result['decisions']}  "
               f"({result['seconds_per_decision']:.2f}s per decision, {result['mode']} mode)")
     else:
         def on_iter(k: int, info: dict) -> None:
+            verdict = "" if info["accepted"] else (
+                "  step refused by the guard" if info["vetoed"] else "  step rejected")
             print(f"iter {k + 1:>3}/{args.iterations}  loss={info['loss']:.4f}  "
-                  f"(f+={info['f_plus']:.4f} f-={info['f_minus']:.4f})")
+                  f"(f+={info['f_plus']:.4f} f-={info['f_minus']:.4f}){verdict}")
 
-        result = spsa_sprint(args.track, weights, backend, iterations=args.iterations,
-                             shots=args.shots, batch=args.batch, on_iter=on_iter,
-                             config=config, resilience_level=args.resilience,
-                             prune_light_cone=prune, on_start=on_start)
-        print(f"\nSPSA sprint done in {result['seconds']:.1f}s "
-              f"({args.iterations} iterations, 2 Estimator jobs each, {result['mode']} mode)")
-        print(f"loss: {result['loss_history'][0]:.4f} -> {result['loss_history'][-1]:.4f}")
-        print(f"greedy return (fastsim): {result['return_before']:.1f} -> "
-              f"{result['return_after']:.1f}")
+        groups = args.groups.split(",") if args.groups else None
+        try:
+            result = spsa_sprint(args.track, weights, backend, iterations=args.iterations,
+                                 shots=shots, batch=args.batch, on_iter=on_iter,
+                                 config=config, resilience_level=args.resilience,
+                                 prune_light_cone=prune, on_start=on_start,
+                                 rescale=args.rescale, groups=groups,
+                                 blocking=False if args.no_blocking else None,
+                                 guard=0.0 if args.no_guard else None)
+        except ValueError as exc:  # e.g. an unknown --groups name
+            parser.error(str(exc))
+        print(f"\nSPSA sprint done in {result['seconds']:.1f}s ({args.iterations} iterations "
+              f"on {'+'.join(result['groups'])}, {result['jobs']} Estimator jobs, "
+              f"{result['mode']} mode)")
+        print(f"steps taken: {sprint_steps_text(result)}")
+        print(f"hardware loss (mean of {SPRINT_LOSS_EVALUATIONS} fresh evaluations): "
+              f"{result['loss_before']:.4f} -> {result['loss_after']:.4f}")
+        print(f"greedy return (fastsim, mean of {SPRINT_EVAL_EPISODES} episodes): "
+              f"{result['return_before']:.1f} -> {result['return_after']:.1f}")
 
 
 if __name__ == "__main__":

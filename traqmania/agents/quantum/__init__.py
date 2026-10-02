@@ -5,7 +5,8 @@ Importing this package must NOT import qiskit: the numpy fast path
 qiskit-facing submodules (``circuit``, ``qnn``) are loaded lazily on first
 attribute access. ``lightcone`` (structural light-cone analysis; numpy-only
 until its ``pruned_circuit`` is called) is lazy too, so
-``python -m traqmania.agents.quantum.lightcone`` runs it exactly once.
+``python -m traqmania.agents.quantum.lightcone`` runs it exactly once, and so
+is ``surrogate`` (classical Fourier surrogates of a trained circuit; numpy-only).
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from traqmania.agents.quantum.qdqn import QuantumQFunction
 
 __all__ = ["FastStatevectorSim", "QuantumQFunction", "make_qfunction"]
 
-_LAZY_SUBMODULES = ("circuit", "qnn", "lightcone")
+_LAZY_SUBMODULES = ("circuit", "qnn", "lightcone", "surrogate")
 
 
 def make_qfunction(kind: str, circuit_cfg: dict, **kw):

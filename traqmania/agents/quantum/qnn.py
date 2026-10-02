@@ -9,7 +9,7 @@ qiskit-machine-learning's ``EstimatorQNN`` on a choice of Aer backends:
 - ``aer_shots``: shot-based sampling (precision = 1/sqrt(shots)).
 - ``aer_noisy``: shot-based with a noise model — the Aer twin of a
   ``qiskit_ibm_runtime`` fake device when that package is installed (default
-  ``fake_nighthawk``; see ``traqmania.hardware.local_simulator``: noise model
+  ``fake_miami``; see ``traqmania.hardware.local_simulator``: noise model
   built once, devices beyond 7 qubits as an n-qubit device patch), else a
   simple depolarizing model (so this path works without qiskit-ibm-runtime).
 

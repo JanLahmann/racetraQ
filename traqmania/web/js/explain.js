@@ -8,7 +8,37 @@ import { initDocs } from "./docs.js";
 
 const RAY_WORDS = { 3: "three", 5: "five", 7: "seven", 9: "nine" };
 
-const sections = ({ n_qubits: n = 4, n_layers: layers = 4, n_params: np = {} } = {}) => [
+/** The light-cone paragraph of "The quantum circuit". `visibility` (actions x
+ *  features, 0/1) and `needed` (layers for full visibility) come from the
+ *  circuit spec: the middle sentence says whether this circuit size leaves
+ *  blind spots, and is dropped when the spec carries no light-cone analysis.
+ *  Pure function. */
+export function lightConeHtml(n = 4, layers = 4, visibility = null, needed = null) {
+  let verdict = "";
+  if (Array.isArray(visibility) && visibility.length) {
+    const full = visibility.every((row) => row.every(Boolean));
+    verdict = full
+      ? `With ${n} qubits and ${layers} layers every action can see every input.`
+      : `With ${n} qubits and ${layers} layers the cones are too short: some actions cannot
+      see every input${Number.isInteger(needed) ? ` (that would take ${needed} layers)` : ""}
+      — the <em>Who sees what</em> grid in the Quantum tab shows which.`;
+  }
+  return `
+      <p>Influence spreads through the CZ ring only one neighbour per layer,
+      so every readout has a <strong>light cone</strong>: the inputs and
+      gates close enough to reach it. Whatever lies outside cannot change
+      that action's Q-value, however long the agent trains. ${verdict}
+      Gates outside every light cone are drawn dimmed in the circuit
+      diagram.</p>`;
+}
+
+const sections = ({
+  n_qubits: n = 4,
+  n_layers: layers = 4,
+  n_params: np = {},
+  visibility,
+  min_layers_full_visibility: minLayers,
+} = {}) => [
   {
     id: "what",
     title: "What is this?",
@@ -55,7 +85,7 @@ const sections = ({ n_qubits: n = 4, n_layers: layers = 4, n_params: np = {} } =
       <p>The output is read as the <strong>⟨Z⟩ expectation value</strong> of
       ${n === 4 ? "each qubit" : "each of the first four qubits"}: four numbers
       in [-1, 1], scaled to become the four Q-values.
-      The gauges in the Quantum tab show them live.</p>`,
+      The gauges in the Quantum tab show them live.</p>${lightConeHtml(n, layers, visibility, minLayers)}`,
   },
   {
     id: "compare",
@@ -107,6 +137,11 @@ const sections = ({ n_qubits: n = 4, n_layers: layers = 4, n_params: np = {} } =
   },
 ];
 
+// The open sub-tab survives a rebuild: every welcome (qubit or driver switch)
+// re-templates the copy, and the reader should see the paragraph change
+// rather than be sent back to the first section.
+let activeId = null;
+
 /** Build the explain panel (sub-tab nav + sections) inside `root`.
  *  `spec` is the welcome `circuit_spec` (optional: defaults to 4 qubits). */
 export function initExplain(root, spec) {
@@ -117,6 +152,7 @@ export function initExplain(root, spec) {
   body.className = "explain-body";
 
   const show = (id) => {
+    activeId = id;
     for (const btn of nav.querySelectorAll("button")) {
       btn.classList.toggle("active", btn.dataset.section === id);
     }
@@ -134,5 +170,5 @@ export function initExplain(root, spec) {
   }
 
   root.replaceChildren(nav, body);
-  show(SECTIONS[0].id);
+  show(SECTIONS.some((s) => s.id === activeId) ? activeId : SECTIONS[0].id);
 }

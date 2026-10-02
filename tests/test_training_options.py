@@ -53,6 +53,8 @@ EXPLICIT_DEFAULTS = {
     "grad_clip": 0.0,
     "reward_scale": 1.0,
     "eval_episodes": 12,
+    "act_noise": {},
+    "action_gap": 0.0,
 }
 
 
@@ -437,10 +439,34 @@ def test_hard_target_only_syncs_every_n_updates(oval, config):
     np.testing.assert_array_equal(trainer.target_params, trainer.qfunc.get_params())
 
 
+def test_action_gap_subtracts_the_gap_to_the_best_action(oval, config):
+    """Advantage learning: target -= action_gap * (max_a Q(s, a) - Q(s, a_taken)),
+    both from the target network; the best action's own target is untouched."""
+    alpha = 0.7
+    plain = _filled_trainer(oval, config)
+    gapped = _filled_trainer(oval, config, action_gap=alpha)
+    td = _td_errors(plain)  # same seeds: both trainers draw the same batch
+
+    idx = copy.deepcopy(gapped.rng).integers(0, gapped.buffer.size, size=gapped.batch_size)
+    rows = np.arange(gapped.batch_size)
+    q_now = gapped.qfunc.q_values(gapped.buffer.obs[idx])  # target net == online net here
+    gap = q_now.max(axis=1) - q_now[rows, gapped.buffer.action[idx]]
+    assert np.any(gap > 0.0) and np.any(gap == 0.0)  # best and non-best actions in the batch
+
+    calls = _spy(gapped.qfunc, "grad_selected")
+    loss = gapped._update()
+    np.testing.assert_allclose(calls[0][2], 2.0 * (td + alpha * gap) / gapped.batch_size,
+                               rtol=0, atol=1e-15)
+    assert loss == pytest.approx(float(np.mean((td + alpha * gap) ** 2)))
+    np.testing.assert_array_equal(calls[0][2][gap == 0.0],
+                                  (2.0 * td / gapped.batch_size)[gap == 0.0])
+
+
 @pytest.mark.parametrize("bad", [{"loss": "l1"}, {"target_update": "polyak"}, {"tau": 0.0},
                                  {"huber_delta": 0.0}, {"grad_clip": -1.0},
                                  {"reward_scale": 0.0}, {"lr_end": -0.001},
-                                 {"bootstrap_truncation": "off"}])
+                                 {"bootstrap_truncation": "off"}, {"action_gap": 1.0},
+                                 {"action_gap": -0.1}])
 def test_invalid_option_values_are_rejected(oval, config, bad):
     with pytest.raises(ValueError, match=next(iter(bad))):
         _filled_trainer(oval, config, steps=0, **bad)
@@ -678,6 +704,29 @@ def test_train_headless_records_overrides_evals_and_final_params(tmp_path):
     for key in ("eval_log", "best_eval", "final_eval"):
         assert payload[key] == summary[key]
     assert payload["training"]["loss"] == "huber"
+
+
+def test_train_headless_takes_act_noise_and_action_gap(tmp_path, capsys):
+    from traqmania.train_headless import train
+
+    robust = ["training.act_noise={ attenuation = 0.95, shots = 256 }",
+              "training.action_gap=0.5"]
+    train("quantum", "oval", episodes=8, seed=1, profile=None, out_dir=str(tmp_path),
+          overrides=[*FAST, *robust])
+    out = capsys.readouterr().out
+    assert "acting noise: attenuation 0.950, 256 shots" in out
+    meta = json.loads((tmp_path / "quantum_oval.meta.json").read_text())
+    assert meta["training"]["act_noise"] == {"attenuation": 0.95, "shots": 256}
+    assert meta["training"]["action_gap"] == 0.5
+
+    train("quantum", "oval", episodes=8, seed=1, profile=None, out_dir=str(tmp_path),
+          overrides=FAST)
+    assert "acting noise" not in capsys.readouterr().out  # off by default
+
+    # the classical baseline has no readout expectations to add noise to
+    with pytest.raises(ValueError, match="act_noise needs a Q-function with readout"):
+        train("mlp", "oval", episodes=8, seed=1, profile=None, out_dir=str(tmp_path),
+              overrides=[*FAST, robust[0]])
 
 
 def test_save_final_writes_the_final_params_not_the_best_snapshot(tmp_path, monkeypatch):

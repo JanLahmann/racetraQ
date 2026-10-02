@@ -31,6 +31,7 @@ TARGET_UPDATES = ("hard", "soft")
 OPTION_KEYS = (
     "eval_every", "eval_episodes", "bootstrap_truncation", "loss", "huber_delta",
     "lr_groups", "lr_end", "target_update", "tau", "grad_clip", "reward_scale",
+    "act_noise", "action_gap",
 )
 
 
@@ -120,7 +121,10 @@ class DQNTrainer:
         ``huber_delta`` (10.0), ``lr_groups`` ({group: lr} over
         ``qfunc.param_groups()``), ``lr_end`` (= lr), ``target_update``
         ("hard" | "soft") with ``tau`` (0.005), ``grad_clip`` (0 = off) and
-        ``reward_scale`` (1.0) — see ``config/default.toml`` for what each does.
+        ``reward_scale`` (1.0), ``act_noise`` (none: a ``{attenuation, shots,
+        bias}`` table of expectation noise the rollouts and snapshot evals act
+        under) and ``action_gap`` (0.0: advantage-learning coefficient) — see
+        ``config/default.toml`` for what each does.
         """
         self.qfunc = qfunc
         self.env = env
@@ -176,6 +180,39 @@ class DQNTrainer:
         if self.reward_scale <= 0.0:
             raise ValueError(f"[training] reward_scale must be > 0, got {self.reward_scale}")
 
+        # Advantage learning: subtract action_gap * (V(s) - Q(s, a)) from the TD
+        # target, which widens the gap between the best action and the rest
+        # by 1 / (1 - action_gap) without changing which action is best.
+        self.action_gap = float(training_cfg.get("action_gap", 0.0))
+        if not 0.0 <= self.action_gap < 1.0:
+            raise ValueError(f"[training] action_gap must be in [0, 1), got {self.action_gap}")
+        # Acting noise: rollouts and snapshot evals pick actions from NOISY
+        # readout expectations (what a device returns); TD targets and
+        # gradients stay exact.  None = act on the exact Q-values.
+        self.act_noise = None
+        self._act_noise_rng: np.random.Generator | None = None
+        if training_cfg.get("act_noise"):
+            from traqmania.agents.quantum.noise import ExpectationNoise, act_noise_rng
+
+            try:
+                self.act_noise = ExpectationNoise.from_config(training_cfg["act_noise"])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"[training] act_noise: {exc}") from exc
+            if self.act_noise is not None:
+                if not hasattr(qfunc, "noisy_q_values"):
+                    raise ValueError(
+                        "[training] act_noise needs a Q-function with readout expectations "
+                        f"(noisy_q_values); {type(qfunc).__name__} has none"
+                    )
+                for name in ("attenuation", "bias"):  # per-readout lists: one per action
+                    value = getattr(self.act_noise, name)
+                    if isinstance(value, tuple) and len(value) not in (1, qfunc.n_actions):
+                        raise ValueError(
+                            f"[training] act_noise: {name} lists {len(value)} values, "
+                            f"the Q-function has {qfunc.n_actions} readouts"
+                        )
+                self._act_noise_rng = act_noise_rng(training_cfg.get("seed"))
+
         self.buffer = _ReplayBuffer(training_cfg["replay_size"], qfunc.n_features)
         lr = training_cfg["lr"]
         # Start-of-run learning rate(s): the scalar lr, or a per-parameter
@@ -230,8 +267,15 @@ class DQNTrainer:
         frac = min(1.0, episode / max(1, self.epsilon_decay_episodes))
         return self.epsilon_start + (self.epsilon_end - self.epsilon_start) * frac
 
+    def _acting_q(self, obs: np.ndarray) -> np.ndarray:
+        """Q-values the behaviour policy acts on: exact, or — with ``act_noise``
+        — computed from noisy readout expectations."""
+        if self.act_noise is None:
+            return self.qfunc.q_values(obs)
+        return self.qfunc.noisy_q_values(obs, self.act_noise, self._act_noise_rng)
+
     def _select_actions(self, obs: np.ndarray, epsilon: float) -> np.ndarray:
-        greedy = np.argmax(self.qfunc.q_values(obs), axis=1)
+        greedy = np.argmax(self._acting_q(obs), axis=1)
         random_a = self.rng.integers(self.qfunc.n_actions, size=obs.shape[0])
         explore = self.rng.random(obs.shape[0]) < epsilon
         return np.where(explore, random_a, greedy)
@@ -241,7 +285,7 @@ class DQNTrainer:
 
         MSE: mean(td^2).  Huber: 0.5 * td^2 inside +-huber_delta, linear
         outside — so its gradient is the TD error CLIPPED to +-huber_delta,
-        which keeps a few huge errors (Q-values here reach the hundreds) from
+        which keeps a few huge errors (Q-values here are of order 100) from
         dominating the batch.
         """
         if self.loss == "huber":
@@ -266,8 +310,12 @@ class DQNTrainer:
         online_params = self.qfunc.get_params()
         self.qfunc.set_params(self.target_params)
         q_next = self.qfunc.q_values(next_obs)[rows, a_star]
+        if self.action_gap > 0.0:
+            q_now = self.qfunc.q_values(obs)  # target net, for the gap term
         self.qfunc.set_params(online_params)
         target = reward + self.gamma * (1.0 - done) * q_next
+        if self.action_gap > 0.0:
+            target = target - self.action_gap * (q_now.max(axis=1) - q_now[rows, action])
 
         q_sel = self.qfunc.q_values(obs)[rows, action]
         td = q_sel - target
@@ -313,7 +361,8 @@ class DQNTrainer:
         return next_obs, done & ~np.asarray(info["truncated"], dtype=bool)
 
     def _greedy_eval_round(self, env, max_steps: int = 5000):
-        """One greedy (epsilon = 0) round: one full episode per env, in parallel.
+        """One greedy (epsilon = 0) round: one full episode per env, in parallel
+        (under ``act_noise`` when set: greedy on the noisy Q-values).
 
         Counts laps INCREMENTALLY while each env's first episode is still
         running and stops once every env has finished one episode (crash or
@@ -332,7 +381,7 @@ class DQNTrainer:
         return_acc = np.zeros(n_envs)
         episode_returns: list[float] = []
         for _ in range(max_steps):
-            actions = np.argmax(self.qfunc.q_values(obs), axis=1)
+            actions = np.argmax(self._acting_q(obs), axis=1)
             obs, reward, done, info = env.step(actions)
             done = np.asarray(done, dtype=bool)
             active = ~done_seen

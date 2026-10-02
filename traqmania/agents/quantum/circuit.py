@@ -79,26 +79,36 @@ def observables(n_qubits: int = 4) -> list:
     ]
 
 
-def _light_cone_spec(n: int, layers: int, n_actions: int) -> dict:
+def _light_cone_spec(n: int, layers: int, n_actions: int) -> tuple[dict, dict | None]:
     """The light-cone part of :func:`circuit_spec` (see ``lightcone.py``).
 
-    ``visibility[a][j]`` is 1 iff readout Z_a can depend on the feature on
-    qubit j; ``dead_params`` counts the lam/theta parameters whose gradient is
-    exactly zero for every input; ``min_layers_full_visibility`` is the depth
-    from which every readout sees every feature. All None for a shape the
-    analysis rejects (more readouts than qubits, no blocks).
+    Returns ``(fields, live)``. ``fields["visibility"][a][j]`` is 1 iff readout
+    Z_a can depend on the feature on qubit j; ``dead_params`` counts the
+    lam/theta parameters whose gradient is exactly zero for every input;
+    ``min_layers_full_visibility`` is the depth from which every readout sees
+    every feature; ``dead_gates`` counts, per gate type (the keys of
+    ``counts``), the gates outside every readout's light cone. ``live`` is
+    ``lightcone.live_gates`` — the per-gate flags behind those counts. All
+    None for a shape the analysis rejects (more readouts than qubits, no
+    blocks).
     """
     try:
         visible = lightcone.feature_visibility(n, layers, n_actions)
-        mask = lightcone.live_parameter_mask(n, layers, n_actions)
+        live = lightcone.live_gates(n, layers, n_actions)
         min_layers = lightcone.min_layers_full_visibility(n, n_actions)
     except ValueError:
-        return {"visibility": None, "dead_params": None, "min_layers_full_visibility": None}
+        return {"visibility": None, "dead_params": None,
+                "min_layers_full_visibility": None, "dead_gates": None}, None
+    dead = {key: int(live[kind].size - live[kind].sum())
+            for key, kind in (("ry_enc", "enc"), ("ry", "ry"), ("rz", "rz"), ("cz", "cz"))}
+    dead["total"] = sum(dead.values())
     return {
         "visibility": visible.astype(int).tolist(),
-        "dead_params": int(sum(m.size - m.sum() for m in mask.values())),
+        # every lam sits in an encoding RY, every theta in a variational RY/RZ
+        "dead_params": dead["ry_enc"] + dead["ry"] + dead["rz"],
         "min_layers_full_visibility": min_layers,
-    }
+        "dead_gates": dead,
+    }, live
 
 
 def circuit_spec(config: dict) -> dict:
@@ -107,23 +117,40 @@ def circuit_spec(config: dict) -> dict:
     ``config`` may be a full traQmania config dict (with a "circuit" section)
     or the [circuit] section itself. Intended for the browser circuit diagram;
     also carries the structural light cone (``visibility``, ``dead_params``,
-    ``min_layers_full_visibility`` — see :func:`_light_cone_spec`).
+    ``min_layers_full_visibility``, ``dead_gates`` — see
+    :func:`_light_cone_spec`). Every gate has a ``live`` flag: False when it
+    lies outside every readout's light cone (it cannot influence any action
+    and the hardware path drops it), None when the analysis rejects the shape.
+    ``pruned_on_hardware`` says whether the hardware path really drops those
+    gates: ``[hardware] prune_light_cone`` of a full config (default true).
     """
     cfg = config.get("circuit", config) if isinstance(config.get("circuit"), dict) else config
+    hardware_cfg = config.get("hardware")
+    pruned = (bool(hardware_cfg.get("prune_light_cone", True))
+              if isinstance(hardware_cfg, dict) else True)
     n = int(cfg.get("n_qubits", 4))
     layers = int(cfg.get("n_layers", 4))
     # Z_a readout on the first n_actions qubits (default: the first 4)
     n_actions = int(cfg.get("n_actions", min(4, n)))
 
+    light_cone, live = _light_cone_spec(n, layers, n_actions)
+
+    def is_live(kind: str, layer: int, i: int) -> bool | None:
+        return None if live is None else bool(live[kind][layer, i])
+
     gates: list[dict] = []
     for layer in range(layers):
         for i in range(n):
-            gates.append({"type": "ry_enc", "qubit": i, "layer": layer})
+            gates.append({"type": "ry_enc", "qubit": i, "layer": layer,
+                          "live": is_live("enc", layer, i)})
         for i in range(n):
-            gates.append({"type": "ry", "qubit": i, "layer": layer})
-            gates.append({"type": "rz", "qubit": i, "layer": layer})
+            gates.append({"type": "ry", "qubit": i, "layer": layer,
+                          "live": is_live("ry", layer, i)})
+            gates.append({"type": "rz", "qubit": i, "layer": layer,
+                          "live": is_live("rz", layer, i)})
         for i in range(n):
-            gates.append({"type": "cz", "q0": i, "q1": (i + 1) % n, "layer": layer})
+            gates.append({"type": "cz", "q0": i, "q1": (i + 1) % n, "layer": layer,
+                          "live": is_live("cz", layer, i)})
 
     return {
         "n_qubits": n,
@@ -147,5 +174,6 @@ def circuit_spec(config: dict) -> dict:
         "param_layout": ["lam", "theta", "w", "b"],
         "readout": [f"Z_{a}" for a in range(n_actions)],
         "action_labels": list(action_labels(n_actions)),
-        **_light_cone_spec(n, layers, n_actions),
+        **light_cone,
+        "pruned_on_hardware": pruned,
     }

@@ -25,6 +25,8 @@ QISKIT_FREE_MODULES = [
     "traqmania.agents.quantum.adjoint",
     "traqmania.agents.quantum.qdqn",
     "traqmania.agents.quantum.lightcone",  # qiskit only inside pruned_circuit
+    "traqmania.agents.quantum.noise",  # device calibration imports hardware lazily
+    "traqmania.agents.quantum.surrogate",  # numpy + lightcone; fastsim/env inside functions
     "traqmania.agents.training.spsa",
     "traqmania.hardware",  # qiskit/qiskit-ibm-runtime imports live inside functions
 ]
