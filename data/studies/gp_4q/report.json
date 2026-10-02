@@ -1,0 +1,7271 @@
+{
+ "schema": 1,
+ "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/study_gp1",
+ "baseline": "base",
+ "bootstrap": {
+  "resamples": 2000,
+  "seed": 0,
+  "ci": 0.95,
+  "method": "stratified percentile bootstrap over seeds"
+ },
+ "reliable_fraction": 0.5,
+ "thresholds": [
+  0.5,
+  0.9
+ ],
+ "eval": {
+  "episodes": 36,
+  "seed": 20000
+ },
+ "git_commits": [],
+ "failed_cells": [],
+ "variants": {
+  "base": {
+   "recipe": {
+    "name": "base",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": []
+   },
+   "n_params": 56,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 9,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.8861111111111111,
+      "ci_low": 0.7443750000000001,
+      "ci_high": 0.975
+     },
+     "median": {
+      "value": 0.875,
+      "ci_low": 0.7638888888888888,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.0027777777777777775,
+      "ci_low": 0.0,
+      "ci_high": 0.02777777777777778
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.027777777777777776
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.07503802376639832,
+      "ci_low": 0.03929912405022258,
+      "ci_high": 0.1532780226522976
+     },
+     "median": {
+      "value": 0.08315572605853935,
+      "ci_low": 0.03230132751409347,
+      "ci_high": 0.15787037037037038
+     }
+    },
+    "best_mean_lap": {
+     "n": 10,
+     "iqm": {
+      "value": 34.6884796434443,
+      "ci_low": 28.991564900456897,
+      "ci_high": 43.1416391646496
+     },
+     "median": {
+      "value": 34.35290391286451,
+      "ci_low": 27.696970250909093,
+      "ci_high": 46.20750092415001
+     }
+    },
+    "first_clean_episode": {
+     "n": 10,
+     "iqm": {
+      "value": 1456.8,
+      "ci_low": 1304.9,
+      "ci_high": 1755.2049999999988
+     },
+     "median": {
+      "value": 1432.5,
+      "ci_low": 1309.5,
+      "ci_high": 1844.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 9,
+     "fraction_reached": 0.9,
+     "episodes_half_of_seeds": 800,
+     "iqm": {
+      "value": 794.4444444444445,
+      "ci_low": 630.5555555555555,
+      "ci_high": 1163.888888888889
+     },
+     "median": {
+      "value": 800.0,
+      "ci_low": 600.0,
+      "ci_high": 1200.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 7,
+     "fraction_reached": 0.7,
+     "episodes_half_of_seeds": 1200,
+     "iqm": {
+      "value": 1114.2857142857142,
+      "ci_low": 960.7142857142857,
+      "ci_high": 1585.803571428571
+     },
+     "median": {
+      "value": 1050.0,
+      "ci_low": 1000.0,
+      "ci_high": 1600.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 47.84166762350001,
+     "first_clean_episode": 1251,
+     "stability": 0.09693877551020408,
+     "episodes_to_50": 550,
+     "episodes_to_90": 1000,
+     "wall_time_s": 458.4970093339798
+    },
+    {
+     "seed": 1,
+     "best_lapped": 32,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8888888888888888,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 26.200000524000004,
+     "first_clean_episode": 1849,
+     "stability": 0.09166666666666667,
+     "episodes_to_50": 2000,
+     "episodes_to_90": 2000,
+     "wall_time_s": 636.04142670898
+    },
+    {
+     "seed": 2,
+     "best_lapped": 25,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6944444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.0800006816,
+     "first_clean_episode": 1497,
+     "stability": 0.013888888888888888,
+     "episodes_to_50": 1200,
+     "episodes_to_90": null,
+     "wall_time_s": 603.9368231659755
+    },
+    {
+     "seed": 3,
+     "best_lapped": 29,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8055555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 32.69310410213793,
+     "first_clean_episode": 1328,
+     "stability": 0.2722222222222222,
+     "episodes_to_50": 850,
+     "episodes_to_90": 1200,
+     "wall_time_s": 873.540104167012
+    },
+    {
+     "seed": 4,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 44.57333422480001,
+     "first_clean_episode": 996,
+     "stability": 0.03819444444444444,
+     "episodes_to_50": 600,
+     "episodes_to_90": null,
+     "wall_time_s": 1050.260909124976
+    },
+    {
+     "seed": 5,
+     "best_lapped": 31,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.62580714412903,
+     "first_clean_episode": 1328,
+     "stability": 0.08660130718954247,
+     "episodes_to_50": 650,
+     "episodes_to_90": 1600,
+     "wall_time_s": 411.3401778329862
+    },
+    {
+     "seed": 6,
+     "best_lapped": 5,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.1388888888888889,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 21.400000428,
+     "first_clean_episode": 1844,
+     "stability": 0.014957264957264956,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 323.9877504580072
+    },
+    {
+     "seed": 7,
+     "best_lapped": 34,
+     "final_lapped": 6,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.16666666666666666,
+     "best_mean_lap": 27.696970250909093,
+     "first_clean_episode": 1368,
+     "stability": 0.2240740740740741,
+     "episodes_to_50": 1050,
+     "episodes_to_90": 1050,
+     "wall_time_s": 501.17662300000666
+    },
+    {
+     "seed": 8,
+     "best_lapped": 36,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 48.21388985316667,
+     "first_clean_episode": 2494,
+     "stability": 0.04964539007092198,
+     "episodes_to_50": 650,
+     "episodes_to_90": 850,
+     "wall_time_s": 336.82332529104315
+    },
+    {
+     "seed": 9,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.9083340515,
+     "first_clean_episode": 1505,
+     "stability": 0.07971014492753624,
+     "episodes_to_50": 800,
+     "episodes_to_90": 1000,
+     "wall_time_s": 324.4895930420025
+    }
+   ]
+  },
+  "trunc": {
+   "recipe": {
+    "name": "trunc",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9398148148148149,
+      "ci_low": 0.7824074074074074,
+      "ci_high": 0.9861111111111112
+     },
+     "median": {
+      "value": 0.9583333333333333,
+      "ci_low": 0.7638888888888888,
+      "ci_high": 0.9861111111111112
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.06481481481481481,
+      "ci_low": 0.0,
+      "ci_high": 0.4351851851851852
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.5
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.12554429179079038,
+      "ci_low": 0.03795823885109599,
+      "ci_high": 0.4686681153943059
+     },
+     "median": {
+      "value": 0.06424236361211151,
+      "ci_low": 0.03587962962962963,
+      "ci_high": 0.5307870370370371
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 34.32757738997717,
+      "ci_low": 26.411719399981298,
+      "ci_high": 48.47451077341177
+     },
+     "median": {
+      "value": 32.87225872196129,
+      "ci_low": 25.384783116391304,
+      "ci_high": 50.95676572501765
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1343.3333333333333,
+      "ci_low": 1136.3333333333333,
+      "ci_high": 1644.8333333333333
+     },
+     "median": {
+      "value": 1328.0,
+      "ci_low": 1123.5,
+      "ci_high": 1673.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 650,
+     "iqm": {
+      "value": 800.0,
+      "ci_low": 591.6666666666666,
+      "ci_high": 1508.3333333333333
+     },
+     "median": {
+      "value": 750.0,
+      "ci_low": 575.0,
+      "ci_high": 1600.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 2000,
+     "iqm": {
+      "value": 1600.0,
+      "ci_low": 1000.0,
+      "ci_high": 2950.0
+     },
+     "median": {
+      "value": 1600.0,
+      "ci_low": 1000.0,
+      "ci_high": 2950.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 52.94000105880001,
+     "first_clean_episode": 1251,
+     "stability": 0.06802721088435373,
+     "episodes_to_50": 550,
+     "episodes_to_90": 1000,
+     "wall_time_s": 446.4144298749743
+    },
+    {
+     "seed": 1,
+     "best_lapped": 35,
+     "final_lapped": 22,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.6111111111111112,
+     "best_mean_lap": 25.50289906078261,
+     "first_clean_episode": 1849,
+     "stability": 0.6208333333333333,
+     "episodes_to_50": 2000,
+     "episodes_to_90": 2000,
+     "wall_time_s": 935.8312683749828
+    },
+    {
+     "seed": 2,
+     "best_lapped": 25,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6944444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.0800006816,
+     "first_clean_episode": 1497,
+     "stability": 0.016203703703703703,
+     "episodes_to_50": 1200,
+     "episodes_to_90": null,
+     "wall_time_s": 511.9878604580299
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 14,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.3888888888888889,
+     "best_mean_lap": 25.266667172,
+     "first_clean_episode": 1328,
+     "stability": 0.44074074074074077,
+     "episodes_to_50": 850,
+     "episodes_to_90": 1200,
+     "wall_time_s": 950.252898958046
+    },
+    {
+     "seed": 4,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 48.97353039123529,
+     "first_clean_episode": 996,
+     "stability": 0.05555555555555555,
+     "episodes_to_50": 600,
+     "episodes_to_90": 2950,
+     "wall_time_s": 1288.5938134160242
+    },
+    {
+     "seed": 5,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 31.664516762322577,
+     "first_clean_episode": 1328,
+     "stability": 0.06045751633986928,
+     "episodes_to_50": 650,
+     "episodes_to_90": null,
+     "wall_time_s": 402.0708147090045
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.5666666666666667,
+     "ci_low": 0.3,
+     "ci_high": 0.8166666666666667,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.5666666666666667,
+     "ci_low": 0.25,
+     "ci_high": 0.8666666666666667,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "huber": {
+   "recipe": {
+    "name": "huber",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.loss=\"huber\""
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 4,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.7777777777777777,
+      "ci_low": 0.38888888888888884,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 0.8333333333333333,
+      "ci_low": 0.3333333333333333,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.032282015059648686,
+      "ci_low": 0.006104696834180116,
+      "ci_high": 0.10038392050587171
+     },
+     "median": {
+      "value": 0.029732124244319365,
+      "ci_low": 0.005210594876248371,
+      "ci_high": 0.10382791327913278
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 34.894908105305554,
+      "ci_low": 32.609426578114444,
+      "ci_high": 36.8916674045
+     },
+     "median": {
+      "value": 34.90000069800001,
+      "ci_low": 32.30988953508667,
+      "ci_high": 37.3916674145
+     }
+    },
+    "first_clean_episode": {
+     "n": 4,
+     "iqm": {
+      "value": 1598.0,
+      "ci_low": 1520.0,
+      "ci_high": 1734.0
+     },
+     "median": {
+      "value": 1598.0,
+      "ci_low": 1520.0,
+      "ci_high": 1734.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 1050,
+     "iqm": {
+      "value": 1000.0,
+      "ci_low": 900.0,
+      "ci_high": 1050.0
+     },
+     "median": {
+      "value": 1000.0,
+      "ci_low": 900.0,
+      "ci_high": 1050.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 3,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 2350,
+     "iqm": {
+      "value": 1741.6666666666667,
+      "ci_low": 900.0,
+      "ci_high": 2350.0
+     },
+     "median": {
+      "value": 1800.0,
+      "ci_low": 900.0,
+      "ci_high": 2350.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 12,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 38.1416674295,
+     "first_clean_episode": 1549,
+     "stability": 0.00510204081632653,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 306.07286650000606
+    },
+    {
+     "seed": 1,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 36.641667399499994,
+     "first_clean_episode": 1734,
+     "stability": 0.04878048780487805,
+     "episodes_to_50": 950,
+     "episodes_to_90": 2350,
+     "wall_time_s": 438.63938200002303
+    },
+    {
+     "seed": 2,
+     "best_lapped": 24,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6666666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 31.492000629840003,
+     "first_clean_episode": null,
+     "stability": 0.010683760683760682,
+     "episodes_to_50": 1050,
+     "episodes_to_90": null,
+     "wall_time_s": 529.7170806250069
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.875000697500006,
+     "first_clean_episode": 1647,
+     "stability": 0.1382113821138211,
+     "episodes_to_50": 1050,
+     "episodes_to_90": 1800,
+     "wall_time_s": 660.7798395410064
+    },
+    {
+     "seed": 4,
+     "best_lapped": 12,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.92500069850001,
+     "first_clean_episode": 1520,
+     "stability": 0.005319148936170213,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 823.4144874999765
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.12777844033333,
+     "first_clean_episode": null,
+     "stability": 0.06944444444444445,
+     "episodes_to_50": 900,
+     "episodes_to_90": 900,
+     "wall_time_s": 292.02964066597633
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.25,
+     "ci_low": 0.016666666666666666,
+     "ci_high": 0.55,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "soft": {
+   "recipe": {
+    "name": "soft",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.target_update=\"soft\""
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9166666666666666,
+      "ci_low": 0.7407407407407408,
+      "ci_high": 0.9953703703703703
+     },
+     "median": {
+      "value": 0.9444444444444444,
+      "ci_low": 0.7083333333333333,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0579059829059829,
+      "ci_low": 0.03595679012345679,
+      "ci_high": 0.17592040460257516
+     },
+     "median": {
+      "value": 0.05676638176638176,
+      "ci_low": 0.03240740740740741,
+      "ci_high": 0.18060938845822566
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 37.904186849769815,
+      "ci_low": 32.27701295614631,
+      "ci_high": 44.889245944404955
+     },
+     "median": {
+      "value": 37.762529892779725,
+      "ci_low": 31.503906880078123,
+      "ci_high": 46.102000922040006
+     }
+    },
+    "first_clean_episode": {
+     "n": 5,
+     "iqm": {
+      "value": 1427.8,
+      "ci_low": 1303.0,
+      "ci_high": 1735.2
+     },
+     "median": {
+      "value": 1345.0,
+      "ci_low": 1285.0,
+      "ci_high": 1773.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 850,
+     "iqm": {
+      "value": 1083.3333333333333,
+      "ci_low": 725.0,
+      "ci_high": 1393.124999999992
+     },
+     "median": {
+      "value": 1075.0,
+      "ci_low": 650.0,
+      "ci_high": 1475.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 1350,
+     "iqm": {
+      "value": 1350.0,
+      "ci_low": 850.0,
+      "ci_high": 1450.0
+     },
+     "median": {
+      "value": 1350.0,
+      "ci_low": 850.0,
+      "ci_high": 1450.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.321212827636366,
+     "first_clean_episode": 1319,
+     "stability": 0.059829059829059825,
+     "episodes_to_50": 1350,
+     "episodes_to_90": 1350,
+     "wall_time_s": 409.3088204160449
+    },
+    {
+     "seed": 1,
+     "best_lapped": 26,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 40.20384695792308,
+     "first_clean_episode": 1647,
+     "stability": 0.03240740740740741,
+     "episodes_to_50": 1600,
+     "episodes_to_90": null,
+     "wall_time_s": 474.7515018329723
+    },
+    {
+     "seed": 2,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 29.23281308465625,
+     "first_clean_episode": 1345,
+     "stability": 0.08796296296296297,
+     "episodes_to_50": 1300,
+     "episodes_to_90": 1450,
+     "wall_time_s": 577.8619963340461
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.775000675499996,
+     "first_clean_episode": 1285,
+     "stability": 0.27325581395348836,
+     "episodes_to_50": 850,
+     "episodes_to_90": 1350,
+     "wall_time_s": 916.641097499989
+    },
+    {
+     "seed": 4,
+     "best_lapped": 25,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6944444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 49.60400099208001,
+     "first_clean_episode": 1773,
+     "stability": 0.032407407407407406,
+     "episodes_to_50": 450,
+     "episodes_to_90": null,
+     "wall_time_s": 800.3482851670124
+    },
+    {
+     "seed": 5,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 42.600000851999994,
+     "first_clean_episode": null,
+     "stability": 0.0537037037037037,
+     "episodes_to_50": 850,
+     "episodes_to_90": 850,
+     "wall_time_s": 332.424535750004
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.4666666666666667,
+     "ci_low": 0.16666666666666666,
+     "ci_high": 0.7666666666666667,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "lrdecay": {
+   "recipe": {
+    "name": "lrdecay",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.lr_end=0.001"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 4,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.6712962962962964,
+      "ci_low": 0.19907407407407407,
+      "ci_high": 0.9305555555555555
+     },
+     "median": {
+      "value": 0.7222222222222223,
+      "ci_low": 0.1388888888888889,
+      "ci_high": 0.9583333333333333
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.017623196005103012,
+      "ci_low": 0.004734848484848485,
+      "ci_high": 0.046320653926786
+     },
+     "median": {
+      "value": 0.01589975612886664,
+      "ci_low": 0.002840909090909091,
+      "ci_high": 0.051348824786324784
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 42.597289211734136,
+      "ci_low": 33.24984433984056,
+      "ci_high": 48.90235632878955
+     },
+     "median": {
+      "value": 41.57023892664286,
+      "ci_low": 33.09078349009849,
+      "ci_high": 50.08172143174193
+     }
+    },
+    "first_clean_episode": {
+     "n": 3,
+     "iqm": {
+      "value": 1363.5,
+      "ci_low": 1191.0,
+      "ci_high": 1582.0
+     },
+     "median": {
+      "value": 1352.0,
+      "ci_low": 1191.0,
+      "ci_high": 1582.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 1350,
+     "iqm": {
+      "value": 1025.0,
+      "ci_low": 550.0,
+      "ci_high": 1400.0
+     },
+     "median": {
+      "value": 1025.0,
+      "ci_low": 550.0,
+      "ci_high": 1400.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 1,
+     "fraction_reached": 0.16666666666666666,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 1500.0,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": 1500.0,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 48.66666764,
+     "first_clean_episode": 1191,
+     "stability": 0.025510204081632654,
+     "episodes_to_50": 550,
+     "episodes_to_90": null,
+     "wall_time_s": 410.9531329590245
+    },
+    {
+     "seed": 1,
+     "best_lapped": 21,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5833333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 41.59047702228572,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": 1350,
+     "episodes_to_90": null,
+     "wall_time_s": 494.6520401670132
+    },
+    {
+     "seed": 2,
+     "best_lapped": 8,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 25.54545505636364,
+     "first_clean_episode": null,
+     "stability": 0.006289308176100628,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 532.618449874979
+    },
+    {
+     "seed": 3,
+     "best_lapped": 2,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.05555555555555555,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 41.550000831000006,
+     "first_clean_episode": null,
+     "stability": 0.005681818181818182,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 413.91122987499693
+    },
+    {
+     "seed": 4,
+     "best_lapped": 31,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 51.496775223483866,
+     "first_clean_episode": 1352,
+     "stability": 0.036458333333333336,
+     "episodes_to_50": 700,
+     "episodes_to_90": null,
+     "wall_time_s": 760.0172765420284
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 40.63611192383334,
+     "first_clean_episode": 1582,
+     "stability": 0.06623931623931623,
+     "episodes_to_50": 1400,
+     "episodes_to_90": 1500,
+     "wall_time_s": 297.75324587500654
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.13333333333333333,
+     "ci_low": 0.0,
+     "ci_high": 0.36666666666666664,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "lrgroups": {
+   "recipe": {
+    "name": "lrgroups",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.lr_groups={lam=0.003,theta=0.003,head=0.03}"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 0,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.018518518518518517,
+      "ci_low": 0.0,
+      "ci_high": 0.14814814814814814
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.16666666666666666
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0020576131687242796,
+      "ci_low": 0.0,
+      "ci_high": 0.012006798465131753
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.014055722389055723
+     }
+    },
+    "best_mean_lap": {
+     "n": 2,
+     "iqm": {
+      "value": 27.46222277146667,
+      "ci_low": 26.744444979333334,
+      "ci_high": 28.180000563600004
+     },
+     "median": {
+      "value": 27.46222277146667,
+      "ci_low": 26.744444979333334,
+      "ci_high": 28.180000563600004
+     }
+    },
+    "first_clean_episode": {
+     "n": 2,
+     "iqm": {
+      "value": 1913.0,
+      "ci_low": 1832.0,
+      "ci_high": 1994.0
+     },
+     "median": {
+      "value": 1913.0,
+      "ci_low": 1832.0,
+      "ci_high": 1994.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 314.3847675420111
+    },
+    {
+     "seed": 1,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 423.64450279198354
+    },
+    {
+     "seed": 2,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 495.1340342499898
+    },
+    {
+     "seed": 3,
+     "best_lapped": 4,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.1111111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 28.180000563600004,
+     "first_clean_episode": 1994,
+     "stability": 0.012345679012345678,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 945.216660999984
+    },
+    {
+     "seed": 4,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 683.1746593750431
+    },
+    {
+     "seed": 5,
+     "best_lapped": 8,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.744444979333334,
+     "first_clean_episode": 1832,
+     "stability": 0.015765765765765768,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 349.4670766250347
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.03333333333333333,
+     "ci_low": 0.0,
+     "ci_high": 0.13333333333333333,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "rscale": {
+   "recipe": {
+    "name": "rscale",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.reward_scale=0.05"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 5,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.8981481481481483,
+      "ci_low": 0.4259259259259259,
+      "ci_high": 0.9814814814814815
+     },
+     "median": {
+      "value": 0.8888888888888888,
+      "ci_low": 0.4166666666666667,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.004629629629629629,
+      "ci_low": 0.0,
+      "ci_high": 0.02314814814814815
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.027777777777777776
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.12134807504873295,
+      "ci_low": 0.04558776498538028,
+      "ci_high": 0.20022557634164775
+     },
+     "median": {
+      "value": 0.11927083333333333,
+      "ci_low": 0.02741228070175438,
+      "ci_high": 0.20948483560090703
+     }
+    },
+    "best_mean_lap": {
+     "n": 5,
+     "iqm": {
+      "value": 30.269414643730887,
+      "ci_low": 28.256752265815305,
+      "ci_high": 38.28825834152273
+     },
+     "median": {
+      "value": 30.45476251385714,
+      "ci_low": 27.6583338865,
+      "ci_high": 41.566667498
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1500.3333333333333,
+      "ci_low": 1356.3333333333333,
+      "ci_high": 1724.3333333333333
+     },
+     "median": {
+      "value": 1461.0,
+      "ci_low": 1343.0,
+      "ci_high": 1773.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 5,
+     "fraction_reached": 0.8333333333333334,
+     "episodes_half_of_seeds": 1100,
+     "iqm": {
+      "value": 1190.0,
+      "ci_low": 565.0,
+      "ci_high": 1960.3
+     },
+     "median": {
+      "value": 1100.0,
+      "ci_low": 550.0,
+      "ci_high": 2101.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 2200,
+     "iqm": {
+      "value": 1700.0,
+      "ci_low": 750.0,
+      "ci_high": 2550.0
+     },
+     "median": {
+      "value": 1700.0,
+      "ci_low": 750.0,
+      "ci_high": 2550.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 1781,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 472.3321963750059
+    },
+    {
+     "seed": 1,
+     "best_lapped": 32,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8888888888888888,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 29.653061817551016,
+     "first_clean_episode": 1473,
+     "stability": 0.140625,
+     "episodes_to_50": 2101,
+     "episodes_to_90": 2550,
+     "wall_time_s": 631.2593777919537
+    },
+    {
+     "seed": 2,
+     "best_lapped": 36,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 30.63863697640909,
+     "first_clean_episode": 1765,
+     "stability": 0.09791666666666667,
+     "episodes_to_50": 1900,
+     "episodes_to_90": 2200,
+     "wall_time_s": 786.8525946669979
+    },
+    {
+     "seed": 3,
+     "best_lapped": 32,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8888888888888888,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 30.45476251385714,
+     "first_clean_episode": 1393,
+     "stability": 0.2227891156462585,
+     "episodes_to_50": 550,
+     "episodes_to_90": 750,
+     "wall_time_s": 1479.561416041979
+    },
+    {
+     "seed": 4,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 41.566667498,
+     "first_clean_episode": 1449,
+     "stability": 0.05482456140350876,
+     "episodes_to_50": 1100,
+     "episodes_to_90": null,
+     "wall_time_s": 733.6402281249757
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.6583338865,
+     "first_clean_episode": 1293,
+     "stability": 0.19618055555555558,
+     "episodes_to_50": 600,
+     "episodes_to_90": 1200,
+     "wall_time_s": 479.3604852090357
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.5,
+     "ci_low": 0.275,
+     "ci_high": 0.75,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.6,
+     "ci_low": 0.29958333333333403,
+     "ci_high": 0.9,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "nobonus": {
+   "recipe": {
+    "name": "nobonus",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "reward.lap_bonus=0",
+     "reward.checkpoint_bonus=0"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 2,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.46296296296296297,
+      "ci_low": 0.25925925925925924,
+      "ci_high": 0.8333333333333334
+     },
+     "median": {
+      "value": 0.41666666666666663,
+      "ci_low": 0.2222222222222222,
+      "ci_high": 0.8888888888888888
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06944444444444445
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06944444444444445
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.04106957098852266,
+      "ci_low": 0.006802721088435374,
+      "ci_high": 0.09107274793975562
+     },
+     "median": {
+      "value": 0.035447154471544715,
+      "ci_low": 0.0050039246467817895,
+      "ci_high": 0.09793265132139811
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 36.72726794102308,
+      "ci_low": 28.146101927444448,
+      "ci_high": 44.040340247322625
+     },
+     "median": {
+      "value": 36.5700007314,
+      "ci_low": 26.889522954944447,
+      "ci_high": 45.454186429445706
+     }
+    },
+    "first_clean_episode": {
+     "n": 5,
+     "iqm": {
+      "value": 1370.7,
+      "ci_low": 1183.8,
+      "ci_high": 1619.0
+     },
+     "median": {
+      "value": 1311.0,
+      "ci_low": 1152.0,
+      "ci_high": 1643.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 3,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 1350,
+     "iqm": {
+      "value": 800.0,
+      "ci_low": 450.0,
+      "ci_high": 1350.0
+     },
+     "median": {
+      "value": 750.0,
+      "ci_low": 450.0,
+      "ci_high": 1350.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 1,
+     "fraction_reached": 0.16666666666666666,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 1500.0,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": 1500.0,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 34,
+     "final_lapped": 5,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.1388888888888889,
+     "best_mean_lap": 47.48529506735294,
+     "first_clean_episode": 1152,
+     "stability": 0.09803921568627451,
+     "episodes_to_50": 450,
+     "episodes_to_90": 1500,
+     "wall_time_s": 486.6062912499765
+    },
+    {
+     "seed": 1,
+     "best_lapped": 10,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2777777777777778,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.940000698800006,
+     "first_clean_episode": null,
+     "stability": 0.006802721088435374,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 485.91474312497303
+    },
+    {
+     "seed": 2,
+     "best_lapped": 6,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.16666666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 38.200000764,
+     "first_clean_episode": 1563,
+     "stability": 0.003205128205128205,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 498.5142958749784
+    },
+    {
+     "seed": 3,
+     "best_lapped": 13,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3611111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 43.42307779153847,
+     "first_clean_episode": 1643,
+     "stability": 0.014227642276422762,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 1017.829212667013
+    },
+    {
+     "seed": 4,
+     "best_lapped": 17,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.4722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 23.118518980888894,
+     "first_clean_episode": 1311,
+     "stability": 0.09782608695652172,
+     "episodes_to_50": 750,
+     "episodes_to_90": null,
+     "wall_time_s": 719.175083207956
+    },
+    {
+     "seed": 5,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 30.660526929000003,
+     "first_clean_episode": 1258,
+     "stability": 0.056666666666666664,
+     "episodes_to_50": 1350,
+     "episodes_to_90": null,
+     "wall_time_s": 303.04703399998834
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.44166666666666665,
+     "ci_low": 0.25,
+     "ci_high": 0.6666666666666666,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.35,
+     "ci_low": 0.06666666666666667,
+     "ci_high": 0.6837499999999977,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "stable": {
+   "recipe": {
+    "name": "stable",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.loss=\"huber\"",
+     "training.target_update=\"soft\"",
+     "training.lr_end=0.001",
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 2,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.25,
+      "ci_low": 0.032407407407407406,
+      "ci_high": 0.7222222222222223
+     },
+     "median": {
+      "value": 0.2222222222222222,
+      "ci_low": 0.0,
+      "ci_high": 0.7916666666666667
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.008781199677938807,
+      "ci_low": 0.0,
+      "ci_high": 0.04318019943019943
+     },
+     "median": {
+      "value": 0.003623188405797101,
+      "ci_low": 0.0,
+      "ci_high": 0.04954594017094017
+     }
+    },
+    "best_mean_lap": {
+     "n": 4,
+     "iqm": {
+      "value": 43.25063578564762,
+      "ci_low": 38.842857919714284,
+      "ci_high": 46.14091001372727
+     },
+     "median": {
+      "value": 43.25063578564762,
+      "ci_low": 38.842857919714284,
+      "ci_high": 46.14091001372727
+     }
+    },
+    "first_clean_episode": {
+     "n": 1,
+     "iqm": {
+      "value": 1412.0,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": 1412.0,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 2,
+     "fraction_reached": 0.3333333333333333,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 700.0,
+      "ci_low": 500.0,
+      "ci_high": 900.0
+     },
+     "median": {
+      "value": 700.0,
+      "ci_low": 500.0,
+      "ci_high": 900.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 2,
+     "fraction_reached": 0.3333333333333333,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 700.0,
+      "ci_low": 500.0,
+      "ci_high": 900.0
+     },
+     "median": {
+      "value": 700.0,
+      "ci_low": 500.0,
+      "ci_high": 900.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 9,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.25,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 44.95555645466666,
+     "first_clean_episode": null,
+     "stability": 0.007246376811594202,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 411.72245225001825
+    },
+    {
+     "seed": 1,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 41.54571511662857,
+     "first_clean_episode": null,
+     "stability": 0.060897435897435896,
+     "episodes_to_50": 500,
+     "episodes_to_90": 500,
+     "wall_time_s": 222.42015754204476
+    },
+    {
+     "seed": 2,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 392.66914087499026
+    },
+    {
+     "seed": 3,
+     "best_lapped": 7,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.19444444444444445,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 38.842857919714284,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 886.3050628339988
+    },
+    {
+     "seed": 4,
+     "best_lapped": 22,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6111111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 46.14091001372727,
+     "first_clean_episode": 1412,
+     "stability": 0.03819444444444444,
+     "episodes_to_50": 900,
+     "episodes_to_90": 900,
+     "wall_time_s": 445.282830250042
+    },
+    {
+     "seed": 5,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 256.77692450000905
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.10833333333333334,
+     "ci_low": 0.0,
+     "ci_high": 0.3,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "mlp": {
+   "recipe": {
+    "name": "mlp",
+    "agent": "mlp",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": []
+   },
+   "n_params": 76,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 8,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.8666666666666668,
+      "ci_low": 0.5444444444444445,
+      "ci_high": 0.9694444444444444
+     },
+     "median": {
+      "value": 0.8888888888888888,
+      "ci_low": 0.5277777777777778,
+      "ci_high": 0.9722222222222222
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.16944444444444445,
+      "ci_low": 0.0,
+      "ci_high": 0.4805555555555555
+     },
+     "median": {
+      "value": 0.1527777777777778,
+      "ci_low": 0.0,
+      "ci_high": 0.5277777777777778
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.16638770712046574,
+      "ci_low": 0.045058964024481264,
+      "ci_high": 0.3411099501857479
+     },
+     "median": {
+      "value": 0.17385912698412698,
+      "ci_low": 0.040229885057471264,
+      "ci_high": 0.337424012158054
+     }
+    },
+    "best_mean_lap": {
+     "n": 10,
+     "iqm": {
+      "value": 25.595905316412434,
+      "ci_low": 23.10795067014311,
+      "ci_high": 27.633500643249707
+     },
+     "median": {
+      "value": 26.276271711966103,
+      "ci_low": 22.607692759846152,
+      "ci_high": 27.461938379926586
+     }
+    },
+    "first_clean_episode": {
+     "n": 10,
+     "iqm": {
+      "value": 1875.0,
+      "ci_low": 1777.6825000000001,
+      "ci_high": 2053.9
+     },
+     "median": {
+      "value": 1881.5,
+      "ci_low": 1775.5,
+      "ci_high": 2058.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 8,
+     "fraction_reached": 0.8,
+     "episodes_half_of_seeds": 2250,
+     "iqm": {
+      "value": 2262.5,
+      "ci_low": 1712.5,
+      "ci_high": 2600.0
+     },
+     "median": {
+      "value": 2200.0,
+      "ci_low": 1950.0,
+      "ci_high": 2600.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 7,
+     "fraction_reached": 0.7,
+     "episodes_half_of_seeds": 2800,
+     "iqm": {
+      "value": 2460.714285714286,
+      "ci_low": 1646.4285714285713,
+      "ci_high": 2839.285714285714
+     },
+     "median": {
+      "value": 2350.0,
+      "ci_low": 2000.0,
+      "ci_high": 2850.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 19,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5277777777777778,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.918519056888886,
+     "first_clean_episode": 2424,
+     "stability": 0.005555555555555555,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 126.95625991700217
+    },
+    {
+     "seed": 1,
+     "best_lapped": 31,
+     "final_lapped": 11,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.3055555555555556,
+     "best_mean_lap": 28.00535770296429,
+     "first_clean_episode": 1881,
+     "stability": 0.33730158730158727,
+     "episodes_to_50": 2150,
+     "episodes_to_90": 2350,
+     "wall_time_s": 249.76960729196435
+    },
+    {
+     "seed": 2,
+     "best_lapped": 35,
+     "final_lapped": 26,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.7222222222222222,
+     "best_mean_lap": 23.531429042057137,
+     "first_clean_episode": 1628,
+     "stability": 0.4343971631205674,
+     "episodes_to_50": 1950,
+     "episodes_to_90": 2000,
+     "wall_time_s": 286.22287112503545
+    },
+    {
+     "seed": 3,
+     "best_lapped": 33,
+     "final_lapped": 28,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.7777777777777778,
+     "best_mean_lap": 21.496667096600003,
+     "first_clean_episode": 1862,
+     "stability": 0.6624999999999999,
+     "episodes_to_50": 2250,
+     "episodes_to_90": 2250,
+     "wall_time_s": 430.7986950830091
+    },
+    {
+     "seed": 4,
+     "best_lapped": 8,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.300000526,
+     "first_clean_episode": 1898,
+     "stability": 0.01515151515151515,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 129.43024312501075
+    },
+    {
+     "seed": 5,
+     "best_lapped": 10,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2777777777777778,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 22.607692759846152,
+     "first_clean_episode": 1882,
+     "stability": 0.045454545454545456,
+     "episodes_to_50": 2100,
+     "episodes_to_90": null,
+     "wall_time_s": 90.99692974996287
+    },
+    {
+     "seed": 6,
+     "best_lapped": 36,
+     "final_lapped": 12,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.3333333333333333,
+     "best_mean_lap": 22.444444893333337,
+     "first_clean_episode": 1808,
+     "stability": 0.20486111111111113,
+     "episodes_to_50": 650,
+     "episodes_to_90": 650,
+     "wall_time_s": 195.46826029202202
+    },
+    {
+     "seed": 7,
+     "best_lapped": 36,
+     "final_lapped": 15,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.4166666666666667,
+     "best_mean_lap": 33.65277845083334,
+     "first_clean_episode": 2220,
+     "stability": 0.25,
+     "episodes_to_50": 2650,
+     "episodes_to_90": 2850,
+     "wall_time_s": 138.44822983402992
+    },
+    {
+     "seed": 8,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.346377358521742,
+     "first_clean_episode": 1689,
+     "stability": 0.040229885057471264,
+     "episodes_to_50": 2950,
+     "episodes_to_90": 2950,
+     "wall_time_s": 111.48873666697182
+    },
+    {
+     "seed": 9,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.25254289793221,
+     "first_clean_episode": 1897,
+     "stability": 0.14285714285714285,
+     "episodes_to_50": 2550,
+     "episodes_to_90": 2800,
+     "wall_time_s": 91.89544375002151
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.675,
+     "ci_low": 0.44,
+     "ci_high": 0.88,
+     "n": 10,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.63,
+     "ci_low": 0.35,
+     "ci_high": 0.87,
+     "n": 10,
+     "n_baseline": 10
+    }
+   }
+  },
+  "replay200k": {
+   "recipe": {
+    "name": "replay200k",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.replay_size=200000"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 5,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9444444444444445,
+      "ci_low": 0.6157407407407408,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 0.9861111111111112,
+      "ci_low": 0.5694444444444444,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.3888888888888889
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.3888888888888889
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.08980473670949862,
+      "ci_low": 0.03876973873097903,
+      "ci_high": 0.29390759152663914
+     },
+     "median": {
+      "value": 0.09350340136054422,
+      "ci_low": 0.030189491817398793,
+      "ci_high": 0.2987891737891738
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 45.07865169522381,
+      "ci_low": 35.75342664099445,
+      "ci_high": 55.11666980400207
+     },
+     "median": {
+      "value": 44.897143755085715,
+      "ci_low": 34.54305624641667,
+      "ci_high": 56.50854813871795
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1327.1666666666667,
+      "ci_low": 1187.1666666666667,
+      "ci_high": 1410.5
+     },
+     "median": {
+      "value": 1338.0,
+      "ci_low": 1170.5,
+      "ci_high": 1421.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1000,
+     "iqm": {
+      "value": 1108.3333333333333,
+      "ci_low": 691.6666666666666,
+      "ci_high": 2075.0
+     },
+     "median": {
+      "value": 1075.0,
+      "ci_low": 625.0,
+      "ci_high": 2175.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 1600,
+     "iqm": {
+      "value": 1500.0,
+      "ci_low": 700.0,
+      "ci_high": 1650.0
+     },
+     "median": {
+      "value": 1500.0,
+      "ci_low": 700.0,
+      "ci_high": 1650.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 47.95428667337142,
+     "first_clean_episode": 1352,
+     "stability": 0.12962962962962965,
+     "episodes_to_50": 750,
+     "episodes_to_90": 1400,
+     "wall_time_s": 385.83537562499987
+    },
+    {
+     "seed": 1,
+     "best_lapped": 26,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 56.71153959576923,
+     "first_clean_episode": 1455,
+     "stability": 0.025193798449612406,
+     "episodes_to_50": 1000,
+     "episodes_to_90": null,
+     "wall_time_s": 361.55891804100247
+    },
+    {
+     "seed": 2,
+     "best_lapped": 15,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.4166666666666667,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 41.84000083680001,
+     "first_clean_episode": 1117,
+     "stability": 0.03518518518518518,
+     "episodes_to_50": 2750,
+     "episodes_to_90": null,
+     "wall_time_s": 417.6538552499842
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 28,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.7777777777777778,
+     "best_mean_lap": 34.508334023500005,
+     "first_clean_episode": 1387,
+     "stability": 0.46794871794871795,
+     "episodes_to_50": 1150,
+     "episodes_to_90": 1650,
+     "wall_time_s": 868.5097431250033
+    },
+    {
+     "seed": 4,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 56.305556681666665,
+     "first_clean_episode": 1324,
+     "stability": 0.10034013605442177,
+     "episodes_to_50": 1600,
+     "episodes_to_90": 1600,
+     "wall_time_s": 791.2462115829694
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.57777846933334,
+     "first_clean_episode": 1224,
+     "stability": 0.08666666666666666,
+     "episodes_to_50": 500,
+     "episodes_to_90": 700,
+     "wall_time_s": 587.7914674170315
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.4583333333333333,
+     "ci_low": 0.25,
+     "ci_high": 0.7,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.6,
+     "ci_low": 0.3,
+     "ci_high": 0.8833333333333333,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "replay200k_b128": {
+   "recipe": {
+    "name": "replay200k_b128",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.replay_size=200000",
+     "training.batch_size=128"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 4,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.7453703703703703,
+      "ci_low": 0.1574074074074074,
+      "ci_high": 0.9722222222222222
+     },
+     "median": {
+      "value": 0.8611111111111112,
+      "ci_low": 0.027777777777777776,
+      "ci_high": 0.9861111111111112
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.013888888888888888
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.013888888888888888
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.08192841109507776,
+      "ci_low": 0.009545855379188712,
+      "ci_high": 0.18695887445887446
+     },
+     "median": {
+      "value": 0.0826569264069264,
+      "ci_low": 0.0009259259259259259,
+      "ci_high": 0.20454545454545453
+     }
+    },
+    "best_mean_lap": {
+     "n": 5,
+     "iqm": {
+      "value": 39.57037281521697,
+      "ci_low": 27.256667211800004,
+      "ci_high": 50.151563503031255
+     },
+     "median": {
+      "value": 36.74285787771429,
+      "ci_low": 24.350000487000003,
+      "ci_high": 50.700001014
+     }
+    },
+    "first_clean_episode": {
+     "n": 5,
+     "iqm": {
+      "value": 1521.9,
+      "ci_low": 1357.8,
+      "ci_high": 1678.7
+     },
+     "median": {
+      "value": 1488.0,
+      "ci_low": 1335.0,
+      "ci_high": 1679.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 1200,
+     "iqm": {
+      "value": 1075.0,
+      "ci_low": 800.0,
+      "ci_high": 1250.0
+     },
+     "median": {
+      "value": 1075.0,
+      "ci_low": 800.0,
+      "ci_high": 1250.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 3,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 1300,
+     "iqm": {
+      "value": 983.3333333333334,
+      "ci_low": 800.0,
+      "ci_high": 1300.0
+     },
+     "median": {
+      "value": 950.0,
+      "ci_low": 800.0,
+      "ci_high": 1300.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 32,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8888888888888888,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 48.8718759774375,
+     "first_clean_episode": 1488,
+     "stability": 0.05357142857142857,
+     "episodes_to_50": 1250,
+     "episodes_to_90": null,
+     "wall_time_s": 574.5113695000182
+    },
+    {
+     "seed": 1,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 649.6789599589538
+    },
+    {
+     "seed": 2,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 50.700001014,
+     "first_clean_episode": 1678,
+     "stability": 0.11174242424242423,
+     "episodes_to_50": 800,
+     "episodes_to_90": 800,
+     "wall_time_s": 479.4332843750017
+    },
+    {
+     "seed": 3,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 36.74285787771429,
+     "first_clean_episode": 1411,
+     "stability": 0.1590909090909091,
+     "episodes_to_50": 950,
+     "episodes_to_90": 950,
+     "wall_time_s": 545.2030866669957
+    },
+    {
+     "seed": 4,
+     "best_lapped": 36,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 34.03888956966667,
+     "first_clean_episode": 1335,
+     "stability": 0.25,
+     "episodes_to_50": 1200,
+     "episodes_to_90": 1300,
+     "wall_time_s": 1124.0542100000312
+    },
+    {
+     "seed": 5,
+     "best_lapped": 2,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.05555555555555555,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.350000487000003,
+     "first_clean_episode": 1679,
+     "stability": 0.0018518518518518517,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 698.8576770419604
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.425,
+     "ci_low": 0.25,
+     "ci_high": 0.625,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.48333333333333334,
+     "ci_low": 0.15,
+     "ci_high": 0.8333333333333334,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "replay200k_trunc": {
+   "recipe": {
+    "name": "replay200k_trunc",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.replay_size=200000",
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9629629629629629,
+      "ci_low": 0.9166666666666666,
+      "ci_high": 0.9953703703703703
+     },
+     "median": {
+      "value": 0.9583333333333333,
+      "ci_low": 0.9166666666666666,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.09147770219198788,
+      "ci_low": 0.07025552684467412,
+      "ci_high": 0.20448911758435565
+     },
+     "median": {
+      "value": 0.08564814814814814,
+      "ci_low": 0.0681739879414298,
+      "ci_high": 0.21417669631955344
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 39.887671004725085,
+      "ci_low": 32.87477437180576,
+      "ci_high": 46.51723949243628
+     },
+     "median": {
+      "value": 40.222223026666676,
+      "ci_low": 31.34241548752941,
+      "ci_high": 47.62592007016544
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1311.5,
+      "ci_low": 1187.1666666666667,
+      "ci_high": 1404.3333333333333
+     },
+     "median": {
+      "value": 1317.5,
+      "ci_low": 1170.5,
+      "ci_high": 1415.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1000,
+     "iqm": {
+      "value": 1116.6666666666667,
+      "ci_low": 691.6666666666666,
+      "ci_high": 1966.6666666666667
+     },
+     "median": {
+      "value": 1075.0,
+      "ci_low": 625.0,
+      "ci_high": 2075.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1650,
+     "iqm": {
+      "value": 1700.0,
+      "ci_low": 1149.3750000000011,
+      "ci_high": 2125.0
+     },
+     "median": {
+      "value": 1725.0,
+      "ci_low": 1100.0,
+      "ci_high": 2150.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 29.178947952,
+     "first_clean_episode": 1311,
+     "stability": 0.07962962962962962,
+     "episodes_to_50": 750,
+     "episodes_to_90": 1500,
+     "wall_time_s": 425.27846691699233
+    },
+    {
+     "seed": 1,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 50.32058924170588,
+     "first_clean_episode": 1455,
+     "stability": 0.0678294573643411,
+     "episodes_to_50": 1000,
+     "episodes_to_90": 1800,
+     "wall_time_s": 405.1742468330194
+    },
+    {
+     "seed": 2,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.50588302305882,
+     "first_clean_episode": 1117,
+     "stability": 0.0685185185185185,
+     "episodes_to_50": 2500,
+     "episodes_to_90": 2500,
+     "wall_time_s": 423.8821447909577
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 37.730556310166676,
+     "first_clean_episode": 1375,
+     "stability": 0.29059829059829057,
+     "episodes_to_50": 1150,
+     "episodes_to_90": 1800,
+     "wall_time_s": 933.0509778339765
+    },
+    {
+     "seed": 4,
+     "best_lapped": 32,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8888888888888888,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 44.931250898625,
+     "first_clean_episode": 1324,
+     "stability": 0.1377551020408163,
+     "episodes_to_50": 1650,
+     "episodes_to_90": 1650,
+     "wall_time_s": 772.6190433339798
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 42.713889743166675,
+     "first_clean_episode": 1224,
+     "stability": 0.09166666666666666,
+     "episodes_to_50": 500,
+     "episodes_to_90": 700,
+     "wall_time_s": 553.654708624992
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.6,
+     "ci_low": 0.3,
+     "ci_high": 0.8666666666666667,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "b128": {
+   "recipe": {
+    "name": "b128",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.batch_size=128"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9074074074074074,
+      "ci_low": 0.8148148148148149,
+      "ci_high": 0.9583333333333334
+     },
+     "median": {
+      "value": 0.9166666666666666,
+      "ci_low": 0.8055555555555556,
+      "ci_high": 0.9583333333333333
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.013888888888888888,
+      "ci_low": 0.0,
+      "ci_high": 0.375
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.3888888888888889
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.1461709617767439,
+      "ci_low": 0.09449907751301478,
+      "ci_high": 0.2968224367412608
+     },
+     "median": {
+      "value": 0.14841401676949847,
+      "ci_low": 0.0916718782572441,
+      "ci_high": 0.2985748695303091
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 31.908838153111038,
+      "ci_low": 26.523195126699473,
+      "ci_high": 35.58029695359572
+     },
+     "median": {
+      "value": 32.89861176908333,
+      "ci_low": 25.38521362245836,
+      "ci_high": 35.87341225217009
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1513.3333333333333,
+      "ci_low": 1207.6666666666667,
+      "ci_high": 2071.8333333333335
+     },
+     "median": {
+      "value": 1510.5,
+      "ci_low": 1179.0,
+      "ci_high": 2127.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1050,
+     "iqm": {
+      "value": 1108.3333333333333,
+      "ci_low": 700.0,
+      "ci_high": 1375.0
+     },
+     "median": {
+      "value": 1075.0,
+      "ci_low": 675.0,
+      "ci_high": 1425.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 5,
+     "fraction_reached": 0.8333333333333334,
+     "episodes_half_of_seeds": 1350,
+     "iqm": {
+      "value": 1320.0,
+      "ci_low": 1025.0,
+      "ci_high": 1505.0
+     },
+     "median": {
+      "value": 1350.0,
+      "ci_low": 950.0,
+      "ci_high": 1550.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 33,
+     "final_lapped": 3,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.08333333333333333,
+     "best_mean_lap": 25.134426732196722,
+     "first_clean_episode": 1266,
+     "stability": 0.18798449612403098,
+     "episodes_to_50": 1400,
+     "episodes_to_90": 1400,
+     "wall_time_s": 544.5513182080467
+    },
+    {
+     "seed": 1,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.333333999999994,
+     "first_clean_episode": 1583,
+     "stability": 0.09188034188034187,
+     "episodes_to_50": 1450,
+     "episodes_to_90": 1550,
+     "wall_time_s": 424.4696759999497
+    },
+    {
+     "seed": 2,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 37.524243174727275,
+     "first_clean_episode": 2483,
+     "stability": 0.10884353741496598,
+     "episodes_to_50": 950,
+     "episodes_to_90": 950,
+     "wall_time_s": 366.77548241702607
+    },
+    {
+     "seed": 3,
+     "best_lapped": 27,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.75,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 25.63600051272,
+     "first_clean_episode": 1772,
+     "stability": 0.09146341463414634,
+     "episodes_to_50": 1050,
+     "episodes_to_90": null,
+     "wall_time_s": 429.80562708398793
+    },
+    {
+     "seed": 4,
+     "best_lapped": 31,
+     "final_lapped": 25,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.6944444444444444,
+     "best_mean_lap": 34.22258132961291,
+     "first_clean_episode": 1092,
+     "stability": 0.4056603773584906,
+     "episodes_to_50": 400,
+     "episodes_to_90": 1350,
+     "wall_time_s": 1235.276837915997
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 32.463889538166676,
+     "first_clean_episode": 1438,
+     "stability": 0.19148936170212766,
+     "episodes_to_50": 1100,
+     "episodes_to_90": 1200,
+     "wall_time_s": 641.2671571669634
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.55,
+     "ci_low": 0.3,
+     "ci_high": 0.8083333333333333,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.7833333333333333,
+     "ci_low": 0.5166666666666667,
+     "ci_high": 0.9833333333333333,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "lowlr": {
+   "recipe": {
+    "name": "lowlr",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.lr=0.003"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 0,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "best_mean_lap": {
+     "n": 0,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    },
+    "first_clean_episode": {
+     "n": 0,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 208.834192374954
+    },
+    {
+     "seed": 1,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 170.1353139160201
+    },
+    {
+     "seed": 2,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 193.09446745901369
+    },
+    {
+     "seed": 3,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 152.99788833397906
+    },
+    {
+     "seed": 4,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 236.90437900001416
+    },
+    {
+     "seed": 5,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 240.81564049998997
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.0,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "sync1000": {
+   "recipe": {
+    "name": "sync1000",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.target_sync_every=1000"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 1,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.23611111111111108,
+      "ci_low": 0.05092592592592593,
+      "ci_high": 0.4398148148148149
+     },
+     "median": {
+      "value": 0.2638888888888889,
+      "ci_low": 0.013888888888888888,
+      "ci_high": 0.4444444444444444
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.008927415177415176,
+      "ci_low": 0.0,
+      "ci_high": 0.05511638120333773
+     },
+     "median": {
+      "value": 0.005341880341880341,
+      "ci_low": 0.0,
+      "ci_high": 0.06048254281949934
+     }
+    },
+    "best_mean_lap": {
+     "n": 5,
+     "iqm": {
+      "value": 24.782500495650005,
+      "ci_low": 23.28816713243,
+      "ci_high": 27.3300005466
+     },
+     "median": {
+      "value": 24.9250004985,
+      "ci_low": 22.5866671184,
+      "ci_high": 28.300000566
+     }
+    },
+    "first_clean_episode": {
+     "n": 5,
+     "iqm": {
+      "value": 1922.8,
+      "ci_low": 1721.8,
+      "ci_high": 2452.5
+     },
+     "median": {
+      "value": 1882.0,
+      "ci_low": 1708.0,
+      "ci_high": 2697.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 1,
+     "fraction_reached": 0.16666666666666666,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 1150.0,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": 1150.0,
+      "ci_low": null,
+      "ci_high": null
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 12,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.308333819500003,
+     "first_clean_episode": 2697,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 207.42472895799438
+    },
+    {
+     "seed": 1,
+     "best_lapped": 1,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.027777777777777776,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 28.300000566,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 192.69032920897007
+    },
+    {
+     "seed": 2,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 2146,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 197.64329450001242
+    },
+    {
+     "seed": 3,
+     "best_lapped": 20,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5555555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 25.06666716800001,
+     "first_clean_episode": 1708,
+     "stability": 0.08876811594202898,
+     "episodes_to_50": 1150,
+     "episodes_to_90": null,
+     "wall_time_s": 208.0989810829633
+    },
+    {
+     "seed": 4,
+     "best_lapped": 11,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3055555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 22.5866671184,
+     "first_clean_episode": 1882,
+     "stability": 0.032196969696969696,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 359.8472140840022
+    },
+    {
+     "seed": 5,
+     "best_lapped": 8,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.9250004985,
+     "first_clean_episode": 1754,
+     "stability": 0.010683760683760682,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 250.65303604200017
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.13333333333333333,
+     "ci_low": 0.0,
+     "ci_high": 0.4,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "mlp_replay200k": {
+   "recipe": {
+    "name": "mlp_replay200k",
+    "agent": "mlp",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.replay_size=200000"
+    ]
+   },
+   "n_params": 76,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 3,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.375,
+      "ci_low": 0.06944444444444443,
+      "ci_high": 0.7222222222222222
+     },
+     "median": {
+      "value": 0.375,
+      "ci_low": 0.041666666666666664,
+      "ci_high": 0.7361111111111112
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.17129629629629628,
+      "ci_low": 0.0,
+      "ci_high": 0.7454861111111104
+     },
+     "median": {
+      "value": 0.06944444444444445,
+      "ci_low": 0.0,
+      "ci_high": 0.8472222222222222
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.11082545311268716,
+      "ci_low": 0.014775413711583927,
+      "ci_high": 0.38379629629629636
+     },
+     "median": {
+      "value": 0.10625,
+      "ci_low": 0.008865248226950355,
+      "ci_high": 0.3888888888888889
+     }
+    },
+    "best_mean_lap": {
+     "n": 5,
+     "iqm": {
+      "value": 24.576399343751795,
+      "ci_low": 21.7533337684,
+      "ci_high": 33.863069730969826
+     },
+     "median": {
+      "value": 25.236585870585365,
+      "ci_low": 21.433333762,
+      "ci_high": 37.330435529217404
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 2449.3333333333335,
+      "ci_low": 2189.0,
+      "ci_high": 2692.0
+     },
+     "median": {
+      "value": 2445.0,
+      "ci_low": 2180.5,
+      "ci_high": 2730.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 3,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 2800,
+     "iqm": {
+      "value": 2733.3333333333335,
+      "ci_low": 2400.0,
+      "ci_high": 2800.0
+     },
+     "median": {
+      "value": 2800.0,
+      "ci_low": 2400.0,
+      "ci_high": 2800.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 3,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 2950,
+     "iqm": {
+      "value": 2925.0,
+      "ci_low": 2800.0,
+      "ci_high": 2950.0
+     },
+     "median": {
+      "value": 2950.0,
+      "ci_low": 2800.0,
+      "ci_high": 2950.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 23,
+     "final_lapped": 5,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.1388888888888889,
+     "best_mean_lap": 37.330435529217404,
+     "first_clean_episode": 2312,
+     "stability": 0.19166666666666665,
+     "episodes_to_50": 2800,
+     "episodes_to_90": 2800,
+     "wall_time_s": 89.78114274999825
+    },
+    {
+     "seed": 1,
+     "best_lapped": 3,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.08333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 21.433333762,
+     "first_clean_episode": 2806,
+     "stability": 0.020833333333333332,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 79.10370879201218
+    },
+    {
+     "seed": 2,
+     "best_lapped": 4,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.1111111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 22.50000045,
+     "first_clean_episode": 2578,
+     "stability": 0.01773049645390071,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 69.0299714159919
+    },
+    {
+     "seed": 3,
+     "best_lapped": 29,
+     "final_lapped": 27,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8055555555555556,
+     "final_lapped_frac": 0.75,
+     "best_mean_lap": 25.772549535058822,
+     "first_clean_episode": 2100,
+     "stability": 0.2222222222222222,
+     "episodes_to_50": 2800,
+     "episodes_to_90": 2950,
+     "wall_time_s": 94.88280312501593
+    },
+    {
+     "seed": 4,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 2655,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 125.03986595798051
+    },
+    {
+     "seed": 5,
+     "best_lapped": 24,
+     "final_lapped": 34,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6666666666666666,
+     "final_lapped_frac": 0.9444444444444444,
+     "best_mean_lap": 25.236585870585365,
+     "first_clean_episode": 2261,
+     "stability": 0.5555555555555556,
+     "episodes_to_50": 2400,
+     "episodes_to_90": 2950,
+     "wall_time_s": 131.1268099169829
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.6583333333333333,
+     "ci_low": 0.4,
+     "ci_high": 0.9,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.5,
+     "ci_low": 0.18333333333333332,
+     "ci_high": 0.8333333333333334,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "eps15": {
+   "recipe": {
+    "name": "eps15",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.epsilon_end=0.15"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.6990740740740741,
+      "ci_low": 0.625,
+      "ci_high": 0.9259259259259259
+     },
+     "median": {
+      "value": 0.6527777777777777,
+      "ci_low": 0.625,
+      "ci_high": 0.9722222222222222
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.1111111111111111,
+      "ci_low": 0.0,
+      "ci_high": 0.4305555555555555
+     },
+     "median": {
+      "value": 0.05555555555555555,
+      "ci_low": 0.0,
+      "ci_high": 0.4861111111111111
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0726653387462952,
+      "ci_low": 0.036320905872277966,
+      "ci_high": 0.15255575914576355
+     },
+     "median": {
+      "value": 0.07087532661440836,
+      "ci_low": 0.029404404404404404,
+      "ci_high": 0.15436174469787914
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 32.323613084758605,
+      "ci_low": 26.83531799702381,
+      "ci_high": 34.474224955556586
+     },
+     "median": {
+      "value": 33.30851714968682,
+      "ci_low": 25.83472273891667,
+      "ci_high": 34.48991614873551
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1742.0,
+      "ci_low": 1447.6000000000001,
+      "ci_high": 2117.3333333333335
+     },
+     "median": {
+      "value": 1723.0,
+      "ci_low": 1404.0,
+      "ci_high": 2180.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1450,
+     "iqm": {
+      "value": 1616.6666666666667,
+      "ci_low": 1033.3333333333333,
+      "ci_high": 2241.6666666666665
+     },
+     "median": {
+      "value": 1625.0,
+      "ci_low": 900.0,
+      "ci_high": 2350.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 2,
+     "fraction_reached": 0.3333333333333333,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 1300.0,
+      "ci_low": 700.0,
+      "ci_high": 1900.0
+     },
+     "median": {
+      "value": 1300.0,
+      "ci_low": 700.0,
+      "ci_high": 1900.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 23,
+     "final_lapped": 4,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.1111111111111111,
+     "best_mean_lap": 33.88846221623077,
+     "first_clean_episode": 1813,
+     "stability": 0.04964539007092199,
+     "episodes_to_50": 1800,
+     "episodes_to_90": null,
+     "wall_time_s": 444.1855067089782
+    },
+    {
+     "seed": 1,
+     "best_lapped": 24,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6666666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.725000534500005,
+     "first_clean_episode": 2009,
+     "stability": 0.009259259259259259,
+     "episodes_to_50": 2100,
+     "episodes_to_90": null,
+     "wall_time_s": 475.85050891700666
+    },
+    {
+     "seed": 2,
+     "best_lapped": 23,
+     "final_lapped": 19,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.5277777777777778,
+     "best_mean_lap": 33.98260937530435,
+     "first_clean_episode": 2351,
+     "stability": 0.04954954954954955,
+     "episodes_to_50": 2600,
+     "episodes_to_90": null,
+     "wall_time_s": 395.39230787497945
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.99722292216667,
+     "first_clean_episode": 1633,
+     "stability": 0.20578231292517005,
+     "episodes_to_50": 1450,
+     "episodes_to_90": 1900,
+     "wall_time_s": 481.50298320897855
+    },
+    {
+     "seed": 4,
+     "best_lapped": 22,
+     "final_lapped": 16,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6111111111111112,
+     "final_lapped_frac": 0.4444444444444444,
+     "best_mean_lap": 24.944444943333338,
+     "first_clean_episode": 1551,
+     "stability": 0.09210526315789473,
+     "episodes_to_50": 1100,
+     "episodes_to_90": null,
+     "wall_time_s": 302.8687962910044
+    },
+    {
+     "seed": 5,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 32.728572083142865,
+     "first_clean_episode": 1257,
+     "stability": 0.10294117647058823,
+     "episodes_to_50": 700,
+     "episodes_to_90": 700,
+     "wall_time_s": 289.373788041994
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.6583333333333333,
+     "ci_low": 0.4,
+     "ci_high": 0.9,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.5,
+     "ci_low": 0.21666666666666667,
+     "ci_high": 0.8166666666666667,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "eps30": {
+   "recipe": {
+    "name": "eps30",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.epsilon_end=0.30"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 10,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.9388888888888889,
+      "ci_low": 0.8138194444444445,
+      "ci_high": 0.9972222222222221
+     },
+     "median": {
+      "value": 0.9583333333333333,
+      "ci_low": 0.7916666666666667,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.15555555555555553,
+      "ci_low": 0.025,
+      "ci_high": 0.4806249999999996
+     },
+     "median": {
+      "value": 0.1527777777777778,
+      "ci_low": 0.0,
+      "ci_high": 0.4861111111111111
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.18005999724863822,
+      "ci_low": 0.13264314449917897,
+      "ci_high": 0.21321718931475023
+     },
+     "median": {
+      "value": 0.18152109328579916,
+      "ci_low": 0.1235632183908046,
+      "ci_high": 0.21428571428571433
+     }
+    },
+    "best_mean_lap": {
+     "n": 10,
+     "iqm": {
+      "value": 37.87973936486564,
+      "ci_low": 33.979313457463775,
+      "ci_high": 41.290184252916916
+     },
+     "median": {
+      "value": 37.95115283275576,
+      "ci_low": 33.934632713324675,
+      "ci_high": 42.00555639566667
+     }
+    },
+    "first_clean_episode": {
+     "n": 10,
+     "iqm": {
+      "value": 1768.5,
+      "ci_low": 1690.3925000000002,
+      "ci_high": 1913.7
+     },
+     "median": {
+      "value": 1749.0,
+      "ci_low": 1695.0,
+      "ci_high": 1887.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 10,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1100,
+     "iqm": {
+      "value": 1240.0,
+      "ci_low": 890.0,
+      "ci_high": 1480.0
+     },
+     "median": {
+      "value": 1225.0,
+      "ci_low": 850.0,
+      "ci_high": 1500.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 8,
+     "fraction_reached": 0.8,
+     "episodes_half_of_seeds": 1450,
+     "iqm": {
+      "value": 1400.0,
+      "ci_low": 1100.0,
+      "ci_high": 1887.5
+     },
+     "median": {
+      "value": 1400.0,
+      "ci_low": 1100.0,
+      "ci_high": 2000.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 36,
+     "final_lapped": 6,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.16666666666666666,
+     "best_mean_lap": 42.00555639566667,
+     "first_clean_episode": 1658,
+     "stability": 0.21428571428571433,
+     "episodes_to_50": 550,
+     "episodes_to_90": 600,
+     "wall_time_s": 506.72465474996716
+    },
+    {
+     "seed": 1,
+     "best_lapped": 31,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 38.44516205922581,
+     "first_clean_episode": 1950,
+     "stability": 0.10858585858585858,
+     "episodes_to_50": 1450,
+     "episodes_to_90": null,
+     "wall_time_s": 533.9653035830124
+    },
+    {
+     "seed": 2,
+     "best_lapped": 30,
+     "final_lapped": 5,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.1388888888888889,
+     "best_mean_lap": 36.07000072140001,
+     "first_clean_episode": 1695,
+     "stability": 0.1235632183908046,
+     "episodes_to_50": 1550,
+     "episodes_to_90": 2350,
+     "wall_time_s": 384.1861509169685
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 36,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 1.0,
+     "best_mean_lap": 38.97777855733334,
+     "first_clean_episode": 1750,
+     "stability": 0.16833333333333333,
+     "episodes_to_50": 1000,
+     "episodes_to_90": 1200,
+     "wall_time_s": 370.70864670799347
+    },
+    {
+     "seed": 4,
+     "best_lapped": 34,
+     "final_lapped": 10,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.2777777777777778,
+     "best_mean_lap": 29.877551617959185,
+     "first_clean_episode": 1495,
+     "stability": 0.18627450980392157,
+     "episodes_to_50": 1600,
+     "episodes_to_90": 1600,
+     "wall_time_s": 296.9774387499783
+    },
+    {
+     "seed": 5,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 37.45714360628571,
+     "first_clean_episode": 1748,
+     "stability": 0.2154471544715447,
+     "episodes_to_50": 1100,
+     "episodes_to_90": 1100,
+     "wall_time_s": 242.18973641598132
+    },
+    {
+     "seed": 6,
+     "best_lapped": 36,
+     "final_lapped": 29,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.8055555555555556,
+     "best_mean_lap": 42.69722307616667,
+     "first_clean_episode": 1738,
+     "stability": 0.17676767676767674,
+     "episodes_to_50": 1350,
+     "episodes_to_90": 1350,
+     "wall_time_s": 424.42302029096754
+    },
+    {
+     "seed": 7,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.8916673645,
+     "first_clean_episode": 1825,
+     "stability": 0.3354700854700855,
+     "episodes_to_50": 1050,
+     "episodes_to_90": 2000,
+     "wall_time_s": 495.7749345000484
+    },
+    {
+     "seed": 8,
+     "best_lapped": 23,
+     "final_lapped": 12,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.3333333333333333,
+     "best_mean_lap": 45.530435693217385,
+     "first_clean_episode": 2515,
+     "stability": 0.04722222222222223,
+     "episodes_to_50": 1500,
+     "episodes_to_90": null,
+     "wall_time_s": 335.2933605829603
+    },
+    {
+     "seed": 9,
+     "best_lapped": 26,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7222222222222222,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 30.412121820363637,
+     "first_clean_episode": 1868,
+     "stability": 0.20000000000000004,
+     "episodes_to_50": 650,
+     "episodes_to_90": 1450,
+     "wall_time_s": 279.1327908329549
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.77,
+     "ci_low": 0.565,
+     "ci_high": 0.945,
+     "n": 10,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.77,
+     "ci_low": 0.51,
+     "ci_high": 1.0,
+     "n": 10,
+     "n_baseline": 10
+    }
+   }
+  },
+  "eps15_trunc": {
+   "recipe": {
+    "name": "eps15_trunc",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.epsilon_end=0.15",
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.8194444444444443,
+      "ci_low": 0.625,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 0.8194444444444444,
+      "ci_low": 0.625,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.2546296296296296,
+      "ci_low": 0.0,
+      "ci_high": 0.7222222222222223
+     },
+     "median": {
+      "value": 0.2222222222222222,
+      "ci_low": 0.0,
+      "ci_high": 0.8194444444444444
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.12475969261314979,
+      "ci_low": 0.0715432152477228,
+      "ci_high": 0.18049336851857864
+     },
+     "median": {
+      "value": 0.12205955955955956,
+      "ci_low": 0.05720418066442702,
+      "ci_high": 0.18932573029211686
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 31.928226174113988,
+      "ci_low": 27.335079911780962,
+      "ci_high": 40.58048514209401
+     },
+     "median": {
+      "value": 31.80708854822967,
+      "ci_low": 26.94827909921596,
+      "ci_high": 40.83055637216666
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1742.0,
+      "ci_low": 1447.6000000000001,
+      "ci_high": 2117.3333333333335
+     },
+     "median": {
+      "value": 1723.0,
+      "ci_low": 1404.0,
+      "ci_high": 2180.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1450,
+     "iqm": {
+      "value": 1616.6666666666667,
+      "ci_low": 1033.3333333333333,
+      "ci_high": 2191.6666666666665
+     },
+     "median": {
+      "value": 1625.0,
+      "ci_low": 900.0,
+      "ci_high": 2300.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 3,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 2750,
+     "iqm": {
+      "value": 1841.6666666666667,
+      "ci_low": 700.0,
+      "ci_high": 2750.0
+     },
+     "median": {
+      "value": 1900.0,
+      "ci_low": 700.0,
+      "ci_high": 2750.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 23,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.88846221623077,
+     "first_clean_episode": 1813,
+     "stability": 0.03546099290780142,
+     "episodes_to_50": 1800,
+     "episodes_to_90": null,
+     "wall_time_s": 479.609546208987
+    },
+    {
+     "seed": 1,
+     "best_lapped": 23,
+     "final_lapped": 23,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.6388888888888888,
+     "best_mean_lap": 29.725714880228576,
+     "first_clean_episode": 2009,
+     "stability": 0.11574074074074076,
+     "episodes_to_50": 2100,
+     "episodes_to_90": null,
+     "wall_time_s": 468.64884416700806
+    },
+    {
+     "seed": 2,
+     "best_lapped": 36,
+     "final_lapped": 36,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 1.0,
+     "best_mean_lap": 28.952113255098585,
+     "first_clean_episode": 2351,
+     "stability": 0.12837837837837837,
+     "episodes_to_50": 2500,
+     "episodes_to_90": 2750,
+     "wall_time_s": 393.97868629102595
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.38888959666666,
+     "first_clean_episode": 1633,
+     "stability": 0.19727891156462588,
+     "episodes_to_50": 1450,
+     "episodes_to_90": 1900,
+     "wall_time_s": 484.3277421249659
+    },
+    {
+     "seed": 4,
+     "best_lapped": 22,
+     "final_lapped": 16,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6111111111111112,
+     "final_lapped_frac": 0.4444444444444444,
+     "best_mean_lap": 24.944444943333338,
+     "first_clean_episode": 1551,
+     "stability": 0.07894736842105263,
+     "episodes_to_50": 1100,
+     "episodes_to_90": null,
+     "wall_time_s": 276.5059051249991
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 46.272223147666665,
+     "first_clean_episode": 1257,
+     "stability": 0.18137254901960784,
+     "episodes_to_50": 700,
+     "episodes_to_90": 700,
+     "wall_time_s": 324.92467879201286
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.675,
+     "ci_low": 0.4,
+     "ci_high": 0.9002083333333322,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.6333333333333333,
+     "ci_low": 0.3333333333333333,
+     "ci_high": 0.9,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "gamma98": {
+   "recipe": {
+    "name": "gamma98",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.gamma=0.98"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9722222222222223,
+      "ci_low": 0.9444444444444443,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 0.9722222222222222,
+      "ci_low": 0.9444444444444444,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.47222222222222215
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.4722222222222222
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.15375263855610966,
+      "ci_low": 0.08060697899640741,
+      "ci_high": 0.26307189542483655
+     },
+     "median": {
+      "value": 0.15668891670143234,
+      "ci_low": 0.07298407167745147,
+      "ci_high": 0.2771317829457364
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 33.08014806435791,
+      "ci_low": 28.412833837806357,
+      "ci_high": 39.168083572032685
+     },
+     "median": {
+      "value": 32.867522024871796,
+      "ci_low": 27.566418461776124,
+      "ci_high": 40.22712498754902
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1210.5,
+      "ci_low": 1120.8333333333333,
+      "ci_high": 1287.1666666666667
+     },
+     "median": {
+      "value": 1213.0,
+      "ci_low": 1107.0,
+      "ci_high": 1298.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 650,
+     "iqm": {
+      "value": 775.0,
+      "ci_low": 575.0,
+      "ci_high": 950.0
+     },
+     "median": {
+      "value": 775.0,
+      "ci_low": 550.0,
+      "ci_high": 975.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 900,
+     "iqm": {
+      "value": 891.6666666666666,
+      "ci_low": 691.6666666666666,
+      "ci_high": 991.6666666666666
+     },
+     "median": {
+      "value": 925.0,
+      "ci_low": 650.0,
+      "ci_high": 1000.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 39.376471375764716,
+     "first_clean_episode": 1125,
+     "stability": 0.07482993197278912,
+     "episodes_to_50": 650,
+     "episodes_to_90": 650,
+     "wall_time_s": 493.1050128749921
+    },
+    {
+     "seed": 1,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 41.07777859933333,
+     "first_clean_episode": 1218,
+     "stability": 0.07113821138211382,
+     "episodes_to_50": 950,
+     "episodes_to_90": 950,
+     "wall_time_s": 436.4566476669861
+    },
+    {
+     "seed": 2,
+     "best_lapped": 34,
+     "final_lapped": 34,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.9444444444444444,
+     "best_mean_lap": 27.634328910895526,
+     "first_clean_episode": 1208,
+     "stability": 0.3333333333333333,
+     "episodes_to_50": 600,
+     "episodes_to_90": 650,
+     "wall_time_s": 485.59622445801506
+    },
+    {
+     "seed": 3,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.49850801265672,
+     "first_clean_episode": 1311,
+     "stability": 0.22093023255813954,
+     "episodes_to_50": 1000,
+     "episodes_to_90": 1000,
+     "wall_time_s": 416.9989872080041
+    },
+    {
+     "seed": 4,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.022222882666675,
+     "first_clean_episode": 1286,
+     "stability": 0.12056737588652482,
+     "episodes_to_50": 900,
+     "episodes_to_90": 1000,
+     "wall_time_s": 285.0535665000207
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 32.71282116707692,
+     "first_clean_episode": 1089,
+     "stability": 0.19281045751633985,
+     "episodes_to_50": 500,
+     "episodes_to_90": 900,
+     "wall_time_s": 265.3535763330292
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.4583333333333333,
+     "ci_low": 0.25,
+     "ci_high": 0.7,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.7,
+     "ci_low": 0.4,
+     "ci_high": 0.9333333333333333,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "L6": {
+   "recipe": {
+    "name": "L6",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "circuit.n_layers=6"
+    ]
+   },
+   "n_params": 80,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 3,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.5462962962962963,
+      "ci_low": 0.18055555555555558,
+      "ci_high": 0.9212962962962964
+     },
+     "median": {
+      "value": 0.5138888888888888,
+      "ci_low": 0.125,
+      "ci_high": 0.9861111111111112
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.03662656115417744,
+      "ci_low": 0.007496568152454827,
+      "ci_high": 0.1434990040913006
+     },
+     "median": {
+      "value": 0.031684027777777776,
+      "ci_low": 0.003875968992248062,
+      "ci_high": 0.1546726959517657
+     }
+    },
+    "best_mean_lap": {
+     "n": 5,
+     "iqm": {
+      "value": 27.401639948954447,
+      "ci_low": 23.88003273566516,
+      "ci_high": 29.760066384675003
+     },
+     "median": {
+      "value": 27.547143408085716,
+      "ci_low": 23.2300004646,
+      "ci_high": 29.994737442
+     }
+    },
+    "first_clean_episode": {
+     "n": 5,
+     "iqm": {
+      "value": 1518.8,
+      "ci_low": 1281.5,
+      "ci_high": 2194.4
+     },
+     "median": {
+      "value": 1502.0,
+      "ci_low": 1187.0,
+      "ci_high": 2411.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 4,
+     "fraction_reached": 0.6666666666666666,
+     "episodes_half_of_seeds": 1100,
+     "iqm": {
+      "value": 1025.0,
+      "ci_low": 850.0,
+      "ci_high": 1650.0
+     },
+     "median": {
+      "value": 1025.0,
+      "ci_low": 850.0,
+      "ci_high": 1650.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 2,
+     "fraction_reached": 0.3333333333333333,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 1275.0,
+      "ci_low": 1150.0,
+      "ci_high": 1400.0
+     },
+     "median": {
+      "value": 1275.0,
+      "ci_low": 1150.0,
+      "ci_high": 1400.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 608.2352986250189
+    },
+    {
+     "seed": 1,
+     "best_lapped": 21,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5833333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 25.396774701483878,
+     "first_clean_episode": 1502,
+     "stability": 0.04513888888888889,
+     "episodes_to_50": 850,
+     "episodes_to_90": null,
+     "wall_time_s": 583.7471005420084
+    },
+    {
+     "seed": 2,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.547143408085716,
+     "first_clean_episode": 1187,
+     "stability": 0.22407407407407404,
+     "episodes_to_50": 1100,
+     "episodes_to_90": 1150,
+     "wall_time_s": 590.5608005420072
+    },
+    {
+     "seed": 3,
+     "best_lapped": 9,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.25,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 23.2300004646,
+     "first_clean_episode": 1689,
+     "stability": 0.007751937984496124,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 393.84722787496867
+    },
+    {
+     "seed": 4,
+     "best_lapped": 16,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.4444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 29.994737442,
+     "first_clean_episode": 2411,
+     "stability": 0.018229166666666668,
+     "episodes_to_50": 1650,
+     "episodes_to_90": null,
+     "wall_time_s": 349.7400062500383
+    },
+    {
+     "seed": 5,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 29.21250058425,
+     "first_clean_episode": 1371,
+     "stability": 0.08527131782945738,
+     "episodes_to_50": 950,
+     "episodes_to_90": 1400,
+     "wall_time_s": 357.15264558402123
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.3,
+     "ci_low": 0.05,
+     "ci_high": 0.6,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "L8": {
+   "recipe": {
+    "name": "L8",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "circuit.n_layers=8"
+    ]
+   },
+   "n_params": 104,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 5,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.5972222222222222,
+      "ci_low": 0.38425925925925924,
+      "ci_high": 0.8009259259259259
+     },
+     "median": {
+      "value": 0.5972222222222223,
+      "ci_low": 0.375,
+      "ci_high": 0.8055555555555556
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.08333333333333333,
+      "ci_low": 0.0,
+      "ci_high": 0.40277777777777773
+     },
+     "median": {
+      "value": 0.013888888888888888,
+      "ci_low": 0.0,
+      "ci_high": 0.4722222222222222
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.07851186753625779,
+      "ci_low": 0.050121086317246155,
+      "ci_high": 0.14877181641887524
+     },
+     "median": {
+      "value": 0.07793263646922184,
+      "ci_low": 0.04540273556231003,
+      "ci_high": 0.15092383107088989
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 26.26023048220875,
+      "ci_low": 22.104805246900906,
+      "ci_high": 28.10307748513846
+     },
+     "median": {
+      "value": 26.77624290692851,
+      "ci_low": 21.4866670964,
+      "ci_high": 28.206084480205597
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1739.1666666666667,
+      "ci_low": 1494.6666666666667,
+      "ci_high": 2053.174999999994
+     },
+     "median": {
+      "value": 1744.0,
+      "ci_low": 1476.0,
+      "ci_high": 2116.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 5,
+     "fraction_reached": 0.8333333333333334,
+     "episodes_half_of_seeds": 1600,
+     "iqm": {
+      "value": 1480.0,
+      "ci_low": 935.0,
+      "ci_high": 1770.0
+     },
+     "median": {
+      "value": 1600.0,
+      "ci_low": 650.0,
+      "ci_high": 1800.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 2,
+     "fraction_reached": 0.3333333333333333,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 2175.0,
+      "ci_low": 2100.0,
+      "ci_high": 2250.0
+     },
+     "median": {
+      "value": 2175.0,
+      "ci_low": 2100.0,
+      "ci_high": 2250.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 20,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5555555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 22.353333780400003,
+     "first_clean_episode": 1955,
+     "stability": 0.06300813008130082,
+     "episodes_to_50": 1100,
+     "episodes_to_90": null,
+     "wall_time_s": 861.1978830420412
+    },
+    {
+     "seed": 1,
+     "best_lapped": 21,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5833333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.49032313045161,
+     "first_clean_episode": 2278,
+     "stability": 0.05357142857142857,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 637.2443124580313
+    },
+    {
+     "seed": 2,
+     "best_lapped": 23,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 20.6200004124,
+     "first_clean_episode": 1920,
+     "stability": 0.10576923076923077,
+     "episodes_to_50": 1700,
+     "episodes_to_90": 2100,
+     "wall_time_s": 571.1306036669994
+    },
+    {
+     "seed": 3,
+     "best_lapped": 35,
+     "final_lapped": 18,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.5,
+     "best_mean_lap": 28.103077485138463,
+     "first_clean_episode": 1448,
+     "stability": 0.196078431372549,
+     "episodes_to_50": 1800,
+     "episodes_to_90": 2250,
+     "wall_time_s": 644.0419738749624
+    },
+    {
+     "seed": 4,
+     "best_lapped": 7,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.19444444444444445,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 28.309091475272734,
+     "first_clean_episode": 1568,
+     "stability": 0.03723404255319149,
+     "episodes_to_50": 650,
+     "episodes_to_90": null,
+     "wall_time_s": 489.1019095829688
+    },
+    {
+     "seed": 5,
+     "best_lapped": 22,
+     "final_lapped": 16,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6111111111111112,
+     "final_lapped_frac": 0.4444444444444444,
+     "best_mean_lap": 26.062162683405404,
+     "first_clean_episode": 1504,
+     "stability": 0.09285714285714286,
+     "episodes_to_50": 1600,
+     "episodes_to_90": null,
+     "wall_time_s": 422.37985654198565
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.6416666666666667,
+     "ci_low": 0.36666666666666664,
+     "ci_high": 0.8916666666666667,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.55,
+     "ci_low": 0.26666666666666666,
+     "ci_high": 0.8333333333333334,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "q6": {
+   "recipe": {
+    "name": "q6",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": "q6",
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": []
+   },
+   "n_params": 80,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 0,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.018518518518518517,
+      "ci_low": 0.0,
+      "ci_high": 0.19907407407407407
+     },
+     "median": {
+      "value": 0.013888888888888888,
+      "ci_low": 0.0,
+      "ci_high": 0.20833333333333331
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0071839080459770105
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0071839080459770105
+     }
+    },
+    "best_mean_lap": {
+     "n": 3,
+     "iqm": {
+      "value": 20.88055597316667,
+      "ci_low": 19.050000381,
+      "ci_high": 26.633333865999997
+     },
+     "median": {
+      "value": 19.900000398,
+      "ci_low": 19.050000381,
+      "ci_high": 26.633333866
+     }
+    },
+    "first_clean_episode": {
+     "n": 4,
+     "iqm": {
+      "value": 1854.5,
+      "ci_low": 1701.0,
+      "ci_high": 2067.0
+     },
+     "median": {
+      "value": 1854.5,
+      "ci_low": 1701.0,
+      "ci_high": 2067.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 1,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.027777777777777776,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 19.900000398,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 878.8965298749972
+    },
+    {
+     "seed": 1,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 1967,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 831.3296712499578
+    },
+    {
+     "seed": 2,
+     "best_lapped": 13,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3611111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.633333866,
+     "first_clean_episode": 1742,
+     "stability": 0.014367816091954021,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 810.6631914160098
+    },
+    {
+     "seed": 3,
+     "best_lapped": 2,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.05555555555555555,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 19.050000381,
+     "first_clean_episode": 1701,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 601.2623170000152
+    },
+    {
+     "seed": 4,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 2067,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 604.8900424169842
+    },
+    {
+     "seed": 5,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 516.2792879159679
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.35,
+     "ci_low": 0.2,
+     "ci_high": 0.45,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.016666666666666666,
+     "ci_low": 0.0,
+     "ci_high": 0.1,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "mlp_h32": {
+   "recipe": {
+    "name": "mlp_h32",
+    "agent": "mlp",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "mlp.hidden=32"
+    ]
+   },
+   "n_params": 292,
+   "n_seeds": 6,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "reliable_seeds": 6,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.9953703703703703,
+      "ci_low": 0.9768518518518517,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 1.0,
+      "ci_low": 0.9722222222222222,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 6,
+     "iqm": {
+      "value": 0.3101851851851852,
+      "ci_low": 0.041666666666666664,
+      "ci_high": 0.8564814814814815
+     },
+     "median": {
+      "value": 0.2222222222222222,
+      "ci_low": 0.013888888888888888,
+      "ci_high": 0.9722222222222222
+     }
+    },
+    "stability": {
+     "n": 6,
+     "iqm": {
+      "value": 0.23734263820470716,
+      "ci_low": 0.18898809523809523,
+      "ci_high": 0.3429296154391939
+     },
+     "median": {
+      "value": 0.22454844006568145,
+      "ci_low": 0.18857758620689655,
+      "ci_high": 0.35637505321413365
+     }
+    },
+    "best_mean_lap": {
+     "n": 6,
+     "iqm": {
+      "value": 26.788955436057524,
+      "ci_low": 24.393019862276827,
+      "ci_high": 31.310594308129087
+     },
+     "median": {
+      "value": 26.10230210934762,
+      "ci_low": 24.118587083678925,
+      "ci_high": 31.99714778709009
+     }
+    },
+    "first_clean_episode": {
+     "n": 6,
+     "iqm": {
+      "value": 1847.1666666666667,
+      "ci_low": 1757.5,
+      "ci_high": 2012.1666666666667
+     },
+     "median": {
+      "value": 1847.5,
+      "ci_low": 1755.5,
+      "ci_high": 2012.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1650,
+     "iqm": {
+      "value": 1583.3333333333333,
+      "ci_low": 358.3333333333333,
+      "ci_high": 2208.3333333333335
+     },
+     "median": {
+      "value": 1800.0,
+      "ci_low": 100.0,
+      "ci_high": 2250.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 6,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1950,
+     "iqm": {
+      "value": 2066.6666666666665,
+      "ci_low": 958.1250000000005,
+      "ci_high": 2358.3333333333335
+     },
+     "median": {
+      "value": 2125.0,
+      "ci_low": 825.0,
+      "ci_high": 2375.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 35,
+     "final_lapped": 34,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.9444444444444444,
+     "best_mean_lap": 26.565714817028574,
+     "first_clean_episode": 1675,
+     "stability": 0.1896551724137931,
+     "episodes_to_50": 100,
+     "episodes_to_90": 100,
+     "wall_time_s": 239.90536875004182
+    },
+    {
+     "seed": 1,
+     "best_lapped": 36,
+     "final_lapped": 7,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.19444444444444445,
+     "best_mean_lap": 25.638889401666667,
+     "first_clean_episode": 1857,
+     "stability": 0.37654320987654316,
+     "episodes_to_50": 1650,
+     "episodes_to_90": 1950,
+     "wall_time_s": 191.24906695901882
+    },
+    {
+     "seed": 2,
+     "best_lapped": 36,
+     "final_lapped": 36,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 1.0,
+     "best_mean_lap": 31.405406033513508,
+     "first_clean_episode": 1855,
+     "stability": 0.19047619047619047,
+     "episodes_to_50": 2300,
+     "episodes_to_90": 2300,
+     "wall_time_s": 100.69572312501259
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 32.58888954066667,
+     "first_clean_episode": 2168,
+     "stability": 0.1875,
+     "episodes_to_50": 2200,
+     "episodes_to_90": 2400,
+     "wall_time_s": 94.98676187498495
+    },
+    {
+     "seed": 4,
+     "best_lapped": 36,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 23.318056021916668,
+     "first_clean_episode": 1836,
+     "stability": 0.25862068965517243,
+     "episodes_to_50": 100,
+     "episodes_to_90": 1550,
+     "wall_time_s": 128.10739954200108
+    },
+    {
+     "seed": 5,
+     "best_lapped": 35,
+     "final_lapped": 9,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.25,
+     "best_mean_lap": 24.91911814544118,
+     "first_clean_episode": 1840,
+     "stability": 0.33620689655172414,
+     "episodes_to_50": 1950,
+     "episodes_to_90": 2350,
+     "wall_time_s": 132.32501550001325
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.8583333333333333,
+     "ci_low": 0.625,
+     "ci_high": 1.0,
+     "n": 6,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.8833333333333333,
+     "ci_low": 0.6833333333333333,
+     "ci_high": 1.0,
+     "n": 6,
+     "n_baseline": 10
+    }
+   }
+  },
+  "eps30_trunc": {
+   "recipe": {
+    "name": "eps30_trunc",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.epsilon_end=0.30",
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 10,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.9555555555555555,
+      "ci_low": 0.8249305555555556,
+      "ci_high": 0.9972222222222221
+     },
+     "median": {
+      "value": 0.9722222222222222,
+      "ci_low": 0.8333333333333334,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.02222222222222222,
+      "ci_low": 0.0027777777777777775,
+      "ci_high": 0.07777777777777777
+     },
+     "median": {
+      "value": 0.027777777777777776,
+      "ci_low": 0.0,
+      "ci_high": 0.05555555555555555
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.1682052118653104,
+      "ci_low": 0.1171591434118057,
+      "ci_high": 0.2158622810841886
+     },
+     "median": {
+      "value": 0.16252525252525252,
+      "ci_low": 0.113510101010101,
+      "ci_high": 0.21258503401360546
+     }
+    },
+    "best_mean_lap": {
+     "n": 10,
+     "iqm": {
+      "value": 34.99124456706875,
+      "ci_low": 30.759285822166227,
+      "ci_high": 40.11071508792857
+     },
+     "median": {
+      "value": 34.94928641327144,
+      "ci_low": 30.412121820363637,
+      "ci_high": 40.205556359666666
+     }
+    },
+    "first_clean_episode": {
+     "n": 10,
+     "iqm": {
+      "value": 1768.5,
+      "ci_low": 1690.3925000000002,
+      "ci_high": 1915.7
+     },
+     "median": {
+      "value": 1749.0,
+      "ci_low": 1695.0,
+      "ci_high": 1887.5
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 10,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 1100,
+     "iqm": {
+      "value": 1240.0,
+      "ci_low": 890.0,
+      "ci_high": 1480.0
+     },
+     "median": {
+      "value": 1225.0,
+      "ci_low": 850.0,
+      "ci_high": 1500.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 9,
+     "fraction_reached": 0.9,
+     "episodes_half_of_seeds": 1450,
+     "iqm": {
+      "value": 1544.4444444444443,
+      "ci_low": 1166.6666666666667,
+      "ci_high": 2125.0
+     },
+     "median": {
+      "value": 1450.0,
+      "ci_low": 1100.0,
+      "ci_high": 2350.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 36,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 42.00555639566667,
+     "first_clean_episode": 1658,
+     "stability": 0.21258503401360546,
+     "episodes_to_50": 550,
+     "episodes_to_90": 600,
+     "wall_time_s": 330.9230589999934
+    },
+    {
+     "seed": 1,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 40.205556359666666,
+     "first_clean_episode": 1950,
+     "stability": 0.1717171717171717,
+     "episodes_to_50": 1450,
+     "episodes_to_90": 2450,
+     "wall_time_s": 320.17733866599156
+    },
+    {
+     "seed": 2,
+     "best_lapped": 30,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 36.07000072140001,
+     "first_clean_episode": 1695,
+     "stability": 0.1264367816091954,
+     "episodes_to_50": 1550,
+     "episodes_to_90": 2350,
+     "wall_time_s": 302.00049541698536
+    },
+    {
+     "seed": 3,
+     "best_lapped": 36,
+     "final_lapped": 3,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.08333333333333333,
+     "best_mean_lap": 32.29166731250001,
+     "first_clean_episode": 1750,
+     "stability": 0.15333333333333332,
+     "episodes_to_50": 1000,
+     "episodes_to_90": 1200,
+     "wall_time_s": 310.77842079196125
+    },
+    {
+     "seed": 4,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.82857210514286,
+     "first_clean_episode": 1495,
+     "stability": 0.065359477124183,
+     "episodes_to_50": 1600,
+     "episodes_to_90": 1600,
+     "wall_time_s": 308.73205808299826
+    },
+    {
+     "seed": 5,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 37.45714360628571,
+     "first_clean_episode": 1748,
+     "stability": 0.2154471544715447,
+     "episodes_to_50": 1100,
+     "episodes_to_90": 1100,
+     "wall_time_s": 267.9320795419626
+    },
+    {
+     "seed": 6,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.97031305940625,
+     "first_clean_episode": 1738,
+     "stability": 0.14646464646464646,
+     "episodes_to_50": 1350,
+     "episodes_to_90": 1350,
+     "wall_time_s": 341.2776404169854
+    },
+    {
+     "seed": 7,
+     "best_lapped": 36,
+     "final_lapped": 12,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.3333333333333333,
+     "best_mean_lap": 27.93472278091667,
+     "first_clean_episode": 1825,
+     "stability": 0.4273504273504274,
+     "episodes_to_50": 1050,
+     "episodes_to_90": 2200,
+     "wall_time_s": 450.40427620796254
+    },
+    {
+     "seed": 8,
+     "best_lapped": 23,
+     "final_lapped": 2,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6388888888888888,
+     "final_lapped_frac": 0.05555555555555555,
+     "best_mean_lap": 45.530435693217385,
+     "first_clean_episode": 2535,
+     "stability": 0.08055555555555555,
+     "episodes_to_50": 1500,
+     "episodes_to_90": null,
+     "wall_time_s": 320.15362249995815
+    },
+    {
+     "seed": 9,
+     "best_lapped": 26,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7222222222222222,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 30.412121820363637,
+     "first_clean_episode": 1868,
+     "stability": 0.20000000000000004,
+     "episodes_to_50": 650,
+     "episodes_to_90": 1450,
+     "wall_time_s": 303.1796169169829
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.66,
+     "ci_low": 0.44,
+     "ci_high": 0.86,
+     "n": 10,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.75,
+     "ci_low": 0.49,
+     "ci_high": 0.95,
+     "n": 10,
+     "n_baseline": 10
+    }
+   }
+  },
+  "eps30_trunc_b128": {
+   "recipe": {
+    "name": "eps30_trunc_b128",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.epsilon_end=0.30",
+     "training.bootstrap_truncation=true",
+     "training.batch_size=128"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 7,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.75,
+      "ci_low": 0.2916666666666667,
+      "ci_high": 0.975
+     },
+     "median": {
+      "value": 0.8611111111111112,
+      "ci_low": 0.1111111111111111,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.0027777777777777775,
+      "ci_low": 0.0,
+      "ci_high": 0.1388888888888889
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.09722222222222222
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.11593234827405238,
+      "ci_low": 0.046156664686076446,
+      "ci_high": 0.20148879477145978
+     },
+     "median": {
+      "value": 0.09614512471655329,
+      "ci_low": 0.04924242424242424,
+      "ci_high": 0.21660685805422647
+     }
+    },
+    "best_mean_lap": {
+     "n": 9,
+     "iqm": {
+      "value": 35.66141004463751,
+      "ci_low": 33.84719721574464,
+      "ci_high": 38.22812139858462
+     },
+     "median": {
+      "value": 35.594445156333336,
+      "ci_low": 33.183333997000005,
+      "ci_high": 39.044445225333334
+     }
+    },
+    "first_clean_episode": {
+     "n": 9,
+     "iqm": {
+      "value": 1804.9444444444443,
+      "ci_low": 1576.1291666666668,
+      "ci_high": 2153.6111111111113
+     },
+     "median": {
+      "value": 1827.0,
+      "ci_low": 1519.0,
+      "ci_high": 2360.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 7,
+     "fraction_reached": 0.7,
+     "episodes_half_of_seeds": 1850,
+     "iqm": {
+      "value": 1328.5714285714287,
+      "ci_low": 410.7142857142857,
+      "ci_high": 2025.0
+     },
+     "median": {
+      "value": 1450.0,
+      "ci_low": 300.0,
+      "ci_high": 2100.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 6,
+     "fraction_reached": 0.6,
+     "episodes_half_of_seeds": 2400,
+     "iqm": {
+      "value": 1566.6666666666667,
+      "ci_low": 491.6666666666667,
+      "ci_high": 2391.6666666666665
+     },
+     "median": {
+      "value": 1675.0,
+      "ci_low": 300.0,
+      "ci_high": 2475.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 37.175758319272724,
+     "first_clean_episode": 1817,
+     "stability": 0.23333333333333334,
+     "episodes_to_50": 300,
+     "episodes_to_90": 300,
+     "wall_time_s": 499.65008137503173
+    },
+    {
+     "seed": 1,
+     "best_lapped": 4,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.1111111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 30.750000615000005,
+     "first_clean_episode": 2360,
+     "stability": 0.015432098765432098,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 419.16077308298554
+    },
+    {
+     "seed": 2,
+     "best_lapped": 29,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8055555555555556,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 44.43448364731036,
+     "first_clean_episode": 1827,
+     "stability": 0.10555555555555556,
+     "episodes_to_50": 750,
+     "episodes_to_90": 2400,
+     "wall_time_s": 481.24621479195775
+    },
+    {
+     "seed": 3,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 330.4814508340205
+    },
+    {
+     "seed": 4,
+     "best_lapped": 3,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.08333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.100000702,
+     "first_clean_episode": 1995,
+     "stability": 0.05637254901960784,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 501.36167212500004
+    },
+    {
+     "seed": 5,
+     "best_lapped": 18,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.594445156333336,
+     "first_clean_episode": 2619,
+     "stability": 0.04924242424242424,
+     "episodes_to_50": 2100,
+     "episodes_to_90": null,
+     "wall_time_s": 429.3233064999804
+    },
+    {
+     "seed": 6,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.93714355588572,
+     "first_clean_episode": 1836,
+     "stability": 0.21124031007751934,
+     "episodes_to_50": 1450,
+     "episodes_to_90": 1450,
+     "wall_time_s": 580.4742984999903
+    },
+    {
+     "seed": 7,
+     "best_lapped": 36,
+     "final_lapped": 34,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.9444444444444444,
+     "best_mean_lap": 33.183333997000005,
+     "first_clean_episode": 1528,
+     "stability": 0.20075757575757572,
+     "episodes_to_50": 1850,
+     "episodes_to_90": 1900,
+     "wall_time_s": 542.2836991670192
+    },
+    {
+     "seed": 8,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 39.044445225333334,
+     "first_clean_episode": 1485,
+     "stability": 0.2324561403508772,
+     "episodes_to_50": 200,
+     "episodes_to_90": 300,
+     "wall_time_s": 503.64429650001694
+    },
+    {
+     "seed": 9,
+     "best_lapped": 36,
+     "final_lapped": 7,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.19444444444444445,
+     "best_mean_lap": 35.69722293616667,
+     "first_clean_episode": 1519,
+     "stability": 0.08673469387755102,
+     "episodes_to_50": 2250,
+     "episodes_to_90": 2550,
+     "wall_time_s": 489.4583845839952
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.525,
+     "ci_low": 0.325,
+     "ci_high": 0.73,
+     "n": 10,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.57,
+     "ci_low": 0.3197500000000004,
+     "ci_high": 0.82,
+     "n": 10,
+     "n_baseline": 10
+    }
+   }
+  },
+  "mlp_trunc": {
+   "recipe": {
+    "name": "mlp_trunc",
+    "agent": "mlp",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 76,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 7,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.7416666666666666,
+      "ci_low": 0.36666666666666664,
+      "ci_high": 0.9666666666666666
+     },
+     "median": {
+      "value": 0.75,
+      "ci_low": 0.33333333333333337,
+      "ci_high": 0.9725694444444425
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.005555555555555555,
+      "ci_low": 0.0,
+      "ci_high": 0.38055555555555554
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.375
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.1436863711001642,
+      "ci_low": 0.053494731800766304,
+      "ci_high": 0.2128588216415676
+     },
+     "median": {
+      "value": 0.14339826839826839,
+      "ci_low": 0.03333333333333333,
+      "ci_high": 0.21788194444444445
+     }
+    },
+    "best_mean_lap": {
+     "n": 9,
+     "iqm": {
+      "value": 25.376093863977545,
+      "ci_low": 23.28668347226961,
+      "ci_high": 28.105488433515504
+     },
+     "median": {
+      "value": 25.50000051,
+      "ci_low": 22.769118102441176,
+      "ci_high": 26.918519056888886
+     }
+    },
+    "first_clean_episode": {
+     "n": 9,
+     "iqm": {
+      "value": 1867.5,
+      "ci_low": 1760.5555555555557,
+      "ci_high": 1979.0013888888889
+     },
+     "median": {
+      "value": 1881.0,
+      "ci_low": 1689.0,
+      "ci_high": 1898.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 7,
+     "fraction_reached": 0.7,
+     "episodes_half_of_seeds": 2150,
+     "iqm": {
+      "value": 2114.285714285714,
+      "ci_low": 1542.857142857143,
+      "ci_high": 2232.1428571428573
+     },
+     "median": {
+      "value": 2100.0,
+      "ci_low": 1950.0,
+      "ci_high": 2250.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 5,
+     "fraction_reached": 0.5,
+     "episodes_half_of_seeds": 2400,
+     "iqm": {
+      "value": 2105.0,
+      "ci_low": 1100.0,
+      "ci_high": 2325.0
+     },
+     "median": {
+      "value": 2150.0,
+      "ci_low": 650.0,
+      "ci_high": 2400.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 19,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5277777777777778,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.918519056888886,
+     "first_clean_episode": 2424,
+     "stability": 0.005555555555555555,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 110.14585691696266
+    },
+    {
+     "seed": 1,
+     "best_lapped": 21,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5833333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 25.50000051,
+     "first_clean_episode": 1881,
+     "stability": 0.14285714285714285,
+     "episodes_to_50": 2250,
+     "episodes_to_90": null,
+     "wall_time_s": 130.07818741595838
+    },
+    {
+     "seed": 2,
+     "best_lapped": 35,
+     "final_lapped": 29,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.8055555555555556,
+     "best_mean_lap": 22.769118102441176,
+     "first_clean_episode": 1628,
+     "stability": 0.3670212765957447,
+     "episodes_to_50": 1950,
+     "episodes_to_90": 2000,
+     "wall_time_s": 226.7215579590411
+    },
+    {
+     "seed": 3,
+     "best_lapped": 35,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9722222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.714493287913044,
+     "first_clean_episode": 1862,
+     "stability": 0.20833333333333334,
+     "episodes_to_50": 2100,
+     "episodes_to_90": 2150,
+     "wall_time_s": 155.53370241599623
+    },
+    {
+     "seed": 4,
+     "best_lapped": 16,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.4444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 28.48636420609091,
+     "first_clean_episode": 1898,
+     "stability": 0.14393939393939392,
+     "episodes_to_50": 2100,
+     "episodes_to_90": null,
+     "wall_time_s": 135.5542357499944
+    },
+    {
+     "seed": 5,
+     "best_lapped": 33,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9166666666666666,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.50153895156923,
+     "first_clean_episode": 1882,
+     "stability": 0.2121212121212121,
+     "episodes_to_50": 2150,
+     "episodes_to_90": 2150,
+     "wall_time_s": 165.248194166983
+    },
+    {
+     "seed": 6,
+     "best_lapped": 36,
+     "final_lapped": 27,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.75,
+     "best_mean_lap": 22.444444893333337,
+     "first_clean_episode": 1808,
+     "stability": 0.22743055555555555,
+     "episodes_to_50": 650,
+     "episodes_to_90": 650,
+     "wall_time_s": 223.51436462497804
+    },
+    {
+     "seed": 7,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 116.27767629100708
+    },
+    {
+     "seed": 8,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 34.63888958166667,
+     "first_clean_episode": 1689,
+     "stability": 0.10057471264367818,
+     "episodes_to_50": 2300,
+     "episodes_to_90": 2400,
+     "wall_time_s": 159.0762422499829
+    },
+    {
+     "seed": 9,
+     "best_lapped": 3,
+     "final_lapped": 2,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.08333333333333333,
+     "final_lapped_frac": 0.05555555555555555,
+     "best_mean_lap": 23.050000461000003,
+     "first_clean_episode": 1897,
+     "stability": 0.03333333333333333,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 131.2888975420501
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.535,
+     "ci_low": 0.325,
+     "ci_high": 0.74,
+     "n": 10,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.61,
+     "ci_low": 0.32975000000000043,
+     "ci_high": 0.85,
+     "n": 10,
+     "n_baseline": 10
+    }
+   }
+  },
+  "mlp_eps30_trunc": {
+   "recipe": {
+    "name": "mlp_eps30_trunc",
+    "agent": "mlp",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.epsilon_end=0.30",
+     "training.bootstrap_truncation=true"
+    ]
+   },
+   "n_params": 76,
+   "n_seeds": 10,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 3,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.20833333333333331,
+      "ci_low": 0.016666666666666666,
+      "ci_high": 0.6111805555555552
+     },
+     "median": {
+      "value": 0.09722222222222221,
+      "ci_low": 0.0,
+      "ci_high": 0.75
+     }
+    },
+    "final_lapped_frac": {
+     "n": 10,
+     "iqm": {
+      "value": 0.008333333333333333,
+      "ci_low": 0.0,
+      "ci_high": 0.03333333333333333
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.041666666666666664
+     }
+    },
+    "stability": {
+     "n": 10,
+     "iqm": {
+      "value": 0.0348403411009794,
+      "ci_low": 0.003555555555555555,
+      "ci_high": 0.10518849206349189
+     },
+     "median": {
+      "value": 0.03476950354609929,
+      "ci_low": 0.0,
+      "ci_high": 0.09920634920634919
+     }
+    },
+    "best_mean_lap": {
+     "n": 7,
+     "iqm": {
+      "value": 23.65185915199263,
+      "ci_low": 22.48481729951319,
+      "ci_high": 30.715651535972007
+     },
+     "median": {
+      "value": 22.900000458,
+      "ci_low": 22.5400004508,
+      "ci_high": 31.31935546509678
+     }
+    },
+    "first_clean_episode": {
+     "n": 5,
+     "iqm": {
+      "value": 2504.2,
+      "ci_low": 2155.2,
+      "ci_high": 2838.3
+     },
+     "median": {
+      "value": 2455.0,
+      "ci_low": 2028.0,
+      "ci_high": 2931.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 4,
+     "fraction_reached": 0.4,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 1475.0,
+      "ci_low": 500.0,
+      "ci_high": 2800.0
+     },
+     "median": {
+      "value": 1475.0,
+      "ci_low": 500.0,
+      "ci_high": 2800.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 1,
+     "fraction_reached": 0.1,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 2500.0,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": 2500.0,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 0,
+     "final_lapped": 2,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.05555555555555555,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 79.84115749999182
+    },
+    {
+     "seed": 1,
+     "best_lapped": 27,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.75,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 31.31935546509678,
+     "first_clean_episode": 2452,
+     "stability": 0.13888888888888887,
+     "episodes_to_50": 2800,
+     "episodes_to_90": null,
+     "wall_time_s": 82.89310520800063
+    },
+    {
+     "seed": 2,
+     "best_lapped": 3,
+     "final_lapped": 1,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.08333333333333333,
+     "final_lapped_frac": 0.027777777777777776,
+     "best_mean_lap": 22.866667124000003,
+     "first_clean_episode": 2455,
+     "stability": 0.05952380952380952,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 100.01397741696564
+    },
+    {
+     "seed": 3,
+     "best_lapped": 0,
+     "final_lapped": 2,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.05555555555555555,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 90.45061362499837
+    },
+    {
+     "seed": 4,
+     "best_lapped": 4,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.1111111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 23.550000471000004,
+     "first_clean_episode": 2931,
+     "stability": 0.003472222222222222,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 103.21211862500058
+    },
+    {
+     "seed": 5,
+     "best_lapped": 1,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.027777777777777776,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 22.900000458,
+     "first_clean_episode": null,
+     "stability": 0.08333333333333333,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 97.27672091696877
+    },
+    {
+     "seed": 6,
+     "best_lapped": 29,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8055555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 21.89615428407693,
+     "first_clean_episode": 2622,
+     "stability": 0.047872340425531915,
+     "episodes_to_50": 650,
+     "episodes_to_90": null,
+     "wall_time_s": 91.90351600002032
+    },
+    {
+     "seed": 7,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 105.35647258302197
+    },
+    {
+     "seed": 8,
+     "best_lapped": 36,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 33.37222288966667,
+     "first_clean_episode": 2028,
+     "stability": 0.32142857142857145,
+     "episodes_to_50": 2300,
+     "episodes_to_90": 2500,
+     "wall_time_s": 123.17624754196731
+    },
+    {
+     "seed": 9,
+     "best_lapped": 16,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.4444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 22.5400004508,
+     "first_clean_episode": null,
+     "stability": 0.021666666666666664,
+     "episodes_to_50": 500,
+     "episodes_to_90": null,
+     "wall_time_s": 76.9679146669805
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.55,
+     "ci_low": 0.34,
+     "ci_high": 0.7651249999999993,
+     "n": 10,
+     "n_baseline": 10
+    },
+    "stability": {
+     "p_improvement": 0.32,
+     "ci_low": 0.11,
+     "ci_high": 0.58,
+     "n": 10,
+     "n_baseline": 10
+    }
+   }
+  }
+ }
+}

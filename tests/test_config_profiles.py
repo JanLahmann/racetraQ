@@ -34,8 +34,9 @@ def test_qn_profile_overlay_and_env_features(profile, n_qubits, rays):
     assert config["observation"]["ray_angles_deg"] == rays
     assert len(rays) == n_qubits - 1
     assert np.allclose(np.diff(rays), 120.0 / (n_qubits - 2))  # evenly spaced
+    # the 8-qubit profile runs 5 blocks (full light-cone visibility)
+    assert config["circuit"]["n_layers"] == (5 if profile == "q8" else 4)
     # everything else inherits from default.toml
-    assert config["circuit"]["n_layers"] == 4
     assert config["physics"]["v_max"] == 25.0
 
     env = make_env(config)
@@ -138,12 +139,14 @@ def test_session_q6_bundled_weights_attract_drives(tmp_path):
     assert len(rays) == 5
 
 
-@pytest.mark.parametrize(("profile", "blind"), [("q8", True), ("q6", False)])
-def test_training_start_logs_light_cone_blind_spots(profile, blind, tmp_path, caplog):
+@pytest.mark.parametrize(("profile", "n_layers", "blind"),
+                         [("q8", 4, True), ("q8", 5, False), ("q6", 4, False)])
+def test_training_start_logs_light_cone_blind_spots(profile, n_layers, blind, tmp_path, caplog):
     """8 qubits at 4 blocks hide one feature from every action: starting a
-    quantum training logs that (server log only, no client error); 6 qubits
-    see everything and stay silent."""
+    quantum training logs that (server log only, no client error); the
+    profile's 5 blocks, and 6 qubits at 4, see everything and stay silent."""
     config = load_config(profile)
+    config["circuit"] = dict(config["circuit"], n_layers=n_layers)
     config["reward"] = dict(config["reward"], max_decisions=50)
     config["training"] = dict(config["training"], n_parallel_envs=2, replay_size=500,
                               batch_size=8)

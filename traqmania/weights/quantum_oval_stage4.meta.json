@@ -1,11 +1,73 @@
 {
   "agent": "quantum",
   "track": "oval",
-  "config_hash": "28c95c35a3c5",
-  "episodes": 1000,
+  "config_hash": "a9c7910a41de",
+  "episodes": 750,
   "stage": 4,
-  "eval_episodes": 4,
-  "eval_laps": 16,
-  "eval_best_lap": 12.2,
-  "date": "2026-07-11"
+  "run": {
+    "seed": 0,
+    "episodes": 800,
+    "best_episode": 750,
+    "driver": "quantum_oval.npz",
+    "driver_sha256": "1cd3f7a390b996c81e23902c22d257d8cae1fe0966ba42c696f8eee19eda7db4",
+    "reproduces_driver": true
+  },
+  "eval_episodes": 12,
+  "eval_lapped": 12,
+  "eval_mean_lap": 12.66,
+  "eval_best_lap": 12.1,
+  "eval_mean_return": 1889.342,
+  "eval_acting_noise": "attenuation 0.950, 1024 shots",
+  "exact_eval": {
+    "episodes": 36,
+    "eval_seed": 20000,
+    "lapped": 36,
+    "laps": 144,
+    "mean_lap": 12.66,
+    "best_lap": 12.1
+  },
+  "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+  },
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      0.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 4
+  },
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 800,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.98,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.05,
+    "epsilon_decay_episodes": 250,
+    "n_parallel_envs": 8,
+    "seed": 0,
+    "warm_start": false,
+    "bootstrap_truncation": true,
+    "action_gap": 0.8,
+    "act_noise": {
+      "attenuation": 0.95,
+      "shots": 1024
+    }
+  },
+  "provenance": "snapshot at episode 750 of the training run that produced quantum_oval.npz (seed 0, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_oval.npz",
+  "date": "2026-10-02"
 }

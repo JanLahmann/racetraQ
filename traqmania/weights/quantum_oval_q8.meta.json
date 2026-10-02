@@ -1,7 +1,138 @@
 {
   "agent": "quantum",
   "track": "oval",
-  "config_hash": "7d8fc0169910",
+  "config_hash": "930aa1810fd9",
   "episodes": 800,
-  "date": "DATE"
+  "circuit": {
+    "n_qubits": 8,
+    "n_layers": 5,
+    "n_actions": 4
+  },
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      -40.0,
+      -20.0,
+      0.0,
+      20.0,
+      40.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 4
+  },
+  "date": "2026-10-02",
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 800,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.98,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.05,
+    "epsilon_decay_episodes": 250,
+    "n_parallel_envs": 8,
+    "seed": 3,
+    "warm_start": false,
+    "bootstrap_truncation": true
+  },
+  "provenance": "best snapshot of seed 3, chosen from the 6-seed study q8_oval variant L5 (quantum on oval, 800 episodes, profile q8, training.bootstrap_truncation=true, circuit.n_layers=5); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.8 s, mean 13.4 s; the recipe across its 6 seeds (IQM [95% CI]): best snapshot laps in 0.99 [0.90, 1.00] of the study's eval episodes, final params in 0.88 [0.62, 0.99], stability 0.53 [0.45, 0.65]; 6/6 seeds lap in at least half",
+  "selection": {
+    "study": "q8_oval",
+    "variant": "L5",
+    "profile": "q8",
+    "overrides": [
+      "training.bootstrap_truncation=true",
+      "circuit.n_layers=5"
+    ],
+    "chosen_seed": 3,
+    "n_seeds": 6,
+    "rank_by": "fresh",
+    "rule": "seeds ranked by the study's 36-episode reliability eval of the best snapshot (lapped fraction, then mean lap); the top 3 re-evaluated on 72 fresh distinct greedy episodes (env seed 31000) and the driver chosen by that result (lapped fraction, then mean lap); the fresh numbers are the ones recorded (they also picked among the 3 candidates, so a small selection effect remains in them)",
+    "study_eval": {
+      "episodes": 36,
+      "eval_seed": 20000
+    },
+    "source": "cells/L5/seed3/quantum_oval_q8.npz",
+    "weights_sha256": "028f040b354bfee002793ba51715e1ee73a0a08107c52721e6dac9d5fac8403a",
+    "candidates": [
+      {
+        "seed": 3,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 13.353,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 13.352,
+        "fresh_best_lap": 12.8
+      },
+      {
+        "seed": 2,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 13.914,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 13.918,
+        "fresh_best_lap": 13.3
+      },
+      {
+        "seed": 1,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 14.568,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 14.564,
+        "fresh_best_lap": 14.1
+      }
+    ],
+    "seed_spread": {
+      "n_seeds": 6,
+      "best_snapshot_lapped": {
+        "iqm": 0.9861,
+        "ci_low": 0.9028,
+        "ci_high": 1.0,
+        "median": 1.0,
+        "n": 6
+      },
+      "final_params_lapped": {
+        "iqm": 0.8843,
+        "ci_low": 0.6247,
+        "ci_high": 0.9907,
+        "median": 0.9028,
+        "n": 6
+      },
+      "stability": {
+        "iqm": 0.5295,
+        "ci_low": 0.4486,
+        "ci_high": 0.6521,
+        "median": 0.5125,
+        "n": 6
+      },
+      "seeds_lapping_half": 6,
+      "interval": "95% percentile bootstrap of the IQM over seeds, 2000 resamples, RNG seed 0"
+    },
+    "fresh_eval": {
+      "episodes": 72,
+      "eval_seed": 31000,
+      "lapped": 72,
+      "lapped_fraction": 1.0,
+      "laps": 288,
+      "mean_lap": 13.352,
+      "best_lap": 12.8
+    }
+  }
 }

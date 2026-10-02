@@ -219,9 +219,11 @@ def test_noisy_qfunction_applies_noise_before_the_head(config):
     a, b = first.q_values(obs), first.q_values(obs)
     assert not np.array_equal(a, b)
     np.testing.assert_array_equal(NoisyQFunction(fast, shot, rng=3).q_values(obs), a)
-    # same greedy action wherever the gap is far above the shot noise
+    # same greedy action wherever the gap is far above the shot noise: 4 sigma
+    # of the difference of two readouts at 256 shots (sigma <= 1/16 in <Z>
+    # each), in the Q units of this driver's own output head
     gap = np.diff(np.sort(fast.q_values(obs), axis=1)[:, -2:], axis=1)[:, 0]
-    clear = gap > 12.0  # ~ 4 sigma of the difference of two readouts at 256 shots
+    clear = gap > 4.0 * np.sqrt(2.0) * np.max(np.abs(fast.w)) / np.sqrt(256)
     assert clear.any()
     np.testing.assert_array_equal(np.argmax(a, axis=1)[clear],
                                   np.argmax(fast.q_values(obs), axis=1)[clear])

@@ -1,11 +1,68 @@
 {
   "agent": "quantum",
   "track": "gp",
-  "config_hash": "038a66243191",
-  "episodes": 1950,
+  "config_hash": "07a79330d7a8",
+  "episodes": 2700,
   "stage": 4,
-  "eval_episodes": 4,
-  "eval_laps": 7,
-  "eval_best_lap": 23.2,
-  "date": "2026-07-11"
+  "run": {
+    "seed": 7,
+    "episodes": 3000,
+    "best_episode": 2700,
+    "driver": "quantum_gp.npz",
+    "driver_sha256": "a48616cda92ef05ffb8df8bb18d063ad9d825f53b6b71f004eb06b61371c3d3a",
+    "reproduces_driver": true
+  },
+  "eval_episodes": 12,
+  "eval_lapped": 12,
+  "eval_mean_lap": 27.929,
+  "eval_best_lap": 26.8,
+  "eval_mean_return": 1068.274,
+  "eval_acting_noise": null,
+  "exact_eval": {
+    "episodes": 36,
+    "eval_seed": 20000,
+    "lapped": 36,
+    "laps": 72,
+    "mean_lap": 27.93,
+    "best_lap": 26.8
+  },
+  "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+  },
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      0.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 4
+  },
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 3000,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.99,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.3,
+    "epsilon_decay_episodes": 2000,
+    "n_parallel_envs": 8,
+    "seed": 7,
+    "warm_start": false,
+    "bootstrap_truncation": true
+  },
+  "provenance": "snapshot at episode 2700 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_gp.npz",
+  "date": "2026-10-02"
 }

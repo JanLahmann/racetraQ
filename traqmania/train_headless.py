@@ -250,7 +250,7 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     if actions is not None:
         config.setdefault("circuit", {})["n_actions"] = int(actions)
     if preset == "auto":
-        training_cfg = resolve_training_cfg(config, track_name)
+        training_cfg = resolve_training_cfg(config, track_name, agent=agent)
     else:
         training_cfg = dict(config["training"])
     if pace:

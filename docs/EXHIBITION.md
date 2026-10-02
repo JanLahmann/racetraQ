@@ -28,7 +28,7 @@ which ship Qiskit preinstalled. Use the matching profile:
 The Pi profiles lower the broadcast rate to 15 Hz and telemetry to 5 Hz and
 shrink training batches (pi4 also drops default episodes to 150). For live
 training on a Pi, always tick **Warm start** — cold training on a Pi 4 is a
-coffee break, warm-start is seconds.
+coffee break; a warm start skips most of it.
 
 Or containerized (the image is multi-arch and built on a QuBins base):
 
@@ -80,25 +80,30 @@ and the UI reports a clear error if selected rather than crashing. Live
 training works on any track, and the oval ships a 6-qubit warm-start
 checkpoint and evolution stages too. Hardware mode needs no special
 handling: the simulated device (`fake_miami`, 120 qubits) fits every size
-and simulates just the 6 physical qubits the circuit lands on — and the
-6-qubit oval driver is the one to show there (see "Hardware-mode
-prerequisites"). 8- and 10-qubit oval/chicane weights ship as well — the
-q10 oval driver's 12.0 s is the fastest quantum lap in the demo (at ~5–9 ms
-per decision instead of <1 ms) — and at 10 qubits even **gp** has a bundled
-driver: it senses 5 rays plus four engineered track features (the gauge
-labels change accordingly when it drives), and laps at 20–22 s.
-<!-- RESULTS-PENDING: lap times of the retrained 8/10-qubit drivers quoted in this paragraph -->
+and simulates just the 6 physical qubits the circuit lands on, and the
+6-qubit oval driver completes its lap there (see "Hardware-mode
+prerequisites"). 8- and 10-qubit oval/chicane weights ship as well. The
+8-qubit drivers are new: five layers instead of four, mean lap 13.4 s on
+the oval and 12.6 s on chicane, a lap in 72 of 72 test episodes each. The
+10-qubit drivers are still the July 2026 files — four layers, so every
+action is blind to three of the ten inputs — and lap in 34 of 36 test
+episodes each. At 10 qubits even **gp** has a bundled driver, also from
+July: it senses 5 rays plus four engineered track features (the gauge
+labels change accordingly when it drives) and laps in 24 of 36 test
+episodes at about 22 s.
+<!-- RESULTS-PENDING: 10-qubit oval and chicane drivers — rewrite the two sentences above once the q10_oval / q10_chicane studies (4 vs 6 layers, seeds 0-5) have finished and the drivers are re-bundled -->
 
-Talking point — what the audit found, which is the better story anyway:
+Talking point — what the audit found, and what the re-measurement says:
 *"With four layers, each action's readout only sees inputs within three
 qubits of its own. At 4 and 6 qubits that is everything. At 8 qubits every
 action misses one input — the Brake action cannot see the speed — and at 10
-qubits three. The bigger circuits were driving partly blind, and our own
-'more qubits don't help much' result was measured that way. We found it by
-checking our own work; the corrected runs use more layers."* Do not quote
-the old scaling line ("sample efficiency stays flat from 4 to 10 qubits")
-as a result until it has been re-measured.
-<!-- RESULTS-PENDING: scaling talking point from the re-measured, fully visible 8/10-qubit circuits -->
+qubits three. The bigger circuits were driving partly blind; we found it by
+checking our own work. The 8-qubit drivers now have a fifth layer, and with
+it training became more reliable. It did not make the car faster: six
+qubits is where this circuit does best, and a small classical network with
+the same sensors is still ahead of it."* The numbers behind that are six to
+eight training runs per size (SCIENCE.md, "Scaling and the light cone"). Do
+not quote a 10-qubit scaling result: that study has not finished.
 `python -m traqmania.agents.quantum.lightcone --qubits 8` prints the map if
 a physicist asks.
 
@@ -115,19 +120,21 @@ A narrative that works cold, in order. Controls for the race segment:
    biggest one steers the car."* Point at a corner: watch the brake action
    win just before the hairpin.
 
-2. **Train — "watch it learn its first lap in seconds"** (~1 min).
+2. **Train — "watch it learn its first lap"** (~1 min).
    Mode **Train** → agent *Quantum* → tick **Warm start** → *Start
-   training*. Eight cars flail, the return curve climbs, and the first clean
-   lap lands in a couple of seconds (measured ~2.2 s on oval, ~2.7 s on
-   chicane, ~9 s on combo); the best-lap banner fires as laps keep
-   improving. Mention: *"This is real double-DQN training against a
-   simulated version of the circuit — the approach of the 2020 quantum-RL
-   paper by Chen et al., co-authored at IBM Research, that this demo
-   follows."* (Without warm start a full cold run on oval is ~18 s to the
-   first clean lap — still demoable; on a Pi, warm only. gp's warm training
-   is a coin flip — it laps in ~20–40 s on most seeds but can miss outright,
-   so prefer the other three tracks for a guaranteed payoff.)
-   <!-- RESULTS-PENDING: warm-start and cold first-lap times after the retrain -->
+   training*. Eight cars flail, the return curve climbs, the first clean
+   lap lands, and the best-lap banner fires as laps keep improving.
+   Mention: *"This is real double-DQN training against a simulated version
+   of the circuit — the approach of the 2020 quantum-RL paper by Chen et
+   al., co-authored at IBM Research, that this demo follows."* (Without
+   warm start a cold run on the oval drives its first clean lap around
+   episode 260 — anywhere from 184 to 475 over ten training runs, so in
+   two of the ten later than the 400 episodes of a default live run. On a
+   Pi, warm only. gp and combo are the hard tracks: cold, the first clean
+   lap comes around episode 1770 on gp, and on combo only 6 of 10 training
+   runs drove one at all — train oval or chicane live for a payoff you can
+   count on.)
+   <!-- RESULTS-PENDING: warm-start — wall-clock times to the first clean lap, warm and cold, per track, after the retrain (being re-measured together with the regenerated warm-start checkpoints); quote them here -->
 
 3. **Evolution — "the same circuit at four ages"** (~30 s).
    Mode **Evolution**: four numbered, colour-coded cars drive weights
@@ -153,23 +160,30 @@ A narrative that works cold, in order. Controls for the race segment:
    execution mode, the two-qubit gate count (12) and the shots per job; then
    the run replays next to a simulator car driving the same weights.
    **Know what will happen before you press the button.** On the default
-   track and size (oval, 4 qubits) the noisy car leaves the track after a
-   few seconds — 0 laps in 14 runs when we measured it. That is the honest
-   result, and it demos well if you say it first: *"Same circuit, same
-   weights — the only change is who executes it. The exact simulator laps;
-   with real-device noise and only 1024 measurements per decision, this
-   driver's four action values get close enough to swap places, and one
-   wrong decision ends the lap. Training the policy to keep a wider margin
-   between its action values fixes that in most of our test runs; the
-   driver you are watching has not been retrained that way yet."* If you
-   want a completed lap instead, set Qubits to 6 (or start
-   with `--profile q6`) and stay on the oval (13 of 13 runs lapped);
-   **chicane** at 4 qubits lapped in 12 of 20. Do not say "with a token this
-   runs on a real quantum computer" as if it were routine: the code path
-   exists, but a full lap on a physical device is ~150 queued jobs and this
-   documentation reports none.
-   <!-- RESULTS-PENDING: which bundled drivers complete a simulated-device lap after the retrain; update the track/profile recommendation here, in step 1 of "Hardware-mode prerequisites" and in the Troubleshooting entry about the hardware car leaving the track -->
-   A completed lap takes ~20–30 s wall-clock (0.1–0.2 s per decision).
+   track and size (oval, 4 qubits) the car now completes its lap: that
+   driver lapped in 24 of 24 simulated-device episodes when we measured it,
+   and so did **chicane** at 4 qubits and the **oval at 6 qubits**. Say
+   why, because that is the interesting part: *"Same circuit, same weights
+   — the only change is who executes it. With real-device noise and only
+   1024 measurements per decision, the four action values blur. A driver
+   trained on a perfect simulator often lets two of them sit so close that
+   they swap places, and one wrong decision ends the lap — the driver we
+   shipped until October 2026 got round in none of 14 tries. This one was
+   trained to keep a wide margin between its action values, with that
+   noise already in the loop."* Stay on those three combinations. The
+   other bundled drivers were not trained that way and are a gamble on the
+   device:
+   chicane at 6 qubits lapped in 11 of 12 device episodes, gp at 4 qubits
+   in 9 of 12, combo in 4 of 12, the universal driver in 9 of 12 on the
+   oval and in 3 of 12 on chicane; the 8- and 10-qubit drivers were not
+   measured.
+   Do not say "with a token this runs on a real quantum computer" as if it
+   were routine: the code path exists, but a full lap on a physical device
+   is ~140 queued jobs and this documentation reports none. What you are
+   showing is a calibration snapshot of a real device, simulated.
+   A lap is about 140 decisions: ~20–30 s wall-clock on an idle laptop
+   (0.1–0.2 s per decision), and a minute or more when the CPU is busy
+   with something else (0.4 s per decision in our last check).
 
 ## Per-mode talking points
 
@@ -183,16 +197,23 @@ A narrative that works cold, in order. Controls for the race segment:
   specialist on the oval to show zero-shot transfer, or pick *universal* (one
   circuit trained on all four tracks at once).
 - **Surprise tracks (🎲 random):** every roll is a fresh procedurally
-  generated circuit with hairpins and chicanes; the universal weights drive
-  it. Type a seed (shown in the track label) to reload a favourite; the size
-  dropdown gives short/medium/long layouts. Long tracks are for driving and
-  watching, not training.
+  generated circuit with hairpins and chicanes. **Set the Driver dropdown
+  to *gp* first.** By default the universal weights drive it, and the
+  universal driver bundled since October 2026 laps the four bundled tracks
+  but none of the ten generated tracks we tested (0 of 120 episodes); the
+  gp specialist lapped all ten (120 of 120), at 30–40 s a lap. Type a seed
+  (shown in the track label) to reload a favourite; the size dropdown gives
+  short/medium/long layouts. Long tracks are for driving and watching, not
+  training.
 - **Draw your own (✏️):** the crowd-pleaser — let a visitor sketch a loop on
-  the race view; the server smooths it into a drivable track and the same
-  universal circuit drives it zero-shot. Impossible drawings come back with a
-  friendly hint (open loop, crossing, too-tight corners); drawing again is
-  the adjust flow. Talking point: *"the agent has never seen this track —
-  the egocentric lidar view is why one driver generalizes."*
+  the race view; the server smooths it into a drivable track and the agent
+  drives it zero-shot. Same advice as for 🎲: keep the Driver dropdown on
+  *gp* (drawn tracks were not measured separately; they use the same
+  default driver). Impossible drawings come back with a friendly hint (open
+  loop, crossing, too-tight corners); drawing again is the adjust flow.
+  Talking point: *"this driver was trained on a single track and has never
+  seen yours — it only ever sees three distance rays and its speed, and
+  that is why it can drive a track it was not trained on."*
 - **Sharing the demo (driver lock + turn queue):** when several browsers are
   connected — a public deployment, or visitors' phones plus the booth screen
   — only one client at a time holds the wheel: the first to interact.
@@ -204,10 +225,13 @@ A narrative that works cold, in order. Controls for the race segment:
   kiosk — a solo driver has no time limit and never notices any of it.
 - **Train:** double DQN, epsilon-greedy, replay buffer — the classical RL
   recipe, with the neural network swapped for a quantum circuit. Choosing
-  *Both* races quantum vs MLP learning curves live. Honest line: *"similar
-  learning in the runs we have, no speedup — the interesting part is that a
-  56-parameter quantum model does this at all. And it can be simulated
-  classically, so nobody should call this quantum advantage."* If the lap
+  *Both* races quantum vs MLP learning curves live. Honest line: *"the
+  small classical network learns the easy tracks in about half the
+  episodes and more steadily, and it drives the hard ones faster — we
+  measured that over eight to ten training runs each. The interesting part
+  is that a 56-parameter quantum model does this at all. And it can be
+  simulated classically, so nobody should call this quantum advantage."* If
+  the lap
   times get worse again after a good lap: that is real. This kind of
   training is not stable on the hard tracks, which is why the saved driver
   is the best snapshot along the way, not the last one.
@@ -227,8 +251,9 @@ A narrative that works cold, in order. Controls for the race segment:
   the measured loss got worse, and a step that would make the driver
   clearly worse on the exact simulator is refused before a job is spent on
   it. Present it as a demonstration of the mechanics, not as a way to
-  improve the driver. What we measured on the simulated device with the
-  default oval driver: in 20 seeded ten-iteration sprints it took between 0
+  improve the driver. What we measured on the simulated device in October
+  2026, with the oval driver bundled before the retrain (not re-measured
+  with the current one): in 20 seeded ten-iteration sprints it took between 0
   and 8 of the 10 steps, never lost the simulator's greedy return (the
   simulator check guarantees that) and lowered the hardware loss clearly in
   15 — but the adjusted driver lapped the simulated device no more often
@@ -243,8 +268,8 @@ A narrative that works cold, in order. Controls for the race segment:
   with no SWAPs, and the gates that cannot reach a readout are pruned) and
   the **mitigation level** (raw device noise by default: what you see is
   what the device would give). What the visitor should take away: the
-  circuit is small enough for today's devices; the *policy* is not yet
-  robust enough for their noise.
+  circuit is small enough for today's devices, and whether the *policy*
+  survives their noise depends on how it was trained.
 
 ## Expert mode: the hero driver
 
@@ -255,26 +280,29 @@ family of candidate racing lines and physics-derived braking/speed profiles
 straight from the track geometry, picks the fastest combination by simulating
 itself with the real car physics (crash-free laps only), and tracks it with
 continuous steering — the "perfect drive" ceiling for this car model.
-Measured (physics v2): oval 12.1 s, chicane 12.1 s, gp 16.4 s, combo 19.0 s
-— ahead of every learned driver everywhere it takes skill (the pro driver
-edges it by 0.2 s on the flat-out oval, which is pure path geometry) — and
-it handles every generated and drawn track, adapting to physics changes with
-no retraining. Two talking points: the learned agents' gap to this ceiling
-is mostly the 4-action bang-bang control, not intelligence, and the hero's
-line visibly differs (wide entries into hairpins, earlier braking). Notes:
-the first hero lap on a track pauses ~5-8 s while the candidate search runs
-(cached afterwards), and hero laps never become ghost records — the record
-board stays reserved for learned and human drivers.
+Best laps, re-measured in October 2026: oval 12.1 s, chicane 12.1 s, gp
+16.5 s, combo 19.0 s — the pace target for every learned driver — and it
+adapts to physics changes with no retraining. Operator note: do not promise
+that it never crashes. From the randomised start positions of our
+evaluation it lapped in 12 of 12 runs on oval, chicane and gp but left the
+track before the first lap in 6 of 12 on combo, and on one of seven
+generated tracks. One talking point: the hero's line visibly differs (wide
+entries into hairpins, earlier braking). Notes: the first hero lap on a
+track pauses ~5-8 s while the candidate search runs (cached afterwards),
+and hero laps never become ghost records — the record board stays reserved
+for learned and human drivers.
 
 Expert mode also offers **pro — big classical DQN**: the biggest classical
 agent we train, with the exact same double-DQN recipe as every other agent —
 just more parameters (a wide MLP) and a richer observation (9 lidar rays,
 speed and four track-aware scalars), trained on all four tracks at once
-(5000 episodes under v2; seed 0). Measured: oval 11.9 s, chicane 12.4 s,
-gp 17.8 s, combo 20.4 s and 10/10 generated tracks — the strongest learned
-driver in the demo, 1–1.4 s behind the hero on the hard tracks. That gap is
-the 4-action control interface, not model size.
-<!-- RESULTS-PENDING: pro driver lap times after the retrain (the hero is model-based and does not change) -->
+(5000 episodes; the best of three training runs). Best laps: oval 12.1 s,
+chicane 12.5 s, gp 16.5 s, combo 19.1 s — level with the hero on oval and
+gp, 0.1 and 0.4 s behind on combo and chicane — and a lap in 144 of 144
+test episodes, plus 23 of 24 on eight generated tracks. The talking point
+changed with the re-measurement: the pro driver steers with the same four
+on/off actions as the quantum driver, so what separates the small agents
+from the ceiling is sensing and model size, not the controls.
 
 ## Hardware-mode prerequisites
 
@@ -292,10 +320,10 @@ a real 120-qubit Nighthawk processor (square lattice, CZ gates), of which
 only the handful of physical qubits the circuit lands on are simulated.
 The operator steps:
 
-1. Pick the track and size that will complete a lap (today: **oval** at
-   6 qubits; **chicane** at 4 qubits laps more often than not; the default
-   oval/4-qubit driver leaves the track after a few seconds — see step 5
-   of the demo).
+1. Pick a track and size whose driver was trained for device noise:
+   **oval** or **chicane** at 4 qubits (the default size), or the **oval**
+   at 6 qubits. Each lapped in 24 of 24 simulated-device episodes; the
+   other bundled drivers are a gamble (step 5 of the demo has the counts).
 2. Mode **Hardware** → backend *Simulated device* → **Run hardware lap**.
 3. Read the panel: backend (`fake_miami (4-qubit patch: physical qubits
    …)`), execution mode (*session (dedicated)*), two-qubit gates, circuit
@@ -313,7 +341,8 @@ resilience_level = 1       # 0 raw noise (default) | 1 TREX | 2 TREX + ZNE with 
 ```
 
 (The rescale helped drivers with moderate decision margins in our tests,
-not the default oval driver — SCIENCE.md, "Why it fails, and what helps".)
+not a driver with knife-edge margins — SCIENCE.md, "Why a driver fails
+under noise, and what helps". The three drivers of step 1 do not need it.)
 
 `fake_manila` / `fake_lagos` (the retired 5- and 7-qubit Falcon devices
 the demo used before October 2026) still work the same way.
@@ -330,22 +359,24 @@ busy). What to expect:
   run only in job mode or batch mode"). The demo falls back to a Batch,
   then to plain jobs, and shows the reason in the panel. Without a Session
   every decision waits in the queue like any other job, so a full lap of
-  ~150 decisions is not a booth activity; cap it (`--max-decisions 5`) to
+  ~140 decisions is not a booth activity; cap it (`--max-decisions 5`) to
   prove the loop closes.
 - **The device will be a Heron** (heavy-hex) on the Open Plan as far as
   IBM's changelog shows; the SWAP-free Nighthawk embedding needs a paid
   plan. Expect the two-qubit gate count in the panel to be higher than on
   the simulated Nighthawk.
-- **Do not promise a lap.** The default driver does not survive the
-  simulated device's noise; there is no reason to expect better from the
-  real one.
+- **Do not promise a lap.** The drivers of step 1 lap on a *simulated*
+  Nighthawk snapshot at 12 two-qubit gates (17 at 6 qubits). A real Heron
+  runs more gates, drifts, and has not been tried: nothing here says what
+  it will do.
 
 For a booth: run the simulated device live and describe the real path
 truthfully, or pre-run the CLI and show the transcript:
 
 ```sh
-python -m traqmania.hardware lap --track oval --fake --profile q6   # simulated Nighthawk
+python -m traqmania.hardware lap --track oval --fake                # simulated Nighthawk, 4 qubits
 python -m traqmania.hardware lap --track chicane --fake
+python -m traqmania.hardware lap --track oval --fake --profile q6   # 6 qubits
 python -m traqmania.hardware lap --track chicane --fake-name fake_fez --resilience 1
 python -m traqmania.hardware lap --track chicane --fake --no-prune   # full circuit, 16 CZ
 python -m traqmania.hardware sprint --track oval --fake --iterations 20
@@ -402,10 +433,12 @@ installed (`pip install -e ".[hardware]"`); `unknown fake backend …` means
 `[hardware] fake_name` names a device this runtime version does not ship —
 the message lists the ones it does.
 
-**The hardware car leaves the track after a few seconds:** expected for the
-default oval / 4-qubit driver under device noise — not a bug in your setup.
-Use 6 qubits on the oval (see prerequisites); chicane at 4 qubits also
-fails in roughly 4 runs of 10.
+**The hardware car leaves the track after a few seconds:** on oval or
+chicane at 4 qubits and on the oval at 6 that should be rare now (24 laps
+in 24 measured episodes each) — check that the bundled weights were not
+overwritten by a local training run (`git status traqmania/weights`). On
+any other track or size it is expected: those drivers were not trained for
+device noise (see step 5 of the demo).
 
 **The panel shows "Session unavailable … using a Batch" (or job mode):** the
 IBM account cannot open a Session — normal on the free Open Plan. The run

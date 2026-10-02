@@ -11,7 +11,8 @@ or let the script manage its own server process::
 
 Exercises the full pinned protocol: welcome payload, attract mode (moving
 quantum car + quantum introspection messages), the live qubit switch
-(4 -> 6 drives, 8 degrades car-less, back to 4), evolution mode (labelled
+(4 -> 6 -> 8 drive, a track without 8-qubit weights degrades car-less, back
+to 4), evolution mode (labelled
 training-stage cars), set_track, MLP training to completion, warm-started
 quantum training with lap telemetry (lap_times / best_lap_s / new_best_lap),
 a human-vs-quantum race with keyboard input, analog (gamepad-style) input and
@@ -186,7 +187,7 @@ def _check_drives(cars: list[dict], n_rays: int, what: str) -> None:
 
 
 async def verify_qubit_switch(c: Client) -> None:
-    print("[ws] live qubit switch: 4 -> 6 (drives) -> 8 (untrained, degraded) -> 4")
+    print("[ws] live qubit switch: 4 -> 6 (drives) -> 8 (drives; gp untrained, degraded) -> 4")
     await c.send(type="qubits", n=6)
     welcome = await c.wait_for(lambda m: m["type"] == "welcome",
                                timeout=60, desc="welcome after qubits=6")
@@ -200,26 +201,40 @@ async def verify_qubit_switch(c: Client) -> None:
     check(welcome["mode"] == "attract", "qubit switch resets to attract mode")
     _check_drives(await _attract_quantum_cars(c), n_rays=5, what="q6")
 
-    # 8 qubits has no bundled oval weights: switch succeeds but degrades to a
-    # car-less attract mode, with the existing weight-missing error alongside.
+    # 8 qubits: the bundled oval driver drives on 7 rays, at its own depth
     await c.send(type="qubits", n=8)
-    errors: list[dict] = []
-
-    def until_welcome(m: dict) -> bool:
-        if m["type"] == "error":
-            errors.append(m)
-        return m["type"] == "welcome"
-
-    welcome = await c.wait_for(until_welcome, timeout=60, allow_errors=True,
-                               desc="welcome after qubits=8")
-    check(welcome["circuit_spec"]["n_qubits"] == 8, "q8 welcome.circuit_spec.n_qubits == 8")
+    welcome = await c.wait_for(lambda m: m["type"] == "welcome",
+                               timeout=60, desc="welcome after qubits=8")
+    spec = welcome["circuit_spec"]
+    check(spec["n_qubits"] == 8, "q8 welcome.circuit_spec.n_qubits == 8")
+    check(spec["n_params"]["total"] == 3 * spec["n_layers"] * 8 + 8,
+          f"q8 circuit has 3 * {spec['n_layers']} * 8 + 8 params ({spec['n_params']['total']})")
     check(len(welcome.get("obs_labels") or []) == 8, "q8 welcome.obs_labels lists 8 features")
-    check(any("_q8.npz" in e.get("message", "") for e in errors),
-          f"missing q8 weights reported via the existing error path ({len(errors)} error(s))")
+    _check_drives(await _attract_quantum_cars(c), n_rays=7, what="q8")
+
+    # ... but no 8-qubit gp driver is bundled: the track switch succeeds and
+    # degrades to a car-less attract mode, with the weight-missing error alongside.
+    await c.send(type="set_track", track="gp")
+    seen: dict[str, list[dict]] = {"error": [], "track": []}
+
+    def until_track_and_error(m: dict) -> bool:
+        if m["type"] in seen:
+            seen[m["type"]].append(m)
+        return bool(seen["error"]) and bool(seen["track"])
+
+    await c.wait_for(until_track_and_error, timeout=60, allow_errors=True,
+                     desc="track msg + weight-missing error (gp at 8 qubits)")
+    check(seen["track"][-1]["track"]["name"] == "gp", "q8: set_track gp switched the track")
+    check(any("_q8.npz" in e.get("message", "") for e in seen["error"]),
+          "missing q8 gp weights reported via the existing error path "
+          f"({len(seen['error'])} error(s))")
     states = [m for m in await c.collect(1.5) if m["type"] == "state"]
     check(len(states) >= 5, f"degraded q8 attract keeps broadcasting ({len(states)} states)")
     check(all(car_by_kind(s, "quantum") is None for s in states),
-          "no live quantum car at the untrained qubit count")
+          "no live quantum car on a track without weights at this qubit count")
+    await c.send(type="set_track", track="oval")
+    await c.wait_for(lambda m: m["type"] == "track" and m["track"]["name"] == "oval",
+                     timeout=30, desc="track msg (back to oval)")
 
     await c.send(type="qubits", n=4)
     welcome = await c.wait_for(lambda m: m["type"] == "welcome",

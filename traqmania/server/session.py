@@ -931,7 +931,7 @@ class DemoSession:
                 self._error(f"warm-start weights '{warm_path.name}' not found; "
                             "training quantum from scratch")
                 warm_path, warm = None, False
-        tcfg = resolve_training_cfg(self.config, self.track_name, warm)
+        tcfg = resolve_training_cfg(self.config, self.track_name, warm, agent=agent)
         if agent != "quantum":
             # [training] act_noise is noise on the circuit's readout
             # expectations; the classical baseline trains without it

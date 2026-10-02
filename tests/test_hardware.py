@@ -974,9 +974,18 @@ def test_sprint_targets_follow_the_recipe_the_weights_were_trained_with(tmp_path
     import json
 
     config = load_config()
+    # no sidecar: the config's [training], which is the plain double-DQN target
+    plain_recipe = {"gamma": config["training"]["gamma"], "action_gap": 0.0,
+                    "reward_scale": 1.0}
+    assert hardware._td_recipe(tmp_path / "quantum_oval.npz", config) == plain_recipe
+    # the bundled oval driver brings the recipe its sidecar records (since the
+    # October 2026 re-bundling: advantage learning, action_gap 0.8)
+    recorded = json.loads(OVAL_WEIGHTS.with_suffix("").with_suffix(".meta.json")
+                          .read_text(encoding="utf-8"))["training"]
     assert hardware._td_recipe(OVAL_WEIGHTS, config) == {
-        "gamma": config["training"]["gamma"], "action_gap": 0.0, "reward_scale": 1.0}
-    config["training"]["action_gap"] = 0.5  # no sidecar recipe: the config's
+        "gamma": recorded["gamma"], "action_gap": recorded.get("action_gap", 0.0),
+        "reward_scale": recorded.get("reward_scale", 1.0)}
+    config["training"]["action_gap"] = 0.5
     assert hardware._td_recipe(tmp_path / "quantum_oval.npz", config)["action_gap"] == 0.5
     weights = tmp_path / "quantum_oval.npz"
     weights.with_suffix("").with_suffix(".meta.json").write_text(json.dumps(
@@ -988,8 +997,7 @@ def test_sprint_targets_follow_the_recipe_the_weights_were_trained_with(tmp_path
     fast = QuantumQFunction(config["circuit"], seed=42)
     fast.set_params(np.load(OVAL_WEIGHTS)["params"])
     obs, act, plain = hardware._collect_batch(fast, "oval", config, 16, 42)
-    same = hardware._collect_batch(fast, "oval", config, 16, 42,
-                                   recipe=hardware._td_recipe(OVAL_WEIGHTS, config))
+    same = hardware._collect_batch(fast, "oval", config, 16, 42, recipe=plain_recipe)
     np.testing.assert_array_equal(same[2], plain)  # the default recipe changes nothing
     obs_g, act_g, gapped = hardware._collect_batch(
         fast, "oval", config, 16, 42,

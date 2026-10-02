@@ -74,6 +74,22 @@ def expected_spec(profile, **circuit):
     return circuit_spec(config)
 
 
+# The depth of the SHIPPED q8 profile (5 blocks since October 2026, 4 before).
+# Tests that reach the profile through the code under test (records, the qubit
+# switch, the hardware tool) take their "other" depth relative to it.
+Q8_DEPTH = int(load_config("q8")["circuit"]["n_layers"])
+
+
+def q8_config(n_layers=4):
+    """The 8-qubit profile at an EXPLICIT circuit depth.  These tests are about
+    drivers whose depth differs from the profile's (and about the blind spots
+    of 4 blocks at 8 qubits), so they build that profile themselves instead of
+    relying on the depth the shipped q8.toml happens to have."""
+    config = load_config("q8")
+    config["circuit"]["n_layers"] = n_layers
+    return config
+
+
 @pytest.fixture()
 def weights_dir(tmp_path, monkeypatch):
     """An empty weights dir every loader resolves against."""
@@ -170,7 +186,7 @@ def test_resolver_refuses_what_fits_no_depth(tmp_path):
 
 def test_with_weights_circuit_overlays_a_copy(tmp_path):
     write_driver(tmp_path, "quantum_oval_q8", 8, 5)
-    config = load_config("q8")
+    config = q8_config(4)
     resolved = with_weights_circuit(config, tmp_path / "quantum_oval_q8.npz")
     assert resolved["circuit"]["n_layers"] == 5 and resolved["circuit"]["n_actions"] == 4
     assert config["circuit"]["n_layers"] == 4 and "n_actions" not in config["circuit"]
@@ -207,14 +223,16 @@ def test_every_bundled_driver_resolves_and_keeps_its_q_values():
 
 def test_load_agent_and_records_use_the_weights_depth(weights_dir):
     params = write_driver(weights_dir, "quantum_oval_q8", 8, 5)
-    agent = load_agent("quantum", "oval", config=load_config("q8"))
+    agent = load_agent("quantum", "oval", config=q8_config(4))
     assert agent.n_layers == 5
     assert np.array_equal(agent.q_values(OBS8), direct_q(params, 8, 5, OBS8))
-    config = _quantum_config(8, weights_dir / "quantum_oval_q8.npz")
-    assert config["circuit"]["n_layers"] == 5
-    # 4-block weights (no sidecar, like the files bundled so far): the plain
-    # profile, untouched
-    write_driver(weights_dir, "quantum_chicane_q8", 8, 4)
+    # records resolves the shipped q8 profile itself: a driver one block deeper
+    deeper = Q8_DEPTH + 1
+    write_driver(weights_dir, "quantum_gp_q8", 8, deeper)
+    config = _quantum_config(8, weights_dir / "quantum_gp_q8.npz")
+    assert config["circuit"]["n_layers"] == deeper
+    # weights at the profile's own depth (no sidecar): the plain profile, untouched
+    write_driver(weights_dir, "quantum_chicane_q8", 8, Q8_DEPTH)
     assert _quantum_config(8, weights_dir / "quantum_chicane_q8.npz") == load_config("q8")
 
 
@@ -223,7 +241,7 @@ def test_with_weights_config_overlays_observation_and_shape(tmp_path):
                 "features": ["rays", "speed", "curvature_ahead", "lateral_offset",
                              "heading_error", "corner_speed_ratio"]}
     write_driver(tmp_path, "quantum_gp_q8", 8, 5, sidecar={"observation": recorded})
-    config = load_config("q8")
+    config = q8_config(4)
     resolved = with_weights_config(config, tmp_path / "quantum_gp_q8.npz")
     assert resolved["observation"] == {**config["observation"], **recorded}
     assert resolved["observation"]["ray_max_dist"] == config["observation"]["ray_max_dist"]
@@ -271,9 +289,11 @@ def test_hw_reliability_tool_reports_a_sidecar_observation(tmp_path, capsys):
 def test_hw_reliability_tool_resolves_the_depth(tmp_path):
     tool = _hw_reliability_tool()
 
-    write_driver(tmp_path, "quantum_oval_q8", 8, 5)  # no sidecar: profile size, inferred depth
+    # no sidecar: profile size, inferred depth (one block more than the profile's)
+    write_driver(tmp_path, "quantum_oval_q8", 8, Q8_DEPTH + 1)
     config = tool.weights_config(tmp_path / "quantum_oval_q8.npz", "q8")
-    assert config["circuit"] == {**load_config("q8")["circuit"], "n_layers": 5, "n_actions": 4}
+    assert config["circuit"] == {**load_config("q8")["circuit"], "n_layers": Q8_DEPTH + 1,
+                                 "n_actions": 4}
     # a full sidecar still wins over the (4-qubit) default profile, size included
     features = ["rays", "speed", "curvature_ahead", "corner_speed_ratio"]
     write_driver(tmp_path, "driver", 6, 5, n_actions=6, sidecar={
@@ -369,19 +389,20 @@ def test_session_loads_and_drives_a_five_block_driver(tmp_path, weights_dir, wit
                if with_block else None)
     params = write_driver(weights_dir, "quantum_oval_q8", 8, 5, sidecar=sidecar)
 
-    session = DemoSession(load_config("q8"), ghosts_dir=tmp_path)
+    session = DemoSession(q8_config(4), ghosts_dir=tmp_path)
     msgs = session.drain_outbox()
     assert not by_type(msgs, "error")
 
     # the welcome describes the ACTIVE driver's circuit: 5 blocks, at which
-    # every action sees every feature (the profile's 4 blocks leave blind spots)
+    # every action sees every feature (this profile's 4 blocks leave blind spots)
     spec = session.welcome_payload()["circuit_spec"]
     assert spec == expected_spec("q8", n_layers=5)
     assert spec["n_layers"] == 5 and spec["n_params"]["total"] == 128
     assert len(spec["gates"]) == 4 * 5 * 8
     assert spec["min_layers_full_visibility"] == 5
     assert all(all(row) for row in spec["visibility"])
-    assert not all(all(row) for row in expected_spec("q8")["visibility"])  # 4 blocks: blind
+    blind = expected_spec("q8", n_layers=4)["visibility"]  # 4 blocks: blind
+    assert not all(all(row) for row in blind)
     assert by_type(msgs, "welcome")[-1]["circuit_spec"] == spec  # re-broadcast
 
     assert [c.kind for c in session.cars] == ["quantum"]
@@ -410,7 +431,7 @@ def test_drivers_of_different_depth_switch_both_ways(tmp_path, weights_dir):
     gp = write_driver(weights_dir, "quantum_gp_q8", 8, 6, seed=2)
     drivers = {"oval": (oval, 4), "chicane": (chicane, 5), "gp": (gp, 6)}
 
-    session = DemoSession(load_config("q8"), ghosts_dir=tmp_path)
+    session = DemoSession(q8_config(4), ghosts_dir=tmp_path)
     assert not by_type(session.drain_outbox(), "error")
     assert session.welcome_payload()["circuit_spec"]["n_layers"] == 4
 
@@ -458,7 +479,7 @@ def test_drivers_of_different_depth_switch_both_ways(tmp_path, weights_dir):
 def test_training_uses_the_profile_depth(tmp_path, weights_dir):
     write_driver(weights_dir, "quantum_oval_q8", 8, 5)
     write_driver(weights_dir, "quantum_oval_warmstart_q8", 8, 5, seed=3)
-    config = load_config("q8")
+    config = q8_config(4)  # the profile trains 4 blocks, the bundled driver has 5
     config["reward"] = dict(config["reward"], max_decisions=50)
     config["training"] = dict(config["training"], n_parallel_envs=2, replay_size=500,
                               batch_size=8)
@@ -472,7 +493,7 @@ def test_training_uses_the_profile_depth(tmp_path, weights_dir):
         assert job.trainer.qfunc.n_layers == 4
         msgs = session.drain_outbox()
         assert not by_type(msgs, "error")
-        assert by_type(msgs, "welcome")[-1]["circuit_spec"] == expected_spec("q8")
+        assert by_type(msgs, "welcome")[-1]["circuit_spec"] == expected_spec("q8", n_layers=4)
         session.handle_message(P.Train(action="stop", agent="quantum"))
         job.thread.join(timeout=30.0)
         assert not job.thread.is_alive()
@@ -501,7 +522,9 @@ def test_training_uses_the_profile_depth(tmp_path, weights_dir):
 
 def test_qubit_switch_adopts_the_depth_at_the_new_size(tmp_path, weights_dir):
     write_driver(weights_dir, "quantum_oval", 4, 4, seed=4)
-    params = write_driver(weights_dir, "quantum_oval_q8", 8, 5)
+    # the switch loads the shipped q8 profile: a driver one block deeper than it
+    depth = Q8_DEPTH + 1
+    params = write_driver(weights_dir, "quantum_oval_q8", 8, depth)
     session = DemoSession(load_config(), ghosts_dir=tmp_path)
     default_welcome = session.welcome_payload()
     session.drain_outbox()
@@ -510,10 +533,11 @@ def test_qubit_switch_adopts_the_depth_at_the_new_size(tmp_path, weights_dir):
     msgs = session.drain_outbox()
     assert not by_type(msgs, "error")
     welcome = by_type(msgs, "welcome")[-1]
-    assert welcome["circuit_spec"] == expected_spec("q8", n_layers=5)
+    assert welcome["circuit_spec"] == expected_spec("q8", n_layers=depth)
     assert len(welcome["obs_labels"]) == 8
     car = session.cars[0]
-    assert np.array_equal(car.qfunc.q_values(OBS8), direct_q(params, 8, 5, OBS8))
+    assert car.qfunc.n_layers == depth
+    assert np.array_equal(car.qfunc.q_values(OBS8), direct_q(params, 8, depth, OBS8))
     for _ in range(30):
         session.tick()
     assert not by_type(session.drain_outbox(), "error")
@@ -566,7 +590,7 @@ def test_evolution_cars_each_drive_at_their_own_depth(tmp_path, weights_dir):
 def test_parameter_count_that_fits_no_depth_is_refused_cleanly(tmp_path, weights_dir):
     np.savez(weights_dir / "quantum_oval_q8.npz", params=np.zeros(105))
     chicane = write_driver(weights_dir, "quantum_chicane_q8", 8, 5, seed=1)
-    session = DemoSession(load_config("q8"), ghosts_dir=tmp_path)
+    session = DemoSession(q8_config(4), ghosts_dir=tmp_path)
     msgs = session.drain_outbox()
     errors = by_type(msgs, "error")
     assert len(errors) == 1
@@ -576,7 +600,7 @@ def test_parameter_count_that_fits_no_depth_is_refused_cleanly(tmp_path, weights
     assert "fits no depth" in errors[0]["message"]
     assert session.cars == [] and session.mode == "attract"
     # no driver loaded: the spec shows the profile's circuit
-    assert session.welcome_payload()["circuit_spec"] == expected_spec("q8")
+    assert session.welcome_payload()["circuit_spec"] == expected_spec("q8", n_layers=4)
 
     for switch in (P.SetMode(mode="race"), P.SetMode(mode="hardware")):
         session.handle_message(switch)
@@ -626,12 +650,12 @@ def test_reference_driver_pick_still_syncs_to_the_quantum_car(tmp_path, weights_
     best = write_driver(weights_dir, "quantum_oval_q8", 8, 5, n_actions=6, sidecar=sidecar)
     write_driver(weights_dir, "quantum_oval_warmstart_q8", 8, 5, n_actions=6,
                  sidecar=sidecar, seed=1)
-    profile = load_config("q8")
+    profile = q8_config(4)
     profile_spec = circuit_spec(profile)
     profile_labels = [f"ray {a:+g}°" if a else "ray 0°"
                       for a in profile["observation"]["ray_angles_deg"]] + ["speed"]
 
-    session = DemoSession(load_config("q8"), ghosts_dir=tmp_path)
+    session = DemoSession(q8_config(4), ghosts_dir=tmp_path)
     # a stand-in controller: building the real racing line takes seconds and
     # is not what this test is about
     session._agent_cache[("hero", session.track_name, "")] = lambda state: (0.0, 0.5, 0.0)

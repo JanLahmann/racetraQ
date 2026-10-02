@@ -144,12 +144,15 @@ REGRESSION_OBS = np.array(
 # Q-values of the bundled oval weights on REGRESSION_OBS — pins the 4-qubit
 # circuit evaluation (encoding, layers, readout, output head) bit-identically.
 # Recapture deliberately whenever the bundled oval weights are retrained
-# (last: physics-v2 migration, 2026-07-11).
+# (last: 2026-10-02, the driver re-bundled from the multi-seed study
+# robust_oval, seed 0 — file sha256 1cd3f7a390b9...; before: physics-v2
+# migration, 2026-07-11).  The new driver was trained with advantage learning
+# (action_gap 0.8), hence the much wider spread between actions.
 REGRESSION_Q = np.array(
     [
-        [68.06803869594201, 76.21289851315879, 80.22702936590072, 75.7663666870574],
-        [49.32902103558478, 58.62649143055562, 81.20798678892838, 57.03215742247623],
-        [83.56407478492376, 89.77840852878973, 71.24232967208826, 81.11274348214818],
+        [2.792512117253459, 52.17848319140097, 64.4508732659587, 8.63298874025763],
+        [66.16242232076357, 27.318098850886766, 24.25005780487959, 34.2262606419251],
+        [58.82027597504587, 92.70497063832921, 104.51576611183103, 75.69505729785192],
     ]
 )
 

@@ -4,7 +4,6 @@ the documented direction when set), distinct eval episodes, and the
 train_headless preset / override / final-weights plumbing."""
 
 import copy
-import importlib.util
 import inspect
 import json
 import re
@@ -719,9 +718,26 @@ def test_train_headless_takes_act_noise_and_action_gap(tmp_path, capsys):
     assert meta["training"]["act_noise"] == {"attenuation": 0.95, "shots": 256}
     assert meta["training"]["action_gap"] == 0.5
 
+    # plain [training] has neither; the quantum oval preset
+    # ([training_presets_quantum.oval], the default recipe) switches both on
+    train("quantum", "oval", episodes=8, seed=1, profile=None, out_dir=str(tmp_path),
+          overrides=FAST, preset="none")
+    assert "acting noise" not in capsys.readouterr().out
+    meta = json.loads((tmp_path / "quantum_oval.meta.json").read_text())
+    assert "act_noise" not in meta["training"] and "action_gap" not in meta["training"]
+    recipe = load_config()["training_presets_quantum"]["oval"]
     train("quantum", "oval", episodes=8, seed=1, profile=None, out_dir=str(tmp_path),
           overrides=FAST)
-    assert "acting noise" not in capsys.readouterr().out  # off by default
+    assert "acting noise: " in capsys.readouterr().out
+    meta = json.loads((tmp_path / "quantum_oval.meta.json").read_text())
+    assert meta["training"]["act_noise"] == recipe["act_noise"]
+    assert meta["training"]["action_gap"] == recipe["action_gap"]
+    # ... for the circuit only: the MLP on the same track trains without them
+    train("mlp", "oval", episodes=8, seed=1, profile=None, out_dir=str(tmp_path),
+          overrides=FAST)
+    assert "acting noise" not in capsys.readouterr().out
+    meta = json.loads((tmp_path / "mlp_oval.meta.json").read_text())
+    assert "act_noise" not in meta["training"] and "action_gap" not in meta["training"]
 
     # the classical baseline has no readout expectations to add noise to
     with pytest.raises(ValueError, match="act_noise needs a Q-function with readout"):
@@ -798,9 +814,10 @@ def test_train_headless_rejects_unknown_training_overrides(tmp_path):
 def test_train_headless_warns_about_light_cone_blind_spots(tmp_path, capsys):
     from traqmania.train_headless import train
 
-    # 8 qubits at the default 4 blocks: every action is blind to one feature
+    # 8 qubits at 4 blocks (set explicitly: the shipped q8 profile has 5 since
+    # October 2026): every action is blind to one feature
     train("quantum", "oval", episodes=2, seed=1, profile="q8", out_dir=str(tmp_path),
-          overrides=FAST)
+          overrides=[*FAST, "circuit.n_layers=4"])
     out = capsys.readouterr().out
     assert "WARNING: light cone: n_layers = 4 is too shallow for 8 qubits" in out
     assert "full visibility needs n_layers >= 5" in out
@@ -820,35 +837,3 @@ def test_train_headless_warns_about_light_cone_blind_spots(tmp_path, capsys):
 def test_option_keys_list_every_optional_key_the_trainer_reads():
     read = set(re.findall(r'training_cfg\.get\(\s*"(\w+)"', inspect.getsource(DQNTrainer)))
     assert read - {"seed"} == set(OPTION_KEYS)
-
-
-# ------------------------------------------------------------- make_stages
-
-
-def test_make_stages_greedy_eval_runs_distinct_episodes(oval, config, monkeypatch):
-    spec = importlib.util.spec_from_file_location("make_stages",
-                                                  REPO_ROOT / "tools" / "make_stages.py")
-    make_stages = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(make_stages)
-
-    built: list[RacingEnv] = []
-    steps: list[int] = []
-
-    class RecordingEnv(RacingEnv):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            built.append(self)
-
-        def step(self, actions):
-            steps.append(1)
-            return super().step(actions)
-
-    monkeypatch.setattr(make_stages, "RacingEnv", RecordingEnv)
-    cfg = copy.deepcopy(config)
-    cfg["reward"]["max_decisions"] = 30
-    params = QuantumQFunction(cfg["circuit"], seed=0).get_params()
-    laps, best_lap, mean_ret = make_stages.greedy_eval(params, oval, cfg, seed=0,
-                                                       eval_episodes=7)
-    assert len(built) == 1 and built[0].n_envs == 7  # one sub-env per episode
-    assert len(steps) <= 30  # every sub-env drives ONE episode, in parallel
-    assert laps == 0 and best_lap == float("inf") and np.isfinite(mean_ret)

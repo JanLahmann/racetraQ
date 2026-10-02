@@ -1,14 +1,194 @@
 {
   "agent": "quantum",
-  "track": "universal",
+  "track": "multi",
+  "config_hash": "178864c5a823",
   "episodes": 3000,
-  "date": "2026-07-11",
-  "provenance": "best-snapshot of --track multi (oval+chicane+gp+combo round-robin), seed 42, 3000 episodes, gamma 0.99, epsilon decay 1500, warm-started from the physics-v1 universal weights (universal v3 for physics v2: fresh multi training laps at most 2-3 of the 4 tracks under the new physics; the warm migration is what keeps it fully universal)",
-  "greedy_eval": {
-    "oval": "best 13.0s",
-    "chicane": "best 13.3s",
-    "gp": "best 30.3s (slow but laps)",
-    "combo": "best 52.3s (slow but laps)",
-    "generated_d0.5": "10/10, best 23.0s"
+  "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+  },
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      0.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 4
+  },
+  "date": "2026-10-02",
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 3000,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.99,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.3,
+    "epsilon_decay_episodes": 2000,
+    "n_parallel_envs": 8,
+    "seed": 0,
+    "warm_start": false,
+    "bootstrap_truncation": true
+  },
+  "provenance": "best snapshot of seed 0, chosen from the 5-seed study universal variant quantum (quantum on multi, 3000 episodes, training.bootstrap_truncation=true, training.epsilon_end=0.30, training.epsilon_decay_episodes=2000, training.gamma=0.99); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; fresh greedy eval of 36 episodes per track (env seed 31000): oval laps in 36/36 episodes, best 13.1 s, mean 13.7 s; chicane laps in 36/36 episodes, best 13.2 s, mean 13.9 s; gp laps in 36/36 episodes, best 27.7 s, mean 32.2 s; combo laps in 36/36 episodes, best 37.0 s, mean 41.5 s; the recipe across its 5 seeds (IQM [95% CI]): best snapshot laps in 0.89 [0.68, 1.00] of the study's eval episodes, final params in 0.47 [0.25, 0.76], stability 0.35 [0.28, 0.48]; 5/5 seeds lap in at least half",
+  "selection": {
+    "study": "universal",
+    "variant": "quantum",
+    "profile": null,
+    "overrides": [
+      "training.bootstrap_truncation=true",
+      "training.epsilon_end=0.30",
+      "training.epsilon_decay_episodes=2000",
+      "training.gamma=0.99"
+    ],
+    "chosen_seed": 0,
+    "n_seeds": 5,
+    "rank_by": "fresh",
+    "rule": "seeds ranked by the study's 36-episode reliability eval of the best snapshot (lapped fraction, then mean lap); the top 3 re-evaluated on 36 fresh distinct greedy episodes per track (env seed 31000) and the driver chosen by that result (tracks lapped in >= 90% of the episodes, then episodes lapped); the fresh numbers are the ones recorded (they also picked among the 3 candidates, so a small selection effect remains in them)",
+    "study_eval": {
+      "episodes": 36,
+      "eval_seed": 20000
+    },
+    "source": "cells/quantum/seed0/quantum_multi.npz",
+    "weights_sha256": "c68f3fc510c26538b22e7021651c157faede6108ccd0ca4ba7ccd3eb736924e2",
+    "candidates": [
+      {
+        "seed": 0,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 18.456,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 144,
+        "fresh_episodes": 144,
+        "fresh_mean_lap": 18.545,
+        "fresh_best_lap": 13.1,
+        "fresh_tracks": {
+          "oval": 36,
+          "chicane": 36,
+          "gp": 36,
+          "combo": 36
+        },
+        "fresh_tracks_reliable": 4
+      },
+      {
+        "seed": 3,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 30.67,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 143,
+        "fresh_episodes": 144,
+        "fresh_mean_lap": 30.657,
+        "fresh_best_lap": 26.0,
+        "fresh_tracks": {
+          "oval": 36,
+          "chicane": 36,
+          "gp": 35,
+          "combo": 36
+        },
+        "fresh_tracks_reliable": 4
+      },
+      {
+        "seed": 1,
+        "study_lapped": 34,
+        "study_episodes": 36,
+        "study_mean_lap": 25.098,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 141,
+        "fresh_episodes": 144,
+        "fresh_mean_lap": 25.397,
+        "fresh_best_lap": 20.0,
+        "fresh_tracks": {
+          "oval": 36,
+          "chicane": 36,
+          "gp": 34,
+          "combo": 35
+        },
+        "fresh_tracks_reliable": 4
+      }
+    ],
+    "seed_spread": {
+      "n_seeds": 5,
+      "best_snapshot_lapped": {
+        "iqm": 0.8944,
+        "ci_low": 0.6833,
+        "ci_high": 1.0,
+        "median": 0.9444,
+        "n": 5
+      },
+      "final_params_lapped": {
+        "iqm": 0.4667,
+        "ci_low": 0.25,
+        "ci_high": 0.7583,
+        "median": 0.4167,
+        "n": 5
+      },
+      "stability": {
+        "iqm": 0.3468,
+        "ci_low": 0.281,
+        "ci_high": 0.4757,
+        "median": 0.3061,
+        "n": 5
+      },
+      "seeds_lapping_half": 5,
+      "interval": "95% percentile bootstrap of the IQM over seeds, 2000 resamples, RNG seed 0"
+    },
+    "fresh_eval": {
+      "episodes": 144,
+      "eval_seed": 31000,
+      "lapped": 144,
+      "lapped_fraction": 1.0,
+      "laps": 364,
+      "mean_lap": 18.545,
+      "best_lap": 13.1,
+      "episodes_per_track": 36,
+      "tracks_reliable": 4,
+      "reliable_fraction": 0.9,
+      "tracks": {
+        "oval": {
+          "episodes": 36,
+          "lapped": 36,
+          "lapped_fraction": 1.0,
+          "laps": 144,
+          "mean_lap": 13.689,
+          "best_lap": 13.1
+        },
+        "chicane": {
+          "episodes": 36,
+          "lapped": 36,
+          "lapped_fraction": 1.0,
+          "laps": 144,
+          "mean_lap": 13.879,
+          "best_lap": 13.2
+        },
+        "gp": {
+          "episodes": 36,
+          "lapped": 36,
+          "lapped_fraction": 1.0,
+          "laps": 40,
+          "mean_lap": 32.19,
+          "best_lap": 27.7
+        },
+        "combo": {
+          "episodes": 36,
+          "lapped": 36,
+          "lapped_fraction": 1.0,
+          "laps": 36,
+          "mean_lap": 41.467,
+          "best_lap": 37.0
+        }
+      }
+    }
   }
 }
