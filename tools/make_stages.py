@@ -32,7 +32,7 @@ from traqmania.agents.training import DQNTrainer
 from traqmania.config import load_config, resolve_training_cfg
 from traqmania.env.racing_env import RacingEnv
 from traqmania.env.track import Track
-from traqmania.server.runtime import WEIGHTS_DIR
+from traqmania.server.runtime import WEIGHTS_DIR, with_weights_circuit
 from traqmania.train_headless import config_hash
 
 N_STAGES = 4
@@ -145,8 +145,14 @@ def make_stages(track_name: str = "oval", seed: int = 42,
     track's ``_warmstart`` checkpoint (the warm live-training demo needs a
     pre-first-lap starting point), so one run per track regenerates the whole
     evolution + warm-start weight family. ``profile`` (e.g. ``q6``) trains at
-    that circuit size and names files by the usual ``_q{n}`` rule."""
+    that circuit size and names files by the usual ``_q{n}`` rule. With
+    ``init`` the run continues at the circuit depth and action count of those
+    weights (``runtime.weights_circuit``), not the profile's."""
     config = load_config(profile=profile)
+    if init is not None:
+        config = with_weights_circuit(config, init)
+        print(f"circuit shape from {init}: {config['circuit']['n_layers']} blocks, "
+              f"{config['circuit']['n_actions']} actions", flush=True)
     tcfg = resolve_training_cfg(config, track_name)
     tcfg["seed"] = seed
 

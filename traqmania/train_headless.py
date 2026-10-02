@@ -157,6 +157,48 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
     return npz_path
 
 
+def _adopt_init_circuit(config: dict, init: str | Path, explicit_layers: bool,
+                        explicit_actions: bool) -> None:
+    """``--init`` on a quantum agent: the run continues at the circuit depth
+    and action count of the init weights (``runtime.weights_circuit``: their
+    sidecar's ``circuit`` block, else their parameter count), written into
+    ``config["circuit"]`` — with one printed line when that changes anything.
+
+    A depth or action count the caller asked for EXPLICITLY (``--set
+    circuit.n_layers`` / ``circuit.n_actions``, ``--actions``) that
+    contradicts the weights raises ``ValueError``, as do weights of another
+    qubit count or of a parameter count that fits no depth.
+    """
+    from traqmania.server.runtime import weights_circuit
+
+    name = Path(init).name
+    circuit = config.setdefault("circuit", {})
+    n_qubits = int(circuit.get("n_qubits", 4))
+    have = {"n_layers": int(circuit.get("n_layers", 4)),
+            "n_actions": int(circuit.get("n_actions", min(4, n_qubits)))}
+    shape = weights_circuit(Path(init), n_qubits, circuit.get("n_actions"))
+    if shape["n_qubits"] != n_qubits:
+        raise ValueError(f"--init weights '{name}' belong to a {shape['n_qubits']}-qubit "
+                         f"circuit, but this run has [circuit] n_qubits = {n_qubits} — "
+                         "use the matching --profile")
+    if explicit_layers and shape["n_layers"] != have["n_layers"]:
+        raise ValueError(f"--init weights '{name}' have {shape['n_layers']} blocks, but "
+                         f"circuit.n_layers = {have['n_layers']} was requested — drop the "
+                         "override (the run continues at the init weights' depth) or "
+                         "start from weights of that depth")
+    if explicit_actions and shape["n_actions"] != have["n_actions"]:
+        raise ValueError(f"--init weights '{name}' use {shape['n_actions']} actions, but "
+                         f"{have['n_actions']} were requested (--actions / "
+                         "circuit.n_actions) — drop the override or start from weights "
+                         "with that action set")
+    changed = {key: shape[key] for key in have if shape[key] != have[key]}
+    if changed:
+        circuit.update(changed)
+        print(f"circuit shape from --init {name}: {shape['n_layers']} blocks, "
+              f"{shape['n_actions']} actions (config: {have['n_layers']} blocks, "
+              f"{have['n_actions']} actions)")
+
+
 def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
           profile: str | None, out_dir: str | None = None, init: str | None = None,
           history_path: str | None = None, actions: int | None = None,
@@ -169,7 +211,11 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     readout).  ``pace`` merges the ``[training_pace]`` fine-tune recipe onto
     the training config — low epsilon plus a per-decision time penalty, so the
     objective becomes lap time rather than reliable progress; meant to be
-    combined with ``--init`` on an already-lapping snapshot.
+    combined with ``--init`` on an already-lapping snapshot.  A quantum
+    ``init`` brings its circuit depth and action count along
+    (:func:`_adopt_init_circuit`); asking explicitly for another one
+    (``actions``, a ``circuit.n_layers`` / ``circuit.n_actions`` override)
+    raises instead of failing in ``set_params``.
 
     ``preset="auto"`` merges ``[training_presets.<track>]`` onto ``[training]``
     (the server's rule, :func:`traqmania.config.resolve_training_cfg`);
@@ -224,6 +270,10 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     seed = int(training_cfg["seed"])
     episodes = int(episodes) if episodes is not None else int(training_cfg["episodes"])
     training_cfg["episodes"] = episodes  # the resolved table records the actual run
+    if init is not None and agent == "quantum":
+        _adopt_init_circuit(
+            config, init, explicit_layers="circuit.n_layers" in overrides,
+            explicit_actions=actions is not None or "circuit.n_actions" in overrides)
 
     spacing = config["track"]["resample_spacing"]
     n_parallel = training_cfg["n_parallel_envs"]
@@ -353,7 +403,9 @@ def main() -> None:
                         help="RNG seed (default: [training].seed)")
     parser.add_argument("--profile", default=None, help="config profile overlay (e.g. pi5)")
     parser.add_argument("--out", default=None, help="weights output dir (default: bundled)")
-    parser.add_argument("--init", default=None, help="warm-start from a weights .npz")
+    parser.add_argument("--init", default=None,
+                        help="warm-start from a weights .npz (a quantum run continues at "
+                             "its circuit depth and action count)")
     parser.add_argument("--history", default=None,
                         help="write returns/lap summary JSON to this path")
     parser.add_argument("--actions", type=int, default=None, choices=[4, 6, 8],

@@ -70,7 +70,7 @@ flowchart LR
 | `traqmania/hardware.py` | IBM Quantum via `qiskit-ibm-runtime`, real or simulated. `get_backend` (real QPU, or a fake by name — default `fake_miami`, a Nighthawk calibration snapshot; unknown names raise), `local_simulator` / `execution_backend` (the Aer twin of a fake, built once: fakes of up to 7 qubits whole, larger devices — the 120–156-qubit ones above all — as a *device patch* of just the physical qubits the routed circuit touches), `open_execution_mode` (Session → Batch → job fallback, with the reason), `HardwareQFunction` (inference-only; light-cone-pruned ISA circuit, client-side `executor_estimator.Estimator` with `EstimatorV2` fallback, `resilience_level` 0/1/2, optional calibrated attenuation `rescale`), `run_hardware_lap`, `spsa_sprint` (by default: output head only, blocking, and a guard that vetoes steps costing more than 10 % of the exact-simulator greedy return; TD targets follow the recipe in the weights' sidecar; the result lists `accepted` and `vetoed` per iteration, and `sprint_steps_text` words them). CLI: `python -m traqmania.hardware lap|sprint [--track T] [--profile q6] [--fake] [--fake-name NAME] [--backend NAME] [--weights W.npz] [--shots N] [--resilience 0|1|2] [--rescale off|global|readout] [--no-prune]`, plus `--max-decisions N` for a lap and `--iterations N --batch N --groups lam,theta,head --no-blocking --no-guard` for a sprint. `[hardware]` config: `backend_name`, `fake_name`, `shots`, `decision_shots`, `spsa_iterations`, `spsa_groups`, `spsa_blocking`, `spsa_guard`, `resilience_level`, `prune_light_cone`, `rescale`, `calibration_samples`, `calibration_shots`. |
 | `traqmania/server/protocol.py` | Typed WS messages; strict client-side validation (`ProtocolError`). |
 | `traqmania/server/session.py` | `DemoSession`: the mode state machine and synchronous 60 Hz `tick()`; training threads; ghost recording. |
-| `traqmania/server/runtime.py` | Loading bundled agents/weights/tracks/ghosts, track payloads; re-exports `config.resolve_training_cfg`. |
+| `traqmania/server/runtime.py` | Loading bundled agents/weights/tracks/ghosts, track payloads; what a weights file brings along (`weights_observation`, `weights_actions`, `weights_circuit`: its circuit depth and action count; `with_weights_config` overlays all of it on a config); re-exports `config.resolve_training_cfg`. |
 | `traqmania/server/ws.py` | Connection `Hub`, broadcast fan-out, per-socket receive loop, `DriverLock` (exclusive control, spectators watch). |
 | `traqmania/server/app.py` | FastAPI factory: `/health`, `/ws`, `/api/docs` + `/api/docs/{id}` (repo markdown for the in-UI docs browser; empty outside a source checkout) and `/docs-assets` (images), static frontend mounted last. |
 | `traqmania/train_headless.py` | Offline training CLI that produces the bundled `weights/*.npz` (+ `.meta.json`, history JSON). The recipe is `[training]` with the track's `[training_presets.<track>]` merged on top (`--preset none` skips that); `--set section.key=value` overrides any config value (an unknown `training.` key is an error), `--episodes` / `--seed` win over everything, and `--save-final` also writes `<name>.final.npz`, the end-of-training parameters. The sidecar records the circuit shape, observation, action count and the resolved training table. Besides the bundled names, `--track multi` trains one policy on the oval+chicane+gp+combo mixture and `--track random` on a `MultiTrackEnv.random_pool` of generated tracks (seeded from `--seed`); weights save under the literal names (`quantum_multi.npz` / `quantum_random.npz`) — the universal-driver candidates. |
@@ -105,13 +105,33 @@ depends on features within ring distance `n_layers − 1` of its qubit
 (`agents/quantum/lightcone.py`; SCIENCE.md, "Light cones"). `circuit_spec`
 reports it, and `train_headless` warns before training such a circuit (live
 training writes the same warning to the server log). To
-train with full visibility: `--set circuit.n_layers=6`. The sidecar records
-the depth, but weight *filenames* do not (use `--out`), and the server
-loaders adopt a driver's recorded observation and action count, not its
-depth — such weights only load under a config with the same `n_layers`.
-Under any other depth the session reports them as unavailable (an `error`
-naming the parameter counts, car-less attract mode) instead of loading
-them.
+train with full visibility: `--set circuit.n_layers=6`. Weight *filenames*
+do not carry the depth (use `--out` to keep two depths apart), but a driver
+brings its own: every loader builds the circuit a weights file needs
+(`server/runtime.weights_circuit`) — the sidecar's `circuit` block
+(`n_qubits`, `n_layers`, `n_actions`) when there is one, else the depth its
+parameter count implies, `P = 3·L·n + 2·A` (sidecars written before the
+block existed, e.g. all bundled 4-block files). The session adopts that
+depth per driver exactly like the recorded observation and action count —
+attract, race, hardware, driver / track / qubit switches; evolution builds
+each stage car at its own file's depth — so drivers of different depth can
+sit side by side at one qubit count, and `circuit_spec` in the `welcome`
+(depth, gates, visibility, dead parameters) and the hardware job's
+light-cone-pruned circuit are the active driver's. A `hero` / `pro` pick
+only replaces the attract car: in race, evolution and hardware mode the
+session syncs to the quantum car that drives there. Live training always
+builds the profile's `[circuit] n_layers` (warm-start weights of another
+depth are skipped with an `error`: cold start). Outside the session the
+same rules apply (`runtime.with_weights_config`): the hardware lap / sprint
+and their CLI, `agents.quantum.noise validate`, `tools/hw_reliability.py`
+and `records` run a weights file under its recorded observation and at its
+own depth and action count (the CLIs print one line when the sidecar's
+observation differs from the profile's); `train_headless --init` and
+`tools/make_stages.py --init` continue at the init weights' depth and
+action count, and an explicit `--set circuit.n_layers` / `--actions` that
+contradicts them is an error. Only a parameter count that fits no depth
+`L ≥ 1` (or a sidecar naming another qubit count) is still refused: an
+`error` naming the file and the count, car-less attract mode.
 
 The default stays 4 qubits and is bit-identical to the pre-scaling stack
 (pinned by a regression test). The evolution stages and the bundled MLP
@@ -285,13 +305,16 @@ sprint's SPSA settings are not message fields: the server takes them from
 ### Server → client
 
 **`welcome`** — sent on connect and in reply to `hello` (and re-broadcast to
-everyone after a `qubits` or `set_driver` switch):
+everyone after a `qubits` or `set_driver` switch, and whenever the active
+driver's observation, action count or circuit depth differs from the
+previous one's):
 `{mode, track: TrackPayload, tracks: [str], circuit_spec, ui, obs_labels,
 driver, drivers}`. `driver` is the active `set_driver` selection (`"auto"`
 default) and `drivers` the currently valid choices (`"auto"`, each bundled
 training at the active qubit count, `"hero"`, and `"pro"` when
 `mlp_pro.npz` is bundled).
-`circuit_spec` is the JSON gate-by-gate circuit description from
+`circuit_spec` is the JSON gate-by-gate description of the active driver's
+circuit (the profile's while training or without a quantum driver) from
 `agents/quantum/circuit.circuit_spec` (qubit/layer/gate list, parameter
 counts, readout observables, action labels) plus the structural light cone:
 `visibility` (`[a][j]` = 1 iff readout Z_a can depend on the feature on

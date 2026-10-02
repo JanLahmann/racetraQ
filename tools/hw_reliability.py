@@ -79,19 +79,18 @@ def _float_list(text: str) -> float | list[float]:
 
 
 def weights_config(weights: Path, profile: str | None) -> dict:
-    """The config the weights drive under: the profile, then the observation,
-    circuit shape and action count of the weights' ``.meta.json`` sidecar."""
+    """The config the weights drive under: the profile, then the observation
+    of the weights' ``.meta.json`` sidecar and the circuit shape the weights
+    need (``runtime.weights_circuit``: the sidecar's ``circuit`` block, else
+    the depth their parameter count implies at the profile's qubit count).
+    Raises ``ValueError`` for weights that fit no depth."""
     from traqmania.config import load_config
+    from traqmania.server.runtime import weights_circuit, with_weights_observation
 
-    config = load_config(profile)
-    meta_path = weights.with_suffix("").with_suffix(".meta.json")
-    if meta_path.is_file():
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        config["observation"].update(meta.get("observation") or {})
-        config.setdefault("circuit", {}).update(meta.get("circuit") or {})
-        n_actions = (meta.get("actions") or {}).get("n_actions")
-        if n_actions:
-            config["circuit"]["n_actions"] = int(n_actions)
+    config = with_weights_observation(load_config(profile), weights)
+    circuit = config.setdefault("circuit", {})
+    circuit.update(weights_circuit(weights, int(circuit.get("n_qubits", 4)),
+                                   circuit.get("n_actions")))
     return config
 
 
@@ -345,6 +344,12 @@ def run(args: argparse.Namespace) -> dict:
 
     weights = Path(args.weights)
     config = weights_config(weights, args.profile)
+    from traqmania.config import load_config
+    from traqmania.server.runtime import observation_note
+
+    note = observation_note(load_config(args.profile), config)
+    if note:  # stderr: stdout is the report
+        print(note, file=sys.stderr, flush=True)
     params = np.load(weights)["params"]
     fast = QuantumQFunction(config["circuit"])
     fast.set_params(params)

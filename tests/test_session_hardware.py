@@ -12,11 +12,14 @@ from __future__ import annotations
 
 import time
 
+import numpy as np
 import pytest
 
 pytest.importorskip("qiskit_ibm_runtime")
 
 from traqmania import hardware  # noqa: E402
+from traqmania.agents.quantum import lightcone  # noqa: E402
+from traqmania.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
 from traqmania.config import load_config  # noqa: E402
 from traqmania.server import protocol as P  # noqa: E402
 from traqmania.server.session import DemoSession  # noqa: E402
@@ -250,6 +253,48 @@ def test_rescale_and_decision_shots_reach_the_ui(tmp_path):
         statuses, _ = run_until(session, {"done", "error"})
         assert "error" not in [s["phase"] for s in statuses], statuses
         assert [s for s in statuses if s["phase"] == "transpiling"][-1]["shots"] == 64
+    finally:
+        session.shutdown()
+
+
+def test_hardware_lap_runs_the_drivers_own_depth(tmp_path, monkeypatch):
+    """A 6-block driver under the default 4-block profile: hardware mode adopts
+    its depth (the welcome's circuit_spec shows it) and the lap's circuit is
+    the pruned 6-block one — 20 CZ on the Nighthawk patch, not the 12 of the
+    profile's 4 blocks."""
+    import traqmania.server.runtime as runtime_mod
+    import traqmania.server.session as session_mod
+
+    weights = tmp_path / "weights"
+    weights.mkdir()
+    params = QuantumQFunction({"n_qubits": 4, "n_layers": 6}, seed=1).get_params()
+    np.savez(weights / "quantum_oval.npz", params=params)  # no sidecar: inferred
+    monkeypatch.setattr(session_mod, "WEIGHTS_DIR", weights)
+    monkeypatch.setattr(runtime_mod, "WEIGHTS_DIR", weights)
+    cz = int(lightcone.live_gates(4, 6, 4)["cz"].sum())
+    assert cz == 20
+
+    session = DemoSession(load_config(), ghosts_dir=tmp_path)
+    try:
+        session.handle_message(P.SetMode(mode="hardware"))
+        msgs = session.drain_outbox()
+        assert not [m for m in msgs if m["type"] == "error"]
+        spec = session.welcome_payload()["circuit_spec"]
+        assert spec["n_layers"] == 6 and spec["counts"]["cz"] - spec["dead_gates"]["cz"] == cz
+        assert session.cars[0].qfunc.n_layers == 6
+
+        session.handle_message(
+            P.HardwareMsg(action="lap", backend="fake", shots=128, max_decisions=3))
+        statuses, _ = run_until(session, {"replay", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        how = [s for s in statuses if s["phase"] == "transpiling"][-1]
+        assert how["two_qubit_gates"] == cz  # zero SWAPs on the square lattice
+        assert how["message"].startswith(f"circuit transpiled: {cz} two-qubit gates")
+        assert "(light-cone pruned)" in how["message"]
+        done = next(s for s in statuses if s["phase"] == "done")
+        assert done["two_qubit_gates"] == cz
+        # 3 decisions from the start line: the spawn pose plus one per decision
+        assert len(session._hw_replay["points"]) == 4
     finally:
         session.shutdown()
 

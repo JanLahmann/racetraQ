@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -494,8 +495,11 @@ def validate(
     """
     from traqmania.agents.quantum.qdqn import QuantumQFunction
     from traqmania.config import load_config
+    from traqmania.server.runtime import with_weights_config
 
-    config = load_config(profile)
+    # the profile, with the observation the weights record and at the depth
+    # and action count they need
+    config = with_weights_config(load_config(profile), Path(weights))
     fast = QuantumQFunction(config["circuit"])
     params = np.load(weights)["params"]
     fast.set_params(params)
@@ -652,9 +656,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             from traqmania import hardware
             from traqmania.config import load_config
+            from traqmania.server.runtime import observation_note, with_weights_observation
 
-            n_qubits = int(load_config(args.profile)["circuit"]["n_qubits"])
+            profile_config = load_config(args.profile)
+            n_qubits = int(profile_config["circuit"]["n_qubits"])
             weights = args.weights or hardware._default_weights(args.track, n_qubits)
+            note = observation_note(
+                profile_config, with_weights_observation(profile_config, Path(weights)))
+            if note:  # stderr: stdout may be the --json result
+                print(note, file=sys.stderr)
             result = validate(weights, args.track, args.fake, shots=args.shots,
                               states=args.states, repeats=args.repeats, seed=args.seed,
                               profile=args.profile, resilience_level=args.resilience)

@@ -54,6 +54,7 @@ from traqmania.server.runtime import (
     save_leaderboard,
     track_payload,
     weights_actions,
+    weights_circuit,
     weights_observation,
 )
 
@@ -320,6 +321,9 @@ class DemoSession:
         # drivers whose weights record no action set (pre-scaled-readout: 4)
         self._profile_n_actions = int(circuit_cfg.get("n_actions",
                                                       min(4, self.n_qubits)))
+        # ... and the profile's own depth: what fresh training builds, and
+        # what the circuit spec shows while no quantum driver is loaded
+        self._profile_n_layers = int(circuit_cfg.get("n_layers", 4))
 
         server_cfg = config["server"]
         hz = 1.0 / self.dt
@@ -379,24 +383,39 @@ class DemoSession:
         self.ray_max_dist = float(obs_cfg["ray_max_dist"])
 
     def _sync_to_weights(self, use_weights: bool = True) -> None:
-        """Adopt the [observation] AND the action-set size the active quantum
-        driver was trained with (recorded in its weights .meta.json), else the
-        profile's own.
+        """Adopt the [observation], the action-set size AND the circuit depth
+        the active quantum driver was trained with (recorded in its weights
+        .meta.json; the depth of an older file follows from its parameter
+        count — ``runtime.weights_circuit``), else the profile's own.
 
         The circuit encodes one feature per qubit and reads one Q-value per
         action qubit, so driving feature-observation or 6/8-action weights
         under the profile's defaults would scramble inputs (or fail to load —
-        the output head has one w/b pair per action).  Training modes pass
-        ``use_weights=False``: fresh training always uses the profile
-        observation and action set."""
+        the output head has one w/b pair per action), and the parameters only
+        fit a circuit of the depth they were trained at.  ``config["circuit"]``
+        — the welcome's ``circuit_spec``, the hardware job's circuit — then
+        describes the active driver.  ``use_weights=False`` keeps the
+        profile's observation, action set and depth: training (a fresh
+        agent), a classical race opponent, and the attract mode of the
+        hero / pro reference drivers, where no quantum car drives.  In race,
+        evolution and hardware mode a hero / pro pick still syncs to the
+        quantum car that actually drives there (the track specialist)."""
         meta_obs = None
         meta_actions = None
+        n_layers = self._profile_n_layers
         path = None
-        if use_weights and self.driver not in ("hero", "pro"):
+        if use_weights:
             path = self._quantum_weights_path()
             if path.is_file():
                 meta_obs = weights_observation(path)
                 meta_actions = weights_actions(path)
+                try:
+                    shape = weights_circuit(path, self.n_qubits)
+                except ValueError:
+                    pass  # unusable file: _agent_unavailable reports why
+                else:
+                    if shape["n_qubits"] == self.n_qubits:
+                        n_layers = shape["n_layers"]
         target = {**self._profile_obs, **(meta_obs or {})}
         if meta_obs is not None:
             try:  # a bad sidecar must not crash the session: fall back to profile
@@ -423,6 +442,9 @@ class DemoSession:
             changed = True
         if n_actions != current_actions:
             self.config.setdefault("circuit", {})["n_actions"] = int(n_actions)
+            changed = True
+        if n_layers != int(self.config.get("circuit", {}).get("n_layers", 4)):
+            self.config.setdefault("circuit", {})["n_layers"] = int(n_layers)
             changed = True
         if changed:
             self._outbox.append(self.welcome_payload())
@@ -492,35 +514,30 @@ class DemoSession:
         return quantum_weights_path(self.track_name, self.n_qubits, suffix)
 
     def _load_quantum_qfunc(self, path: Path) -> QuantumQFunction:
-        # honor the file's own recorded action count (evolution mixes stage
-        # snapshots whose action sets may differ from the active driver's;
-        # no recorded count means pre-scaled-readout weights: 4 actions)
+        # honor the file's own depth and action count (drivers at one qubit
+        # count may differ in both, and evolution mixes stage snapshots whose
+        # shapes may differ from the active driver's; no recorded action
+        # count means pre-scaled-readout weights: 4 actions)
         cfg = dict(self.config["circuit"])
-        cfg["n_actions"] = weights_actions(path) or min(4, self.n_qubits)
+        cfg.update(weights_circuit(path, self.n_qubits))
         qfunc = QuantumQFunction(cfg)
         qfunc.set_params(np.load(path)["params"])
         return qfunc
 
     def _weights_shape_mismatch(self, path: Path) -> str | None:
-        """Why quantum weights at ``path`` cannot be loaded into the configured
-        circuit (or None): the loaders adopt a driver's recorded observation
-        and action count, but not its depth, so weights trained with another
-        ``[circuit] n_layers`` must be refused here rather than crash
-        ``set_params``."""
-        circuit_cfg = self.config.get("circuit", {})
-        n_layers = int(circuit_cfg.get("n_layers", 4))
-        n_actions = weights_actions(path) or min(4, self.n_qubits)
-        expected = 3 * n_layers * self.n_qubits + 2 * n_actions
+        """Why the quantum weights at ``path`` cannot drive in this session (or
+        None).  The loaders adopt a driver's recorded observation, action
+        count and depth, so what is left to refuse here — rather than crash
+        ``set_params`` — is a file that cannot be read, whose parameter count
+        fits no depth, or that was trained at another qubit count."""
         try:
-            found = int(np.load(path)["params"].size)
-        except (OSError, KeyError, ValueError) as exc:
-            return f"cannot read weights '{path.name}' ({type(exc).__name__}: {exc})"
-        if found == expected:
-            return None
-        return (f"weights '{path.name}' hold {found} parameters, but the configured "
-                f"circuit ({self.n_qubits} qubits, {n_layers} blocks, {n_actions} "
-                f"actions) has {expected} — set [circuit] n_layers to the depth they "
-                "were trained with, or retrain")
+            shape = weights_circuit(path, self.n_qubits)
+        except (OSError, ValueError) as exc:
+            return str(exc)
+        if shape["n_qubits"] != self.n_qubits:
+            return (f"weights '{path.name}' belong to a {shape['n_qubits']}-qubit "
+                    f"circuit, the session runs {self.n_qubits} qubits")
+        return None
 
     def _agent_unavailable(self, kind: str) -> str | None:
         """Why the bundled ``kind`` weights cannot drive the current track (or None)."""
@@ -580,6 +597,10 @@ class DemoSession:
             if not specs or not all(path.is_file() for _, path in specs):
                 return (f"no evolution stage weights for track '{self.track_name}' "
                         f"at {self.n_qubits} qubits")
+            for _, path in specs:  # each stage car loads at its own shape
+                reason = self._weights_shape_mismatch(path)
+                if reason is not None:
+                    return reason
         return None
 
     def _try_make_agent_car(self, kind: str) -> _Car | None:
@@ -773,7 +794,8 @@ class DemoSession:
         self._outbox.append(self.welcome_payload())
 
     def _enter_attract(self) -> None:
-        self._sync_to_weights()
+        # the reference drivers bring no quantum circuit: profile settings
+        self._sync_to_weights(use_weights=self.driver not in ("hero", "pro"))
         if self.driver in ("hero", "pro"):
             self.cars = [self._make_hero_car(self.driver)]
             return
@@ -919,13 +941,23 @@ class DemoSession:
 
         env = RacingEnv(self.track, self.config, n_envs=int(tcfg["n_parallel_envs"]), seed=seed)
         if warm_path is not None:
-            qfunc: Any = self._load_quantum_qfunc(warm_path)
-            if qfunc.n_actions != env.n_actions:
-                # scaled-action warm weights under a profile-action env would
-                # pick actions the env's table doesn't have: cold-start instead
-                self._error(f"warm-start weights '{warm_path.name}' use "
-                            f"{qfunc.n_actions} actions (profile: {env.n_actions}); "
-                            "training quantum from scratch")
+            # training runs the PROFILE's circuit: warm weights of another
+            # shape cannot seed it (scaled-action weights would also pick
+            # actions the env's table doesn't have) — cold-start instead
+            reason = self._weights_shape_mismatch(warm_path)
+            if reason is None:
+                shape = weights_circuit(warm_path, self.n_qubits)
+                if shape["n_actions"] != env.n_actions:
+                    reason = (f"warm-start weights '{warm_path.name}' use "
+                              f"{shape['n_actions']} actions (profile: {env.n_actions})")
+                elif shape["n_layers"] != self._profile_n_layers:
+                    reason = (f"warm-start weights '{warm_path.name}' have "
+                              f"{shape['n_layers']} blocks (profile: "
+                              f"{self._profile_n_layers})")
+            if reason is None:
+                qfunc: Any = self._load_quantum_qfunc(warm_path)
+            else:
+                self._error(f"{reason}; training quantum from scratch")
                 qfunc = QuantumQFunction(self.config["circuit"], seed=seed)
         elif agent == "quantum":
             qfunc = QuantumQFunction(self.config["circuit"], seed=seed)
@@ -1076,6 +1108,7 @@ class DemoSession:
             self.mode = "hardware"
             self._enter_hardware()
         else:  # reset any previous replay; car waits at the start line again
+            self._sync_to_weights()  # the driver may have been switched meanwhile
             self._hw_replay = None
             self.cars = [self._make_agent_car("quantum")]
 

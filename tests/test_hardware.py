@@ -10,6 +10,7 @@ Session) is covered with stubs. Skipped wholesale when qiskit-ibm-runtime
 
 from __future__ import annotations
 
+import json
 import sys
 import types
 import warnings
@@ -24,6 +25,8 @@ from traqmania.agents.quantum import lightcone  # noqa: E402
 from traqmania.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
 from traqmania.agents.training import spsa  # noqa: E402
 from traqmania.config import load_config  # noqa: E402
+from traqmania.env.racing_env import RacingEnv  # noqa: E402
+from traqmania.env.track import Track  # noqa: E402
 
 CIRCUIT_CFG = {"n_qubits": 4, "n_layers": 4, "seed": 7}
 OVAL_WEIGHTS = hardware.WEIGHTS_DIR / "quantum_oval.npz"
@@ -1109,6 +1112,144 @@ def test_cli_no_prune_and_unknown_fake_name(capsys):
     with pytest.raises(SystemExit):
         hardware.main(["lap", "--fake", "--fake-name", "fake_bogus"])
     assert "unknown fake backend 'fake_bogus'" in capsys.readouterr().err
+
+
+def test_lap_sprint_and_cli_run_the_weights_own_depth(tmp_path, fake_backend, capsys):
+    """A driver brings its own depth: 6-block weights under the default
+    4-block config are transpiled (and pruned) as the 6-block circuit — by the
+    lap, the sprint and the CLI — instead of failing in set_params."""
+    weights = tmp_path / "quantum_deep.npz"  # no sidecar: depth from the parameter count
+    params = QuantumQFunction({"n_qubits": 4, "n_layers": 6}, seed=1).get_params()
+    np.savez(weights, params=params)
+    cz = int(lightcone.live_gates(4, 6, 4)["cz"].sum())
+    assert cz == 20  # all but the last ring; 12 at the profile's 4 blocks
+
+    config = load_config()
+    result = hardware.run_hardware_lap("oval", weights, fake_backend, shots=64,
+                                       max_decisions=1, config=config)
+    assert result["decisions"] == 1 and result["pruned"] is True
+    assert result["two_qubit_gates"] == cz
+    assert config["circuit"]["n_layers"] == 4  # the caller's config is not touched
+
+    result = hardware.spsa_sprint("oval", weights, fake_backend, iterations=1, shots=64,
+                                  batch=4)
+    assert result["two_qubit_gates"] == cz and result["params"].shape == params.shape
+
+    hardware.main(["lap", "--fake", "--weights", str(weights), "--max-decisions", "1",
+                   "--shots", "64"])
+    out = capsys.readouterr().out
+    assert ("circuit shape from the weights: 6 blocks, 4 actions "
+            "(profile: 4 blocks, 4 actions)") in out
+    assert f"circuit: {cz} two-qubit gates" in out and "decisions: 1" in out
+
+    # a parameter count that fits no depth: a usage error, before any backend
+    bad = tmp_path / "quantum_bad.npz"
+    np.savez(bad, params=np.zeros(57))
+    with pytest.raises(SystemExit):
+        hardware.main(["lap", "--fake", "--weights", str(bad)])
+    assert "57 parameters, which fits no depth" in capsys.readouterr().err
+    with pytest.raises(ValueError, match="fits no depth"):
+        hardware.run_hardware_lap("oval", bad, fake_backend, max_decisions=1)
+
+
+def _record_envs_and_observations(monkeypatch):
+    """Capture every env the hardware path builds and every observation batch
+    it evaluates on the backend."""
+    envs, seen = [], []
+    build_env, q_values = hardware._build_env, hardware.HardwareQFunction.q_values
+
+    def recording_build(*args, **kwargs):
+        envs.append(build_env(*args, **kwargs))
+        return envs[-1]
+
+    def recording_q(self, obs):
+        seen.append(np.array(obs))
+        return q_values(self, obs)
+
+    monkeypatch.setattr(hardware, "_build_env", recording_build)
+    monkeypatch.setattr(hardware.HardwareQFunction, "q_values", recording_q)
+    return envs, seen
+
+
+def test_lap_and_cli_adopt_the_weights_recorded_observation(tmp_path, fake_backend, capsys,
+                                                            monkeypatch):
+    """A driver trained on engineered features is fed those features on the
+    hardware path too — the observation its sidecar records, not the
+    profile's rays (the rule the server and records apply)."""
+    weights = tmp_path / "quantum_feat.npz"
+    np.savez(weights, params=QuantumQFunction(CIRCUIT_CFG, seed=2).get_params())
+    recorded = {"ray_angles_deg": [-30.0, 30.0],
+                "features": ["rays", "speed", "curvature_ahead"]}
+    (tmp_path / "quantum_feat.meta.json").write_text(
+        json.dumps({"observation": recorded}), encoding="utf-8")
+    names = ["ray -30°", "ray +30°", "speed", "curvature ahead"]
+    envs, seen = _record_envs_and_observations(monkeypatch)
+
+    config = load_config()
+    result = hardware.run_hardware_lap("oval", weights, fake_backend, shots=64,
+                                       max_decisions=3, config=config)
+    assert result["decisions"] == 3
+    assert envs[-1].feature_names == names
+    assert len(seen) == 3 and all(obs.shape == (1, 4) for obs in seen)
+    # exactly what an env under the recorded observation shows at the start
+    # line — and not what the profile's three rays + speed would
+    track = Track.load("oval", config["track"]["resample_spacing"])
+    seed = int(config["training"]["seed"])
+    recorded_cfg = {**config, "observation": {**config["observation"], **recorded}}
+    assert np.array_equal(seen[0], RacingEnv(track, recorded_cfg, n_envs=1, seed=seed).reset())
+    assert not np.array_equal(seen[0], RacingEnv(track, config, n_envs=1, seed=seed).reset())
+    assert config["observation"]["ray_angles_deg"] == [-60.0, 0.0, 60.0]  # caller's: untouched
+
+    hardware.spsa_sprint("oval", weights, fake_backend, iterations=1, shots=64, batch=4)
+    assert envs[-1].feature_names == names
+
+    seen.clear()
+    hardware.main(["lap", "--fake", "--weights", str(weights), "--max-decisions", "3",
+                   "--shots", "64"])
+    out = capsys.readouterr().out
+    assert ("observation from the weights' sidecar: 2 rays, features "
+            "['rays', 'speed', 'curvature_ahead'] (profile: 3 rays, features "
+            "['rays', 'speed'])") in out
+    assert "decisions: 3" in out and "circuit shape from the weights" not in out
+    assert envs[-1].feature_names == names and len(seen) == 3
+
+
+def test_weights_without_a_recorded_observation_run_as_before(tmp_path, fake_backend,
+                                                             capsys, monkeypatch):
+    """No sidecar, or one that records no observation: the config's own
+    observation, and bit-identical decisions to running the config as it is
+    (what the hardware path did before it looked at the sidecar)."""
+    weights = tmp_path / "quantum_plain.npz"
+    np.savez(weights, params=QuantumQFunction(CIRCUIT_CFG, seed=2).get_params())
+    config = load_config()
+    assert hardware._weights_config(config, weights)["observation"] is config["observation"]
+    for path in sorted(hardware.WEIGHTS_DIR.glob("quantum_*.npz")):  # the bundle
+        meta = path.with_suffix("").with_suffix(".meta.json")
+        if meta.is_file() and "observation" in json.loads(meta.read_text(encoding="utf-8")):
+            continue
+        tag = path.stem.rsplit("_q", 1)
+        profile = load_config(f"q{tag[1]}" if len(tag) == 2 and tag[1].isdigit() else None)
+        assert hardware._weights_config(profile, path)["observation"] \
+            is profile["observation"], path.name
+
+    def lap():
+        decisions = []
+        result = hardware.run_hardware_lap(
+            "oval", weights, fake_backend, shots=64, max_decisions=3, config=config,
+            seed_simulator=5, on_decision=lambda i, info: decisions.append(
+                (info["action"], info["q_values"], info["state"])))
+        return decisions, result["trajectory"]
+
+    envs, _seen = _record_envs_and_observations(monkeypatch)
+    now = lap()
+    assert envs[-1].feature_names == ["ray -60°", "ray 0°", "ray +60°", "speed"]
+    with monkeypatch.context() as patch:
+        patch.setattr(hardware, "_weights_config", lambda config, path: config)
+        assert lap() == now
+
+    hardware.main(["lap", "--fake", "--weights", str(weights), "--max-decisions", "1",
+                   "--shots", "64"])
+    assert "observation from the weights' sidecar" not in capsys.readouterr().out
 
 
 def test_cli_fake_name_implies_fake(capsys, monkeypatch):

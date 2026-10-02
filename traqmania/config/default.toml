@@ -63,11 +63,14 @@ epsilon_decay_episodes = 250
 n_parallel_envs = 8
 seed = 42
 warm_start = false
+# The 60 s time limit is a truncation, not a terminal state: the TD target keeps
+# bootstrapping there (Pardo et al., ICML 2018). On since the October 2026 study
+# (neutral to positive on every track; false restores the pre-audit behaviour).
+bootstrap_truncation = true
 # Optional trainer knobs (agents/training/dqn.py). Each line shows the default,
 # which is the behaviour without it; uncomment to change.
 # eval_every = 50               # greedy snapshot eval every N episodes
 # eval_episodes = 12            # distinct greedy episodes per eval (parallel eval envs)
-# bootstrap_truncation = false  # true: the 60 s time limit is a truncation, not a terminal state (TD target keeps bootstrapping)
 # loss = "mse"                  # "mse" | "huber" (TD error clipped to +-huber_delta in the gradient)
 # huber_delta = 10.0            # Huber threshold in Q units (Q-values here are of order 100)
 # lr_groups = { head = 0.01 }   # per-group learning rates; quantum: lam | theta | head, mlp: body | head; unlisted groups use lr
@@ -86,19 +89,23 @@ warm_start = false
 # Per-track overrides merged onto [training] by the server and by train_headless
 # (config.resolve_training_cfg; train_headless --preset none skips them).
 # oval/chicane train fine with the base settings and need no preset.
-# Winning recipe from the v2 overnight sweep (8 decay/gamma combos + lr/sync
-# probes): slow 2000-episode epsilon decay keeps exploration alive long enough
-# to learn braking for the hairpin. Greedy best-snapshot: 20-24 s laps vs 28 s
-# under the old 1200-episode decay.
+# gp: slow 2000-episode epsilon decay keeps exploration alive long enough to
+# learn braking for the hairpin (July 2026 sweep). The 0.30 exploration floor
+# comes from the October 2026 multi-seed study (tools/study.py, 10 seeds): with
+# the usual 0.05 floor the 4-qubit circuit's greedy driving peaks while it is
+# still exploring and collapses afterwards; at 0.30 it stays flat (stability
+# 0.18 vs 0.08). On the easy tracks the higher floor only costs pace.
 [training_presets.gp]
 episodes = 3000
 epsilon_decay_episodes = 2000
+epsilon_end = 0.30
 gamma = 0.99
 
 # combo has a gp-style hairpin plus a chicane: same long-haul recipe as gp.
 [training_presets.combo]
 episodes = 2500
 epsilon_decay_episodes = 1500
+epsilon_end = 0.30
 gamma = 0.99
 
 # Warm-start recipe: short fine-tune on top of bundled warm-start weights.

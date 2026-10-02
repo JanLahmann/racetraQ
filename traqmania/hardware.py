@@ -870,6 +870,18 @@ def _start_execution(
     return qfunc, mode, info
 
 
+def _weights_config(config: dict, weights_path: str | Path) -> dict:
+    """``config`` as the weights file needs it (``runtime.with_weights_config``):
+    the observation its sidecar records overlaid on the config's, and its own
+    circuit depth and action count — a driver brings all three along, so the
+    same profile runs 4-block and 6-block weights, plain-ray and
+    engineered-feature drivers alike. Raises ``ValueError`` for weights that
+    fit no depth or another qubit count."""
+    from traqmania.server.runtime import with_weights_config
+
+    return with_weights_config(config, Path(weights_path))
+
+
 def mitigation_text(info: dict) -> str:
     """One line on the error mitigation of a run, from its ``on_start`` info:
     the Estimator's resilience level plus the attenuation rescale, if any."""
@@ -912,7 +924,11 @@ def run_hardware_lap(
     stops between decisions (cooperative cancellation) and ``aborted`` is
     True. ``config`` (optional) is the fully-resolved config the weights were
     trained under (circuit size + observation geometry); defaults to
-    ``load_config()``. ``resilience_level`` (0 raw noise | 1 TREX | 2 TREX +
+    ``load_config()``. What the weights file brings along wins over
+    ``config`` (``runtime.with_weights_config``): the observation its sidecar
+    records, and its own circuit DEPTH and action count (the sidecar's
+    ``circuit`` block, else its parameter count).
+    ``resilience_level`` (0 raw noise | 1 TREX | 2 TREX +
     ZNE with gate twirling) and ``prune_light_cone`` default to the config's
     ``[hardware]`` values (0 / true). ``rescale`` (default ``[hardware]
     rescale``, false) divides the measured expectations by an attenuation
@@ -927,6 +943,7 @@ def run_hardware_lap(
         from traqmania.config import load_config
 
         config = load_config()
+    config = _weights_config(config, weights_path)
     seed = int(config["training"]["seed"])
     env = _build_env(track_name, config, n_envs=1, seed=seed)
     if max_decisions is None:
@@ -1204,7 +1221,10 @@ def spsa_sprint(
     loop stops between iterations (cooperative cancellation) and the result
     reflects the iterations completed so far. ``config`` (optional) is the
     fully-resolved config the weights were trained under; defaults to
-    ``load_config()``. Execution mode (Session, else Batch, else job mode),
+    ``load_config()`` — the recorded observation, circuit depth and action
+    count are the weights file's own, as in :func:`run_hardware_lap`.
+    Execution mode (Session, else
+    Batch, else job mode),
     ``resilience_level``, ``prune_light_cone``, ``rescale``,
     ``seed_simulator`` and ``on_start`` work as in :func:`run_hardware_lap`.
     Returns ``{loss_history, loss_before, loss_after, accepted, vetoed,
@@ -1217,6 +1237,7 @@ def spsa_sprint(
         from traqmania.config import load_config
 
         config = load_config()
+    config = _weights_config(config, init_weights_path)
     hw_cfg = config.get("hardware", {})
     if groups is None:
         groups = hw_cfg.get("spsa_groups", SPRINT_GROUPS)
@@ -1369,7 +1390,8 @@ def main(argv: list[str] | None = None) -> None:
                        help="track name (oval | chicane | gp | combo)")
         p.add_argument("--profile", default=None,
                        help="config profile overlay (e.g. q6; picks circuit size, "
-                            "observation geometry and the default weights file)")
+                            "observation geometry and the default weights file; an "
+                            "observation recorded with the weights wins)")
         p.add_argument("--fake", action="store_true", help="use a local fake backend")
         p.add_argument("--fake-name", default=None,
                        help="fake backend, any spelling; implies --fake (default: [hardware] "
@@ -1422,6 +1444,11 @@ def main(argv: list[str] | None = None) -> None:
     weights = Path(args.weights) if args.weights else _default_weights(args.track, n_qubits)
     if not weights.exists():
         parser.error(f"weights file not found: {weights} (train first or pass --weights)")
+    profile_config, profile_shape = config, _circuit_shape(config)
+    try:  # the weights' own observation, depth and action count, not the profile's
+        config = _weights_config(config, weights)
+    except ValueError as exc:
+        parser.error(str(exc))
     # Naming a fake asks for one: never contact (or bill) a real device instead.
     use_fake = args.fake or args.fake_name is not None
     try:
@@ -1436,6 +1463,15 @@ def main(argv: list[str] | None = None) -> None:
     print(f"backend: {getattr(backend, 'name', backend)}"
           f"{' (fake, local simulation)' if use_fake else ''}")
     print(f"weights: {weights}")
+    if _circuit_shape(config) != profile_shape:
+        _n, n_layers, n_actions = _circuit_shape(config)
+        print(f"circuit shape from the weights: {n_layers} blocks, {n_actions} actions "
+              f"(profile: {profile_shape[1]} blocks, {profile_shape[2]} actions)")
+    from traqmania.server.runtime import observation_note
+
+    note = observation_note(profile_config, config)
+    if note:
+        print(note)
     # None leaves the choice to the config's [hardware] table (see _start_execution).
     prune = False if args.no_prune else None
     shots = args.shots
