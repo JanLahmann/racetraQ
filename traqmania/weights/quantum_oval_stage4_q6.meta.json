@@ -1,7 +1,7 @@
 {
   "agent": "quantum",
   "track": "oval",
-  "config_hash": "652b2dec7db6",
+  "config_hash": "e65198f8b784",
   "episodes": 550,
   "stage": 4,
   "run": {
@@ -71,5 +71,5 @@
     }
   },
   "provenance": "snapshot at episode 550 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_oval_q6.npz",
-  "date": "2026-10-02"
+  "date": "2026-10-03"
 }

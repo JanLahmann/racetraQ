@@ -496,9 +496,11 @@ def test_calibration_and_validation_on_the_device_patch(capsys):
     device = report["device_systematic_flip_rate"]
     assert 0.0 <= device <= 1.0 and 0.0 <= report["device_flip_rate"] <= 1.0
     # Whatever the driver: the per-readout model is at least as close to the
-    # device's systematic flips as one global attenuation.  (For the bundled
-    # oval driver, whose on-trajectory gaps are far below the device error,
-    # that is 0.55 vs 0.56 on the device against 0.02 for the global model.)
+    # device's systematic flips as one global attenuation.  (The oval driver
+    # bundled in October 2026, trained with action_gap 0.8, is rarely flipped
+    # at all: 0.06 on the device, 0.06 for the per-readout model, 0.00 for the
+    # global one.  The July 2026 driver, whose on-trajectory gaps were far
+    # below the device error, gave 0.56 on the device, 0.55 vs 0.02.)
     assert abs(readout["systematic_flip_rate"] - device) \
         <= abs(overall["systematic_flip_rate"] - device) + 0.03
     assert abs(readout["systematic_flip_rate"] - device) < 0.25

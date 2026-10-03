@@ -34,8 +34,11 @@ def test_qn_profile_overlay_and_env_features(profile, n_qubits, rays):
     assert config["observation"]["ray_angles_deg"] == rays
     assert len(rays) == n_qubits - 1
     assert np.allclose(np.diff(rays), 120.0 / (n_qubits - 2))  # evenly spaced
-    # the 8-qubit profile runs 5 blocks (full light-cone visibility)
-    assert config["circuit"]["n_layers"] == (5 if profile == "q8" else 4)
+    # depth: 4 blocks by default; the 8-qubit profile runs the 5 that give every
+    # action full light-cone visibility.  The 10-qubit profile's depth is still
+    # being decided by a study (4 today, 6 = full visibility): either is fine.
+    layers = config["circuit"]["n_layers"]
+    assert layers in {"q6": (4,), "q8": (5,), "q10": (4, 6)}[profile]
     # everything else inherits from default.toml
     assert config["physics"]["v_max"] == 25.0
 

@@ -139,6 +139,25 @@ def test_random_track_attract_drives_with_honest_fallback(tmp_path):
     assert (max(xs) - min(xs)) + (max(ys) - min(ys)) > 0.5  # the fallback drives
 
 
+# Regression guard for the 2026-10 universal-driver selection: the seed that
+# ranks first on the four bundled tracks brakes to a standstill on generated
+# ones, so the bundled file is a hand-chosen seed that drives them.
+@pytest.mark.parametrize("seed", [4242, 7, 1])
+def test_random_track_fallback_driver_keeps_driving(tmp_path, seed):
+    """What the random-track button promises: a car that drives.  2 s of motion
+    (the test above) is not that — a driver can roll off the line and then
+    brake to a stop for good; 40 s in, it must still be moving."""
+    pytest.importorskip("traqmania.env.trackgen")
+    session = make_session(tmp_path)
+    set_random_track(session, seed=seed)
+    speeds = []
+    for _ in range(40 * 60):  # 40 s of sim time at the 60 Hz substep
+        session.tick()
+        speeds.append(float(session.cars[0].state[3]))
+    assert not by_type(session.drain_outbox(), "error")
+    assert max(speeds[-600:]) > 1.0, "the fallback driver stood still for the last 10 s"
+
+
 def test_random_track_weights_prefer_universal(tmp_path, monkeypatch):
     import traqmania.server.session as session_mod
 

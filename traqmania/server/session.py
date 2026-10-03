@@ -42,6 +42,7 @@ from traqmania.server.runtime import (
     LEADERBOARD_MAX_ENTRIES,
     N_EVOLUTION_STAGES,
     WEIGHTS_DIR,
+    _weights_label,
     available_tracks,
     best_stage_label,
     evolution_stage_specs,
@@ -123,9 +124,9 @@ RANDOM_TRACK = "random"  # set_track name that triggers procedural generation
 def random_track_weights(n_qubits: int, suffix: str = "") -> tuple[Path, str]:
     """(weights path, honest driver label) for a generated random track:
     the trained ``quantum_universal*`` weights when bundled, else the gp
-    specialist (under the current physics it was measured to lap the oval
-    and combo zero-shot, but not the chicane — docs/SCIENCE.md, "One driver,
-    every track")."""
+    specialist (the bundled gp driver laps oval and chicane zero-shot in 36
+    of 36 episodes each, combo in 16-22 of 36, and three sets of ten
+    generated tracks — docs/SCIENCE.md, "One driver, every track")."""
     universal = quantum_weights_path("universal", n_qubits, suffix)
     if universal.is_file():
         return universal, "universal"
@@ -565,7 +566,7 @@ class DemoSession:
         if self.n_qubits == 4:
             return evolution_stage_specs(self.track_name)
         specs = [
-            (f"stage {i}", path)
+            (_weights_label(path, f"stage {i}"), path)
             for i in range(1, N_EVOLUTION_STAGES + 1)
             if (path := self._quantum_weights_path(f"_stage{i}")).is_file()
         ]

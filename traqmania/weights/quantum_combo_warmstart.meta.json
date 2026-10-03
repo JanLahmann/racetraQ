@@ -1,7 +1,7 @@
 {
   "agent": "quantum",
   "track": "combo",
-  "config_hash": "d28669133bbf",
+  "config_hash": "e4170d094d0b",
   "episodes": 1050,
   "run": {
     "seed": 3,
@@ -32,7 +32,8 @@
       600,
       850,
       950
-    ]
+    ],
+    "first_training_lap_episode": 1403
   },
   "circuit": {
     "n_qubits": 4,
@@ -72,5 +73,5 @@
     "bootstrap_truncation": true
   },
   "provenance": "warm-start checkpoint: snapshot at episode 1050 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 1100 (the first snapshot that laps in at least half of an eval's episodes); NOT the run's first lap: the snapshot(s) at episode(s) 600, 850, 950 lapped in a few eval episodes and lost it again",
-  "date": "2026-10-02"
+  "date": "2026-10-03"
 }

@@ -1,7 +1,7 @@
 {
   "agent": "quantum",
   "track": "chicane",
-  "config_hash": "30c8eb927a61",
+  "config_hash": "9ae55f69c686",
   "episodes": 50,
   "stage": 1,
   "run": {
@@ -69,5 +69,5 @@
     }
   },
   "provenance": "snapshot at episode 50 of the training run that produced quantum_chicane.npz (seed 7, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
-  "date": "2026-10-02"
+  "date": "2026-10-03"
 }

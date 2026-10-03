@@ -18,8 +18,11 @@ must leave behind, so a bad one cannot land silently:
 - the warm-start checkpoint is a snapshot of the same run that laps in
   neither eval, taken before the run's breakthrough (the first snapshot that
   laps in at least half of an eval's episodes), and its sidecar says whether
-  an earlier snapshot had lapped already;
-- every file records the circuit it needs and loads at that shape.
+  an earlier snapshot — or an exploring training car — had lapped already;
+- every file records the circuit it needs and loads at that shape;
+- the real session fields them: evolution mode drives the four stages (the
+  last car being the shipped driver) and a warm training start begins from
+  the checkpoint's parameters.
 """
 
 from __future__ import annotations
@@ -31,7 +34,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from traqmania.config import load_config, resolve_training_cfg
+from traqmania.server import protocol as P
 from traqmania.server.runtime import weights_circuit
+from traqmania.server.session import DemoSession
 
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "traqmania" / "weights"
 N_STAGES = 4
@@ -167,10 +173,17 @@ def test_warmstart_is_a_lapless_snapshot_of_the_same_run(track, qtag):
         if stage["episodes"] < meta["episodes"] and (
                 stage["eval_lapped"] > 0 or stage["exact_eval"]["lapped"] > 0):
             assert stage["episodes"] in earlier
+    # ... and about the training cars: the run's first clean lap (exploring,
+    # under the recipe's acting noise) may have come before the checkpoint
+    first_lap = warm["first_training_lap_episode"]
+    assert first_lap is None or 1 <= first_lap <= meta["run"]["episodes"]
+    pre_first_lap = not earlier and (first_lap is None or first_lap > meta["episodes"])
+    assert ("a pre-first-lap checkpoint" in meta["provenance"]) == pre_first_lap
     if earlier:
         assert "NOT the run's first lap" in meta["provenance"]
-    else:
-        assert "a pre-first-lap checkpoint" in meta["provenance"]
+    elif not pre_first_lap:
+        assert "NOT strictly pre-first-lap" in meta["provenance"]
+        assert f"episode {first_lap}" in meta["provenance"]
 
 
 @family
@@ -187,3 +200,49 @@ def test_stage_and_warmstart_weights_load_at_the_recorded_shape(track, qtag):
         assert np.all(np.isfinite(params))
     # distinct snapshots, not one file under four names
     assert len({np.load(path)["params"].tobytes() for path in files}) == len(files)
+
+
+@family
+def test_session_evolution_and_warm_start_use_the_family(track, qtag, tmp_path):
+    """Through the real session, as the demo loads them."""
+    config = load_config(qtag[1:] or None)
+    config["training"] = dict(config["training"], n_parallel_envs=2)  # a cheap warm job
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    session.drain_outbox()
+    if session.track_name != track:
+        session.handle_message(P.SetTrack(track=track))
+        assert not [m for m in session.drain_outbox() if m["type"] == "error"]
+
+    # evolution mode: one car per stage, in stage order, the last one the driver
+    stages = [_stage(track, qtag, i) for i in range(1, N_STAGES + 1)]
+    metas = [_meta(path) for path in stages]
+    session.handle_message(P.SetMode(mode="evolution"))
+    msgs = session.drain_outbox()
+    assert not [m for m in msgs if m["type"] == "error"] and session.mode == "evolution"
+    assert [car.id for car in session.cars] == [f"stage{i}" for i in range(1, N_STAGES + 1)]
+    for car, path, meta in zip(session.cars, stages, metas, strict=True):
+        np.testing.assert_array_equal(car.qfunc.get_params(), np.load(path)["params"])
+        assert car.qfunc.n_layers == meta["circuit"]["n_layers"]
+    np.testing.assert_array_equal(session.cars[-1].qfunc.get_params(),
+                                  np.load(_driver(track, qtag))["params"])
+    labels = [car.label for car in session.cars]
+    assert labels[-1] == f"best (of {metas[-1]['run']['episodes']} ep run)"
+    # the earlier cars are labelled by their sidecar episode at every qubit count
+    assert labels[:-1] == [f"ep {meta['episodes']}" for meta in metas[:-1]]
+    for _ in range(120):  # 2 s: every car drives, nothing errors
+        session.tick()
+    assert not [m for m in session.drain_outbox() if m["type"] == "error"]
+    assert all(np.hypot(*(car.state[:2] - session.track.start_pose()[:2])) > 1.0
+               for car in session.cars)
+
+    # the warm button: the quantum job starts from the checkpoint's parameters
+    # (0 episodes: the trainer only evaluates them, so they stay what they were)
+    warm = _warmstart(track, qtag)
+    session.handle_message(P.Train(action="start", agent="quantum", warm=True, episodes=0))
+    assert not [m for m in session.drain_outbox() if m["type"] == "error"]
+    job = session.jobs["quantum"]
+    job.thread.join(timeout=300.0)
+    assert not job.thread.is_alive() and job.error is None
+    np.testing.assert_array_equal(job.trainer.qfunc.get_params(), np.load(warm)["params"])
+    assert job.trainer.qfunc.n_layers == _meta(warm)["circuit"]["n_layers"]
+    assert job.trainer.cfg == resolve_training_cfg(config, track, warm=True, agent="quantum")

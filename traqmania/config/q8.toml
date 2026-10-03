@@ -2,8 +2,10 @@
 # Bundled weights (quantum_<track>_q8.npz): oval and chicane; on other tracks
 # attract/race/evolution/hardware stay unavailable until you train.
 # 5 re-uploading blocks: at 8 qubits the default 4 hide one feature from every
-# action (Brake cannot see speed); 5 give every action the full observation and
-# train more reliably (October 2026 study, 6 seeds per depth) —
+# action (Brake cannot see speed); 5 give every action the full observation.
+# October 2026 study, 6 seeds per depth: with 5 blocks the end-of-training
+# parameters lap more often on the oval (the one supported difference of ten
+# comparisons); everything else points the same way without support —
 # python -m traqmania.agents.quantum.lightcone --qubits 8 --layers 4
 
 [circuit]

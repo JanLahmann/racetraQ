@@ -669,6 +669,12 @@ def test_resolve_training_cfg_merges_track_presets(config):
     assert gp["lr"] == base["lr"]
     warm_gp = resolve_training_cfg(config, "gp", warm=True)
     assert warm_gp["episodes"] == config["training_warm_gp"]["episodes"]
+    # every track with a [training_warm_<track>] table gets it on top of [training_warm]
+    warm_combo = resolve_training_cfg(config, "combo", warm=True)
+    assert warm_combo["epsilon_start"] == config["training_warm_combo"]["epsilon_start"]
+    assert warm_combo["gamma"] == config["training_presets"]["combo"]["gamma"]
+    warm_oval = resolve_training_cfg(config, "oval", warm=True)
+    assert warm_oval["epsilon_start"] == config["training_warm"]["epsilon_start"]
     assert config["training"]["gamma"] == base["gamma"]  # inputs untouched
 
 

@@ -403,6 +403,10 @@ def rule_text(args: argparse.Namespace, n_top: int, multi: bool, study_episodes:
     if args.rank_by == "device":
         order = f"episodes lapped on the simulated device, then {order}"
     per_track = " per track" if multi else ""
+    if getattr(args, "seed", None) is not None:
+        return (f"seed {args.seed} chosen by hand (--seed; reason in the note) and re-evaluated on "
+                f"{args.eval_episodes} fresh distinct greedy episodes{per_track} (env seed "
+                f"{args.eval_seed}); the fresh numbers are the ones recorded")
     rule = (
         f"seeds ranked by the study's {study_episodes}-episode reliability eval of the best "
         f"snapshot (lapped fraction, then mean lap); the top {n_top} re-evaluated on "
@@ -726,7 +730,12 @@ def cmd_bundle(args: argparse.Namespace) -> int:
     ranked = sorted(cells, key=lambda cell: study_key(cell["result"]))
     for rank, cell in enumerate(ranked, start=1):
         cell["rank"] = rank
-    top = ranked[:args.top]
+    if args.seed is not None:  # a human-chosen seed: still fresh-evaluated and recorded as such
+        top = [cell for cell in ranked if cell["seed"] == args.seed]
+        if not top:
+            raise ValueError(f"--seed {args.seed} is not a finished seed of variant {args.variant}")
+    else:
+        top = ranked[:args.top]
     spread = seed_spread([cell["result"] for cell in cells], args.resamples)
     print(f"## {directory.resolve().name} / {args.variant}: {agent} on {track}, "
           f"{len(cells)} seeds" + (f" ({len(failed_seeds)} more failed: {failed_seeds})"
@@ -875,6 +884,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="file stem of the bundled driver, e.g. quantum_oval")
     parser.add_argument("--list", action="store_true",
                         help="print every variant with its seed-spread statistics and exit")
+    parser.add_argument("--seed", type=int, default=None,
+                        help="bundle this seed instead of the top candidates (it is still "
+                             "re-evaluated on fresh episodes; the sidecar records the choice)")
     parser.add_argument("--top", type=int, default=TOP,
                         help=f"candidates re-evaluated on fresh episodes (default {TOP})")
     parser.add_argument("--eval-episodes", type=int, default=EVAL_EPISODES,

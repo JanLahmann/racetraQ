@@ -53,13 +53,14 @@ def resolve_training_cfg(config: dict, track: str, warm: bool = False,
                          agent: str | None = None) -> dict:
     """[training] merged with [training_presets.<track>], then (when ``agent``
     is given) [training_presets_<agent>.<track>], and, when ``warm``,
-    [training_warm] (+ [training_warm_gp] on top for gp).
+    [training_warm] (+ [training_warm_<track>] on top, where one exists).
 
     The one precedence rule for per-track training recipes, shared by the
     server and headless training (kept here so it needs no server imports).
     The per-agent layer exists because the two agents want different
     recipes: e.g. the exploration floor that keeps the circuit lapping on gp
-    stops the MLP from learning it.
+    tends to hurt the MLP there (a trend over 10 seeds, not a supported
+    difference — docs/SCIENCE.md, "Training stability").
     """
     cfg = dict(config["training"])
     cfg.update(config.get("training_presets", {}).get(track, {}))
@@ -67,8 +68,7 @@ def resolve_training_cfg(config: dict, track: str, warm: bool = False,
         cfg.update(config.get(f"training_presets_{agent}", {}).get(track, {}))
     if warm:
         cfg.update(config.get("training_warm", {}))
-        if track == "gp":
-            cfg.update(config.get("training_warm_gp", {}))
+        cfg.update(config.get(f"training_warm_{track}", {}))
     return cfg
 
 

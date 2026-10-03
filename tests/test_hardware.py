@@ -952,7 +952,8 @@ def test_spsa_sprint_keeps_the_policy(fake_backend):
     start = np.load(OVAL_WEIGHTS)["params"]
     moved = result["params"] - start
     assert np.all(moved[:48] == 0.0)  # circuit angles untouched
-    # the head stays inside ten trust regions (in practice far inside: ~1 % of |w|)
+    # the head stays inside ten trust regions (in practice far inside: the
+    # October 2026 driver moves ~0.6 % of |w|, a twentieth of this bound)
     probe = hardware.SPRINT_HEAD_PROBE * np.mean(np.abs(start[48:52]))
     assert np.max(np.abs(moved[48:])) <= 10 * 2.0 * hardware.SPRINT_STEP_TARGET * probe + 1e-9
     accepted, vetoed = result["accepted"], result["vetoed"]
@@ -980,11 +981,14 @@ def test_sprint_targets_follow_the_recipe_the_weights_were_trained_with(tmp_path
     assert hardware._td_recipe(tmp_path / "quantum_oval.npz", config) == plain_recipe
     # the bundled oval driver brings the recipe its sidecar records (since the
     # October 2026 re-bundling: advantage learning, action_gap 0.8)
-    recorded = json.loads(OVAL_WEIGHTS.with_suffix("").with_suffix(".meta.json")
-                          .read_text(encoding="utf-8"))["training"]
+    sidecar = json.loads(OVAL_WEIGHTS.with_suffix("").with_suffix(".meta.json")
+                         .read_text(encoding="utf-8"))
+    assert "training" in sidecar, "the bundled oval driver's sidecar records no recipe"
+    recorded = sidecar["training"]
+    assert recorded.get("action_gap", 0.0) > 0.0  # the hardware-demo driver: advantage learning
     assert hardware._td_recipe(OVAL_WEIGHTS, config) == {
-        "gamma": recorded["gamma"], "action_gap": recorded.get("action_gap", 0.0),
-        "reward_scale": recorded.get("reward_scale", 1.0)}
+        "gamma": recorded["gamma"], "action_gap": recorded["action_gap"],
+        "reward_scale": recorded.get("reward_scale", 1.0)} != plain_recipe
     config["training"]["action_gap"] = 0.5
     assert hardware._td_recipe(tmp_path / "quantum_oval.npz", config)["action_gap"] == 0.5
     weights = tmp_path / "quantum_oval.npz"
@@ -1068,7 +1072,8 @@ def test_spsa_sprint_descends_a_planted_device_error(fake_backend, monkeypatch):
 
     assert result["vetoed"] == [False] * 10
     assert sum(result["accepted"]) >= 5  # all 10 with qiskit 2.5 / numpy 2.5
-    assert result["loss_after"] < 0.9 * result["loss_before"]  # 67.9 -> 51.2
+    # October 2026 driver: 71.5 -> 52.1 (the July 2026 driver: 67.9 -> 51.2)
+    assert result["loss_after"] < 0.9 * result["loss_before"]
     # no noise: the blocking rule sees the true loss, which can only go down
     history = [result["loss_before"], *result["loss_history"]]
     assert all(b <= a + 1e-9 for a, b in zip(history, history[1:], strict=False))

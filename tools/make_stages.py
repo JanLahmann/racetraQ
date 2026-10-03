@@ -11,7 +11,9 @@ replays it:
 - seed, episode count, the resolved ``training`` table, circuit depth and
   observation are read from the driver's ``.meta.json`` sidecar (``--seed``,
   ``--episodes`` and ``--set`` override them; ``--fresh`` ignores the driver
-  and trains the config's recipe);
+  and trains the config's recipe).  The recorded table is the whole recipe:
+  a replay skips today's per-track presets (``train_headless --preset
+  none``), which may have gained keys the driver was trained without;
 - the run goes through ``traqmania.train_headless.train`` — the code path
   that trained the driver (``tools/study.py`` calls it once per cell) — with
   a trainer that also keeps the parameters of every snapshot eval;
@@ -38,7 +40,11 @@ The ``_warmstart`` checkpoint of the warm live-training demo is the last
 snapshot that laps in NEITHER eval before the run's breakthrough — the first
 snapshot that laps in at least half of an eval's episodes.  Usually that is
 a pre-first-lap snapshot; where an earlier snapshot lapped in a few episodes
-and lost it again (DQN churn), the sidecar names those episodes.
+and lost it again (DQN churn), the sidecar names those episodes.  It also
+records the episode in which an (exploring) training car completed the run's
+first clean lap: that can come before the checkpoint although the checkpoint
+itself, driven greedily, does not lap — the sidecar then says so instead of
+calling it pre-first-lap.
 
 Rationale: raw parameters at fixed episode counts are NOT monotonically
 better — DQN policy churn made an ep-400 snapshot beat ep-800 on screen, and
@@ -99,8 +105,9 @@ def _sha256(path: Path) -> str:
 def driver_recipe(driver: Path, profile: str | None = None) -> dict | None:
     """What it takes to replay the run behind a bundled driver, from its
     sidecar: ``{"seed", "episodes", "overrides"}`` — the resolved training
-    table as ``training.<key>`` overrides (so the replay does not depend on
-    today's presets), the circuit depth and action count, and the recorded
+    table as ``training.<key>`` overrides (:func:`make_stages` trains them
+    with ``preset="none"``, so the replay does not depend on today's
+    presets), the circuit depth and action count, and the recorded
     observation.  None when the sidecar is missing or records no
     ``training`` table with a seed and an episode count (a pre-October-2026
     driver: its run cannot be replayed from what it recorded)."""
@@ -238,6 +245,28 @@ def warmstart_choice(lapped: Sequence[float],
     return None if warm is None else (warm, first)
 
 
+def warmstart_history(episode: int, earlier: Sequence[int],
+                      first_training_lap: int | None) -> str:
+    """What a warm-start sidecar says about laps BEFORE its checkpoint (the
+    snapshot at ``episode``, which laps in neither eval).
+
+    ``earlier``: episodes of earlier snapshots that lapped in an eval;
+    ``first_training_lap``: the episode in which a training car — exploring,
+    and under the recipe's acting noise — completed the run's first clean
+    lap (``train_headless``'s ``first_clean_episode``; None: never).  Only a
+    checkpoint with neither before it is called pre-first-lap.
+    """
+    if earlier:
+        return ("NOT the run's first lap: the snapshot(s) at episode(s) "
+                f"{', '.join(map(str, earlier))} lapped in a few eval episodes and "
+                "lost it again")
+    if first_training_lap is not None and first_training_lap <= episode:
+        return ("NOT strictly pre-first-lap: no earlier snapshot lapped, but an exploring "
+                "training car had completed the run's first clean lap in episode "
+                f"{first_training_lap}")
+    return "no earlier snapshot lapped: a pre-first-lap checkpoint"
+
+
 def exact_eval(npz: Path, track_name: str, profile: str | None,
                episodes: int = EXACT_EVAL_EPISODES, seed: int = EXACT_EVAL_SEED) -> dict:
     """Independent eval of a saved snapshot: ``episodes`` distinct greedy
@@ -329,8 +358,13 @@ def make_stages(track_name: str = "oval", seed: int | None = None,
 
     record: list[dict] = []
     with tempfile.TemporaryDirectory(prefix="make_stages_") as tmp, recorded_evals(record):
+        # a replay trains the recorded table and nothing else: today's presets
+        # may hold keys the driver's run did not have (they would make it
+        # another run)
         summary = train_headless.train("quantum", track_name, episodes, seed, profile,
-                                       out_dir=tmp, init=init, overrides=run_overrides)
+                                       out_dir=tmp, init=init, overrides=run_overrides,
+                                       preset="none" if recipe else "auto")
+        first_training_lap = summary.get("first_clean_episode")
         run_npz = Path(summary["weights_path"])
         run_meta = _read_sidecar(run_npz)
         best_params = np.load(run_npz)["params"]
@@ -447,12 +481,7 @@ def make_stages(track_name: str = "oval", seed: int | None = None,
         warm_idx, first = warm
         entry = record[warm_idx]
         earlier = [int(record[j]["episode"]) for j in range(warm_idx) if lapped[j] > 0.0]
-        if earlier:
-            history = ("NOT the run's first lap: the snapshot(s) at episode(s) "
-                       f"{', '.join(map(str, earlier))} lapped in a few eval episodes and "
-                       "lost it again")
-        else:
-            history = "no earlier snapshot lapped: a pre-first-lap checkpoint"
+        history = warmstart_history(int(entry["episode"]), earlier, first_training_lap)
         np.savez(warm_path, params=entry["params"])
         _write_sidecar(warm_path, {
             **base_meta(entry),
@@ -462,6 +491,9 @@ def make_stages(track_name: str = "oval", seed: int | None = None,
                 "breakthrough_episode": int(record[first]["episode"]),
                 "breakthrough_fraction": BREAKTHROUGH,
                 "earlier_lapping_episodes": earlier,
+                # the run's first clean lap by an (exploring) training car
+                "first_training_lap_episode": (None if first_training_lap is None
+                                               else int(first_training_lap)),
             },
             **run_blocks(),
             "provenance": (f"warm-start checkpoint: snapshot at episode {entry['episode']} "

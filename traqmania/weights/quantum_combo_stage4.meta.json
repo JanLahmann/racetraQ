@@ -1,7 +1,7 @@
 {
   "agent": "quantum",
   "track": "combo",
-  "config_hash": "d28669133bbf",
+  "config_hash": "e4170d094d0b",
   "episodes": 1700,
   "stage": 4,
   "run": {
@@ -64,5 +64,5 @@
     "bootstrap_truncation": true
   },
   "provenance": "snapshot at episode 1700 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_combo.npz",
-  "date": "2026-10-02"
+  "date": "2026-10-03"
 }

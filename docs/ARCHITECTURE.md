@@ -60,14 +60,14 @@ flowchart LR
 | `traqmania/agents/quantum/circuit.py` | Canonical Qiskit circuit (single source of truth) + JSON `circuit_spec` for the browser diagram, including the light-cone fields `visibility`, `dead_params`, `min_layers_full_visibility`, `dead_gates`, a `live` flag on every gate and `pruned_on_hardware`. |
 | `traqmania/agents/quantum/lightcone.py` | Structural light-cone analysis (numpy only): `feature_visibility` (which features each readout ⟨Z_a⟩ can depend on), `live_gates` / `live_parameter_mask` (what can influence a readout at all — the rest has exactly zero gradient), `min_layers_full_visibility`, `blind_spots` / `blind_spot_warning` (human-readable, printed by `train_headless`), `pruned_circuit` (the live gates only, same expectation values — what the hardware path runs). CLI: `python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4`. |
 | `traqmania/agents/quantum/fastsim.py`, `adjoint.py` | Hand-written numpy statevector simulator and adjoint (backprop-style) gradients. |
-| `traqmania/agents/quantum/noise.py` | Expectation-value noise model (numpy only at import): `ExpectationNoise` (attenuation, shots, bias — what a device does to ⟨Z_a⟩), `NoisyQFunction`, `ReadoutCorrection` (the calibrated rescale behind `HardwareQFunction(rescale=...)`), `calibrate` / `validate` against the local device patch (CLI: `python -m traqmania.agents.quantum.noise calibrate|validate --fake fake_miami`). The model is semi-quantitative — what it gets right and wrong is measured in SCIENCE.md, "Why a driver fails under noise, and what helps". |
+| `traqmania/agents/quantum/noise.py` | Expectation-value noise model (numpy only at import): `ExpectationNoise` (attenuation, shots, bias — what a device does to ⟨Z_a⟩), `NoisyQFunction`, `ReadoutCorrection` (the calibrated rescale behind `HardwareQFunction(rescale=...)`), `calibrate` / `validate` against the local device patch (CLI: `python -m traqmania.agents.quantum.noise calibrate\|validate --fake fake_miami`). The model is semi-quantitative — what it gets right and wrong is measured in SCIENCE.md, "Why a driver fails under noise, and what helps". |
 | `traqmania/agents/quantum/surrogate.py` | Classical Fourier surrogates of the trained circuit (numpy only): the frequency spectrum set by the trained input scalings, (`frequency_spectrum` / `spectrum_size`: the product upper bound the encoding allows), `gate_coefficients` (the exact Fourier coefficients of a readout — which of those frequencies are really used), and `fit_surrogate` (`full` least squares, random Fourier features, kernel ridge) returning a `FourierSurrogate` that can drive in place of the circuit (`drive_laps`, `compare`). Backs notebook 07 — light cones and classical surrogates. |
 | `traqmania/agents/quantum/qdqn.py` | `QuantumQFunction`: fastsim-backed `QFunction`, flat `[lam, theta, w, b]` layout, P = 3·L·n + 8 params (56 at 4 qubits, 80 at 6); `param_groups()` names the `lam` / `theta` / `head` slices for per-group learning rates. |
 | `traqmania/agents/quantum/qnn.py` | Same circuit via qiskit-machine-learning `EstimatorQNN` (parity checks, shots/noise backends; `aer_noisy` uses the local device twin from `hardware.local_simulator`). |
 | `traqmania/agents/classical/mlp.py` | 76-parameter numpy MLP baseline (4-8-4, tanh) with analytic backprop; `param_groups()`: `body` / `head`. |
 | `traqmania/agents/training/dqn.py` | Double-DQN loop over vectorized envs, Adam, replay buffer — shared by both backends. Snapshot eval (one round of `eval_episodes` distinct greedy episodes every `eval_every` episodes; `history["eval_log"]`, `final_eval`, `trainer.final_params`) and the optional `[training]` knobs `bootstrap_truncation`, `loss` / `huber_delta`, `lr_groups`, `lr_end`, `target_update` / `tau`, `grad_clip`, `reward_scale`, plus, for robustness to device noise, `act_noise` (act and select snapshots under an `ExpectationNoise`; TD targets and gradients stay exact) and `action_gap` (advantage learning). In the trainer every knob is off unless the recipe sets it; `default.toml` turns `bootstrap_truncation` on for everyone and `act_noise` / `action_gap` on for the quantum agent on oval and chicane. |
 | `traqmania/agents/training/spsa.py` | Minimal SPSA minimizer used by hardware sprints: two loss evaluations per iteration, plus the optional safeguards the sprint turns on — per-parameter `scale` (0 freezes a parameter), a `max_step` trust region, `blocking` (reject a step the loss does not confirm), `accept` (a veto on a proposed point, costing no loss evaluation) and `calibrate_gain`. |
-| `traqmania/hardware.py` | IBM Quantum via `qiskit-ibm-runtime`, real or simulated. `get_backend` (real QPU, or a fake by name — default `fake_miami`, a Nighthawk calibration snapshot; unknown names raise), `local_simulator` / `execution_backend` (the Aer twin of a fake, built once: fakes of up to 7 qubits whole, larger devices — the 120–156-qubit ones above all — as a *device patch* of just the physical qubits the routed circuit touches), `open_execution_mode` (Session → Batch → job fallback, with the reason), `HardwareQFunction` (inference-only; light-cone-pruned ISA circuit, client-side `executor_estimator.Estimator` with `EstimatorV2` fallback, `resilience_level` 0/1/2, optional calibrated attenuation `rescale`), `run_hardware_lap`, `spsa_sprint` (by default: output head only, blocking, and a guard that vetoes steps costing more than 10 % of the exact-simulator greedy return; TD targets follow the recipe in the weights' sidecar; the result lists `accepted` and `vetoed` per iteration, and `sprint_steps_text` words them). CLI: `python -m traqmania.hardware lap|sprint [--track T] [--profile q6] [--fake] [--fake-name NAME] [--backend NAME] [--weights W.npz] [--shots N] [--resilience 0|1|2] [--rescale off|global|readout] [--no-prune]`, plus `--max-decisions N` for a lap and `--iterations N --batch N --groups lam,theta,head --no-blocking --no-guard` for a sprint. `[hardware]` config: `backend_name`, `fake_name`, `shots`, `decision_shots`, `spsa_iterations`, `spsa_groups`, `spsa_blocking`, `spsa_guard`, `resilience_level`, `prune_light_cone`, `rescale`, `calibration_samples`, `calibration_shots`. |
+| `traqmania/hardware.py` | IBM Quantum via `qiskit-ibm-runtime`, real or simulated. `get_backend` (real QPU, or a fake by name — default `fake_miami`, a Nighthawk calibration snapshot; unknown names raise), `local_simulator` / `execution_backend` (the Aer twin of a fake, built once: fakes of up to 7 qubits whole, larger devices — the 120–156-qubit ones above all — as a *device patch* of just the physical qubits the routed circuit touches), `open_execution_mode` (Session → Batch → job fallback, with the reason), `HardwareQFunction` (inference-only; light-cone-pruned ISA circuit, client-side `executor_estimator.Estimator` with `EstimatorV2` fallback, `resilience_level` 0/1/2, optional calibrated attenuation `rescale`), `run_hardware_lap`, `spsa_sprint` (by default: output head only, blocking, and a guard that vetoes steps costing more than 10 % of the exact-simulator greedy return; TD targets follow the recipe in the weights' sidecar; the result lists `accepted` and `vetoed` per iteration, and `sprint_steps_text` words them). CLI: `python -m traqmania.hardware lap\|sprint [--track T] [--profile q6] [--fake] [--fake-name NAME] [--backend NAME] [--weights W.npz] [--shots N] [--resilience 0\|1\|2] [--rescale off\|global\|readout] [--no-prune]`, plus `--max-decisions N` for a lap and `--iterations N --batch N --groups lam,theta,head --no-blocking --no-guard` for a sprint. `[hardware]` config: `backend_name`, `fake_name`, `shots`, `decision_shots`, `spsa_iterations`, `spsa_groups`, `spsa_blocking`, `spsa_guard`, `resilience_level`, `prune_light_cone`, `rescale`, `calibration_samples`, `calibration_shots`. |
 | `traqmania/server/protocol.py` | Typed WS messages; strict client-side validation (`ProtocolError`). |
 | `traqmania/server/session.py` | `DemoSession`: the mode state machine and synchronous 60 Hz `tick()`; training threads; ghost recording. |
 | `traqmania/server/runtime.py` | Loading bundled agents/weights/tracks/ghosts, track payloads; what a weights file brings along (`weights_observation`, `weights_actions`, `weights_circuit`: its circuit depth and action count; `with_weights_config` overlays all of it on a config); re-exports `config.resolve_training_cfg`. |
@@ -77,11 +77,11 @@ flowchart LR
 | `traqmania/records.py` | `python -m traqmania.records [--episodes N] [--seed S] [--drivers a,b] [--tracks x,y] [--out FILE]`: greedy evaluation of every bundled driver on every bundled track (each under its own recorded observation, depth and action count) into `data/records.json`. |
 | `traqmania/bench.py` | Micro-benchmarks (env steps, forward passes, DQN updates). |
 | `tools/study.py` | Multi-seed study harness. `run` trains a (variant × seed) grid, one subprocess per cell, resumable; each cell saves best-snapshot and final weights and evaluates both over 36 distinct greedy episodes. `report` aggregates over seeds: IQM and median with bootstrap confidence intervals, stability, sample complexity, probability of improvement over a baseline (`report.md`, `report.json`). |
-| `tools/bundle_driver.py` | From a study to a bundled driver: ranks a variant's seeds by the study's 36-episode eval, re-evaluates the top candidates on 72 fresh episodes (`--eval-seed`, refused when it coincides with a seed the study used), optionally drives them on the simulated device (`--device-episodes N`, ranking first with `--rank-by device`), and writes `<name>.npz` plus a sidecar with a `selection` block. `--list` prints a study's variants with their seed spreads; `--dry-run` writes nothing; a driver below `--min-lapped` (0.9) or an existing target needs `--force` / `--overwrite`. |
+| `tools/bundle_driver.py` | From a study to a bundled driver: ranks a variant's seeds by the study's 36-episode eval, re-runs that eval for the top candidates (the check that this checkout still drives the weights as the study did; `--skip-replay`), re-evaluates them on 72 fresh episodes (`--eval-seed`, refused when it coincides with a seed the study used), optionally drives them on the simulated device (`--device-episodes N`, ranking first with `--rank-by device`), and writes `<name>.npz` plus a sidecar with a `selection` block. `--list` prints a study's variants with their seed spreads; `--dry-run` writes nothing; a driver below `--min-lapped` (0.9) or an existing target needs `--force` / `--overwrite`. |
 | `tools/export_study.py` | `python tools/export_study.py STUDY_DIR --name NAME [--out data/studies]`: the committable summary of a study — `report.md`, `report.json`, and `cells.json` with one record per finished cell (variant, seed, overrides, parameter count, first clean lap, the in-training eval log, both 36-episode evals, mean return per 100 episodes, wall time). |
 | `data/studies/<name>/` | Those summaries for every study behind SCIENCE.md's "Measured results" (the weights and full logs of the runs are not in the repository). |
 | `tools/hw_reliability.py` | Lap completion and decisions-until-crash of one weights file under device noise: many emulated episodes (the `noise.py` model) plus a few on the local device patch, across shots (`--shots`, default 1024,4096,16384), rescale settings (`--rescale`, default off,readout) and resilience levels (`--resilience`, default 0,1); `--device-episodes N` sets the device-path sample (default 3 — use 8 or more to judge a driver), `--no-device` emulates only. Emulated rescale rows are optimistic, and "mean lap" is not comparable between emulated and device rows (different decision caps). |
-| `tools/make_stages.py` | Trains a fresh quantum agent, snapshots parameters as it learns, and saves 4 evolution-stage weights `quantum_<track>_stage{1..4}.npz` (+ `.meta.json` with the episode count shown as the car label). |
+| `tools/make_stages.py` | Evolution-stage weights and the warm-start checkpoint, as earlier snapshots of the bundled driver's own training run: replays that run from the driver's sidecar (seed, episodes, recipe, depth, observation) and writes nothing unless the replay's best snapshot equals the driver parameter for parameter (`--allow-mismatch` overrides; `--fresh` trains the config's recipe instead). Saves 4 snapshots that improve from one to the next and end on the driver, `quantum_<track>_stage{1..4}[_q<n>].npz` (+ `.meta.json` with the episode count shown as the car label), and `quantum_<track>_warmstart[_q<n>].npz`, the last snapshot that does not lap before the run starts lapping in half of an eval's episodes. |
 | `traqmania/web/` | Frontend ES modules (`main`, `net`, `race`, `input`, `charts`, `circuit`, `quantum-panel`, `hardware-panel`, `attract`, `explain`, `docs`, `md`, `draw`, `tooltip`); no build step, served statically. |
 
 ## Qubit-count profiles (q6 / q8 / q10)
@@ -107,11 +107,16 @@ ring distance `n_layers − 1` of its qubit (`agents/quantum/lightcone.py`;
 SCIENCE.md, "Light cones"), so 4 blocks show every feature to every action
 at 4 and 6 qubits, but 8 qubits need 5 blocks and 10 need 6. The default
 config and `q6` keep `[circuit] n_layers = 4`; **`q8` sets 5** (the October
-2026 study: 5 blocks train more reliably than 4, and the bundled 8-qubit
-drivers are 5-block, 128-parameter files); `q10` still has 4 — its bundled
-drivers are the July 4-block files, and its depth is decided when the
-4-against-6-block study is in.
-<!-- RESULTS-PENDING: q10 profile depth and the re-bundled quantum_oval_q10 / quantum_chicane_q10, once the q10_oval / q10_chicane studies (4 vs 6 blocks, seeds 0-5) have finished -->
+2026 study, 6 seeds per depth: with 5 blocks the end-of-training parameters
+lap more often on the oval — the one supported difference of ten — and
+everything else points the same way without support; the bundled 8-qubit
+drivers are 5-block, 128-parameter files); `q10` has 6 (full visibility;
+on the oval 6 blocks pointed the same way as the fifth block at 8 qubits
+without the difference being supported, on chicane the depths are
+indistinguishable — `data/studies/oval_q10`, `chicane_q10`), and its
+bundled oval and chicane drivers are 6-block, 188-parameter files;
+`quantum_gp_q10` is still a 4-block file, which the loaders read from its
+parameter count.
 `circuit_spec` reports the visibility, and `train_headless` warns before
 training a circuit with blind spots (live training writes the same warning
 to the server log). To train with full visibility at 10 qubits: `--set
@@ -166,10 +171,11 @@ agent)` merges, later layers winning:
 3. `[training_presets_<agent>.<track>]` — the per-agent layer, today only
    for `quantum`: `action_gap = 0.8` and `act_noise = { attenuation = 0.95,
    shots = 1024 }` on oval and chicane, `epsilon_end = 0.30` on gp and
-   combo. The MLP has no such table and keeps `epsilon_end = 0.05`: the two
-   agents want opposite exploration on gp (SCIENCE.md, "Training
-   stability");
-4. with `warm`: `[training_warm]`, plus `[training_warm_gp]` on gp.
+   combo. The MLP has no such table and keeps `epsilon_end = 0.05`: on 10
+   seeds the MLP tends to do worse with the 0.30 floor on gp — a consistent
+   trend, not a supported difference (SCIENCE.md, "Training stability");
+4. with `warm`: `[training_warm]`, plus `[training_warm_<track>]` where one
+   exists (gp, combo).
 
 Live training in the session and `train_headless` both call it with the
 agent. `train_headless --preset none` skips layers 2 and 3, `--set
@@ -235,7 +241,7 @@ Differences from bundled tracks:
   the four bundled tracks but none of ten generated tracks (0 of 120
   episodes at difficulty 0.5 and at the 0.65 the server generates), while
   `quantum_gp` laps all ten (120 of 120 at both) and, zero-shot, oval and
-  chicane (36 of 36 each) and combo (21 of 36) — SCIENCE.md, "One driver,
+  chicane (36 of 36 each) and combo (16–22 of 36) — SCIENCE.md, "One driver,
   every track". Until the universal driver is re-selected, `set_driver
   {driver: "gp"}` is the working choice on generated and drawn tracks. At
   10 qubits there is no universal file and the fallback is the July
@@ -568,7 +574,7 @@ need weights though: train and save them with
 ```sh
 python -m traqmania.train_headless --agent quantum --track hairpin
 python -m traqmania.train_headless --agent mlp --track hairpin
-python tools/make_stages.py --track hairpin   # evolution-mode snapshots
+python tools/make_stages.py --track hairpin   # evolution stages + warm-start checkpoint (replays the quantum run above)
 ```
 
 which writes `traqmania/weights/{quantum,mlp}_hairpin.npz` + `.meta.json`

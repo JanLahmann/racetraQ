@@ -2,12 +2,20 @@
 # Bundled weights (quantum_<track>_q10.npz): oval, chicane and gp (the gp
 # driver uses an engineered-feature observation recorded in its sidecar); on
 # other tracks attract/race/evolution/hardware stay unavailable until you train.
-# n_layers stays at the default 4, which at 10 qubits hides three features
-# from every action; full visibility needs 6 blocks —
-# python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4
+# 6 re-uploading blocks: at 10 qubits the default 4 hide three features from
+# every action (Brake cannot see speed); 6 give every action the full
+# observation — python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4
+# October 2026 study (6 seeds per depth, data/studies/oval_q10 and chicane_q10):
+# on the oval 6 blocks point the same way as the fifth block at 8 qubits
+# (end-of-training lapped 0.68 [0.19, 1.00] vs 0.36 [0.06, 0.85]; mean lap
+# 13.3 vs 14.3 s) without the difference being supported; on the chicane the
+# two depths are indistinguishable (0.55 vs 0.55; 13.1 vs 13.6 s). Full
+# visibility costs nothing measurable, so the profile uses it; the gp driver
+# is the July 4-block file (see docs/SCIENCE.md).
 
 [circuit]
 n_qubits = 10
+n_layers = 6
 
 [observation]
 ray_angles_deg = [-60.0, -45.0, -30.0, -15.0, 0.0, 15.0, 30.0, 45.0, 60.0]

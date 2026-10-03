@@ -111,8 +111,9 @@ gamma = 0.99
 # - gp / combo: a 0.30 exploration floor. With the usual 0.05 the 4-qubit
 #   circuit's greedy driving peaks while it is still exploring and collapses
 #   afterwards; at 0.30 it stays flat (stability 0.18 vs 0.08, 10 seeds).
-#   The MLP wants the opposite (it stops learning gp at 0.30), hence per agent;
-#   so does the 10-qubit feature-observation circuit (see docs/SCIENCE.md).
+#   On 10 seeds the MLP tends to do worse with the 0.30 floor (a consistent
+#   trend, not a supported difference), hence per agent; the 10-qubit
+#   feature-observation circuit fails under it too (see docs/SCIENCE.md).
 [training_presets_quantum.oval]
 action_gap = 0.8
 act_noise = { attenuation = 0.95, shots = 1024 }
@@ -132,16 +133,21 @@ epsilon_end = 0.30
 # driver's own training run that does not lap yet, tools/make_stages.py).
 # Merged on top of the track's presets, so oval / chicane warm training
 # keeps the action-gap / acting-noise recipe of the quantum presets above.
-# Measured October 2026 through the server's own warm path, 6 seeds per track
-# (42, the one the demo runs, and 0-4); "first lap" = the first lap one of
-# the 8 training cars completes, in episodes and CPU seconds of training:
-#   oval              6/6 seeds, episode 15-36 (median 20.5), 1.4-2.9 s
-#   chicane           6/6 seeds, episode 14-67 (median 47.5), 1.3-5.3 s
-#   oval, 6 qubits    6/6 seeds, episode 25-44 (median 29.5), 4.9-7.2 s
-#   combo             1/6 seeds (episode 52); the other five never lap
-# HONEST caveat: combo does not warm-start reliably. Lower learning rates
-# (0.003: 0/3 seeds, 0.001: 1/3) and 400 episodes at 0.003 (0/3) did not
-# change that, so the recipe stays as it is.
+# Measured October 2026 through the server's own warm path, 11 seeds per
+# track (42, the one the demo runs, and 0-9). "First lap" = the first lap one
+# of the 8 training cars completes, in episodes and CPU seconds of training
+# (M1 Max); "ends lapping" = the run's best snapshot laps in at least half of
+# its 12 eval episodes:
+#   oval            first lap 11/11 seeds, episode 15-36 (median 23),
+#                   1.4-2.9 s; ends lapping 11/11
+#   chicane         first lap 11/11 seeds, episode 14-78 (median 50),
+#                   1.3-7.2 s; ends lapping 7/11 (not on seed 42)
+#   oval, 6 qubits  first lap 11/11 seeds, episode 11-64 (median 29),
+#                   3.4-9.9 s; ends lapping 9/11
+#   combo           see [training_warm_combo]
+# For comparison, a cold 400-episode live run, seeds 42 and 0-4: oval first
+# lap 6/6 (episode 184-339, median 257; 7.2-18.0 s), chicane 4/6 (episode
+# 212-397).
 [training_warm]
 epsilon_start = 0.25
 epsilon_end = 0.05
@@ -163,21 +169,44 @@ epsilon_decay_episodes = 400
 episodes = 600
 gamma = 0.99
 
-# gp gets a longer warm fine-tune (merged on top of [training_warm]): a slow
-# epsilon decay from the bundled episode-1000 checkpoint.
+# gp gets its own warm fine-tune (merged on top of [training_warm]): from the
+# bundled episode-1000 checkpoint, exploration restarts where the driver's own
+# run had it at that point (epsilon 0.65) and falls to 0.15 over 300 episodes.
 # HONEST caveat: gp warm live-training mostly fails. Measured October 2026
-# like the tracks above (6 seeds): a training car lapped in 1 of 6 seeds
-# (seed 0, after 477 episodes, ~42 s CPU), and no run ended with a driver
-# that laps in half of its eval episodes; the demo's own seed (42) saw no
-# training-car lap. A fast decay to low exploration (epsilon 0.15 -> 0.05
-# over 100 episodes) did no better (0 of 3 seeds). In the driver's own
-# training run reliable laps came 1200 episodes after this checkpoint — more
-# than a warm demo can show. Use oval or chicane to demonstrate warm training.
+# like the tracks above (11 seeds): a training car lapped in 3 of 11 seeds
+# (seed 42 at episode 274, seed 0 at 200, seed 5 at 201; 15-27 s CPU), and 3
+# of 11 runs ended lapping (best snapshot 5, 12, 7, 0, 0, 9, 1, 4, 0, 4 and 0
+# of 12 eval episodes for seeds 42, 0-9). The recipe this replaces (epsilon
+# 0.45 -> 0.05 over 850 of 900 episodes), on the same 11 seeds: a first lap
+# in 1 (seed 0, episode 477), ended lapping in none — and took more than
+# twice as long. Little or quickly falling exploration fails outright
+# (0.15 -> 0.05 over 100 episodes: 0 of 3 seeds; 0.45 -> 0.30 over 100: 0 of
+# 3, no eval lap at all); 0.65 -> 0.30 over 1000 and 0.65 -> 0.20 over 400
+# did about the same as this one (first lap in 1 of 3 and 2 of 3 seeds). In
+# the driver's own training run reliable laps came 1200 episodes after this
+# checkpoint — more than a warm demo can show. Use oval or chicane to
+# demonstrate warm training.
 [training_warm_gp]
-epsilon_start = 0.45
-epsilon_decay_episodes = 850
-episodes = 900
+epsilon_start = 0.65
+epsilon_end = 0.15
+epsilon_decay_episodes = 300
+episodes = 400
 gamma = 0.99
+
+# combo gets its own warm fine-tune too: exploration as high as the
+# checkpoint's own run had it. With the shared [training_warm] recipe combo
+# did not warm-start (first lap in 2 of 11 seeds, ended lapping in 1 of 11;
+# lower learning rates — 0.003: 0/3 seeds, 0.001: 1/3 — did not change that).
+# Measured October 2026 like the tracks above (11 seeds, 42 and 0-9): first
+# lap in 11/11 seeds (episode 148-284, median 208; 13-23 s CPU), and 11/11
+# runs ended lapping (best snapshot 12, 12, 12, 9, 12, 12, 11, 12, 10, 10 and
+# 6 of 12 eval episodes for seeds 42, 0-9); the final parameters lap at all
+# in 5/11 and in at least half of their episodes in 3/11.
+[training_warm_combo]
+epsilon_start = 0.5
+epsilon_end = 0.20
+epsilon_decay_episodes = 300
+episodes = 300
 
 [server]
 host = "127.0.0.1"

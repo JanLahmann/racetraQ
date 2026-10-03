@@ -22,6 +22,7 @@ import pytest
 
 from traqmania import train_headless
 from traqmania.agents.training import DQNTrainer
+from traqmania.config import load_config
 from traqmania.server.runtime import WEIGHTS_DIR, weights_circuit
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -154,6 +155,25 @@ def test_warmstart_is_the_last_lapless_snapshot_before_the_breakthrough(tool):
     assert tool.warmstart_choice([0.0, 0.3, 0.4], breakthrough=0.25) == (0, 1)
 
 
+def test_warmstart_history_only_calls_it_pre_first_lap_when_it_is(tool):
+    # nothing lapped before the checkpoint at episode 250: neither an earlier
+    # snapshot nor a training car (first clean training lap in episode 268 / never)
+    assert tool.warmstart_history(250, [], 268) \
+        == tool.warmstart_history(250, [], None) \
+        == "no earlier snapshot lapped: a pre-first-lap checkpoint"
+    # an earlier snapshot lapped in an eval and lost it again
+    text = tool.warmstart_history(1050, [600, 850], 1403)
+    assert text.startswith("NOT the run's first lap") and "600, 850" in text
+    assert "pre-first-lap checkpoint" not in text
+    # no snapshot lapped, but an exploring training car did, up to the episode
+    # the checkpoint was taken at (the bundled chicane run: both 450)
+    for first_lap in (450, 430):
+        text = tool.warmstart_history(450, [], first_lap)
+        assert text.startswith("NOT strictly pre-first-lap") and f"episode {first_lap}" in text
+        assert "pre-first-lap checkpoint" not in text
+    assert "a pre-first-lap checkpoint" in tool.warmstart_history(450, [], 451)
+
+
 # ---------------------------------------------------------------- the replay
 
 
@@ -262,13 +282,39 @@ def test_replay_reproduces_the_driver_and_ends_on_it(tool, plumbing, tmp_path, c
     assert meta["episodes"] == log[0]["episode"] and "stage" not in meta
     assert meta["run"]["reproduces_driver"] is True
     assert meta["circuit"] == driver_meta["circuit"]
+    assert summary["first_clean_episode"] is None  # 25 decisions: no lap, no training lap
     assert meta["warmstart"] == {"breakthrough_episode": log[1]["episode"],
                                  "breakthrough_fraction": 0.5,
-                                 "earlier_lapping_episodes": []}
+                                 "earlier_lapping_episodes": [],
+                                 "first_training_lap_episode": None}
     assert "a pre-first-lap checkpoint" in meta["provenance"]
     assert np.load(warm)["params"].shape == np.load(driver)["params"].shape
     assert sorted(p.name for p in weights.glob("*.npz")) == sorted(
         ["quantum_oval.npz", "quantum_oval_warmstart.npz", *(p.name for p in paths)])
+
+
+def test_replay_trains_the_recorded_recipe_not_todays_presets(tool, plumbing, tmp_path, capsys):
+    """The sidecar's training table is the whole recipe.  A driver trained
+    without the keys today's quantum presets add (no action_gap / act_noise:
+    the bundled 6-qubit chicane and 8-qubit drivers) must replay as it was
+    trained — with the presets merged in, the replay is another run."""
+    weights = tmp_path / "weights"
+    weights.mkdir()
+    train_headless.train("quantum", "oval", EPISODES, SEED, None, out_dir=str(weights),
+                         overrides=FAST, preset="none")
+    training = meta_of(weights / "quantum_oval.npz")["training"]
+    assert "act_noise" not in training and "action_gap" not in training
+    # ... which today's preset for this agent and track would switch on
+    assert {"act_noise", "action_gap"} <= set(load_config()["training_presets_quantum"]["oval"])
+    capsys.readouterr()
+
+    paths = tool.make_stages("oval", weights_dir=weights, overrides=[SHORT], exact_episodes=0)
+    out = capsys.readouterr().out
+    assert "acting noise" not in out
+    assert "== quantum_oval.npz, parameter for parameter" in out
+    meta = meta_of(paths[-1])
+    assert meta["run"]["reproduces_driver"] is True
+    assert meta["training"] == training and meta["eval_acting_noise"] is None
 
 
 def test_replay_that_misses_the_driver_writes_nothing(tool, plumbing, tmp_path, capsys):

@@ -1,7 +1,7 @@
 {
   "agent": "quantum",
   "track": "oval",
-  "config_hash": "652b2dec7db6",
+  "config_hash": "e65198f8b784",
   "episodes": 250,
   "run": {
     "seed": 2,
@@ -28,7 +28,8 @@
   "warmstart": {
     "breakthrough_episode": 300,
     "breakthrough_fraction": 0.5,
-    "earlier_lapping_episodes": []
+    "earlier_lapping_episodes": [],
+    "first_training_lap_episode": 275
   },
   "circuit": {
     "n_qubits": 6,
@@ -75,5 +76,5 @@
     }
   },
   "provenance": "warm-start checkpoint: snapshot at episode 250 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 300 (the first snapshot that laps in at least half of an eval's episodes); no earlier snapshot lapped: a pre-first-lap checkpoint",
-  "date": "2026-10-02"
+  "date": "2026-10-03"
 }

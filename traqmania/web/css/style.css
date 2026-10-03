@@ -1065,6 +1065,11 @@ body.kiosk .caption {
 /* -- small screens ---------------------------------------------------------------- */
 
 @media (max-width: 900px) {
+  #topbar {
+    flex-wrap: wrap; /* the pickers wrap instead of forcing a horizontal scroll */
+    row-gap: 8px;
+  }
+
   #layout {
     grid-template-columns: 1fr;
     grid-template-rows: 55% 45%;

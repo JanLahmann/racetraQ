@@ -1,7 +1,7 @@
 {
   "agent": "quantum",
   "track": "gp",
-  "config_hash": "07a79330d7a8",
+  "config_hash": "571bc5732c7b",
   "episodes": 1350,
   "stage": 2,
   "run": {
@@ -64,5 +64,5 @@
     "bootstrap_truncation": true
   },
   "provenance": "snapshot at episode 1350 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
-  "date": "2026-10-02"
+  "date": "2026-10-03"
 }

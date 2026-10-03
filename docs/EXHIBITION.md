@@ -85,25 +85,27 @@ and simulates just the 6 physical qubits the circuit lands on, and the
 prerequisites"). 8- and 10-qubit oval/chicane weights ship as well. The
 8-qubit drivers are new: five layers instead of four, mean lap 13.4 s on
 the oval and 12.6 s on chicane, a lap in 72 of 72 test episodes each. The
-10-qubit drivers are still the July 2026 files — four layers, so every
-action is blind to three of the ten inputs — and lap in 34 of 36 test
-episodes each. At 10 qubits even **gp** has a bundled driver, also from
-July: it senses 5 rays plus four engineered track features (the gauge
+10-qubit oval and chicane drivers are new as well: six layers (every action
+sees every input), 13.3 s and 12.6 s, 72 of 72 test episodes each. At 10
+qubits even **gp** has a bundled driver, still from July: a four-layer
+circuit that senses 5 rays plus four engineered track features (the gauge
 labels change accordingly when it drives) and laps in 24 of 36 test
 episodes at about 22 s.
-<!-- RESULTS-PENDING: 10-qubit oval and chicane drivers — rewrite the two sentences above once the q10_oval / q10_chicane studies (4 vs 6 layers, seeds 0-5) have finished and the drivers are re-bundled -->
 
 Talking point — what the audit found, and what the re-measurement says:
 *"With four layers, each action's readout only sees inputs within three
 qubits of its own. At 4 and 6 qubits that is everything. At 8 qubits every
 action misses one input — the Brake action cannot see the speed — and at 10
 qubits three. The bigger circuits were driving partly blind; we found it by
-checking our own work. The 8-qubit drivers now have a fifth layer, and with
-it training became more reliable. It did not make the car faster: six
+checking our own work. The 8-qubit drivers now have a fifth layer; with it
+the trained parameters lap more often at the end of training — a modest
+gain on six runs per depth. It did not make the car faster: six
 qubits is where this circuit does best, and a small classical network with
 the same sensors is still ahead of it."* The numbers behind that are six to
-eight training runs per size (SCIENCE.md, "Scaling and the light cone"). Do
-not quote a 10-qubit scaling result: that study has not finished.
+eight training runs per size (SCIENCE.md, "Scaling and the light cone"). At
+10 qubits only the oval has been re-measured — six runs each with four and
+with six layers, neither better than six qubits. Do not quote a 10-qubit
+chicane result: those runs are not analysed yet.
 `python -m traqmania.agents.quantum.lightcone --qubits 8` prints the map if
 a physicist asks.
 
@@ -121,9 +123,9 @@ A narrative that works cold, in order. Controls for the race segment:
    win just before the hairpin.
 
 2. **Train — "watch it learn its first lap"** (~1 min).
-   Mode **Train** → agent *Quantum* → tick **Warm start** → *Start
-   training*. Eight cars flail, the return curve climbs, the first clean
-   lap lands, and the best-lap banner fires as laps keep improving.
+   On the oval: mode **Train** → agent *Quantum* → tick **Warm start** →
+   *Start training*. Eight cars flail, the return curve climbs, the first
+   clean lap lands, and the best-lap banner fires as laps keep improving.
    Mention: *"This is real double-DQN training against a simulated version
    of the circuit — the approach of the 2020 quantum-RL paper by Chen et
    al., co-authored at IBM Research, that this demo follows."* (Without
@@ -134,7 +136,23 @@ A narrative that works cold, in order. Controls for the race segment:
    lap comes around episode 1770 on gp, and on combo only 6 of 10 training
    runs drove one at all — train oval or chicane live for a payoff you can
    count on.)
-   <!-- RESULTS-PENDING: warm-start — wall-clock times to the first clean lap, warm and cold, per track, after the retrain (being re-measured together with the regenerated warm-start checkpoints); quote them here -->
+   Measured in October 2026 over eleven training seeds per track through
+   the server's own training path (seconds are CPU seconds of training on
+   an M1 Max; a busy machine or a Pi takes longer): with **Warm start** a
+   training car completes its first lap on the oval after 15–36 episodes
+   (median 23; 1.4–2.9 s), on the chicane after 14–78 (median 50;
+   1.3–7.2 s) and on the 6-qubit oval after 11–64 (median 29; 3.4–9.9 s) —
+   in eleven of eleven seeds each — and on combo, which has a warm recipe
+   of its own, after 148–284 episodes (median 208; 13–23 s), also eleven of
+   eleven. Cold, the same 400-episode live run reaches its first lap on the
+   oval after 184–339 episodes (median 257; 7.2–18.0 s; six of six seeds)
+   and on the chicane in four of six seeds (212–397 episodes). Warm start
+   does not rescue gp: a training car lapped in three of eleven seeds
+   (episodes 200–274, 15–27 s). Whether the run *ends* with a lapping
+   driver is a separate question: on the oval and on combo it did in eleven
+   of eleven seeds, on the 6-qubit oval in nine, on the chicane in seven
+   (not on the demo's own seed), on gp in three — which is why this step
+   says "on the oval".
 
 3. **Evolution — "the same circuit at four ages"** (~30 s).
    Mode **Evolution**: four numbered, colour-coded cars drive weights
@@ -285,8 +303,8 @@ Best laps, re-measured in October 2026: oval 12.1 s, chicane 12.1 s, gp
 adapts to physics changes with no retraining. Operator note: do not promise
 that it never crashes. From the randomised start positions of our
 evaluation it lapped in 12 of 12 runs on oval, chicane and gp but left the
-track before the first lap in 6 of 12 on combo, and on one of seven
-generated tracks. One talking point: the hero's line visibly differs (wide
+track before the first lap in 6 of 12 on combo (8 of 12 on each of two
+further sets of starts), and on one of seven generated tracks. One talking point: the hero's line visibly differs (wide
 entries into hairpins, earlier braking). Notes: the first hero lap on a
 track pauses ~5-8 s while the candidate search runs (cached afterwards),
 and hero laps never become ghost records — the record board stays reserved

@@ -8,6 +8,24 @@ import { initDocs } from "./docs.js";
 
 const RAY_WORDS = { 3: "three", 5: "five", 7: "seven", 9: "nine" };
 
+/** "three lidar rays and speed" / "five lidar rays, speed, curvature ahead,
+ *  lateral offset, heading error and corner speed": the circuit's inputs from
+ *  the welcome's obs_labels (rays are labelled "ray …°"), `n - 1` rays and
+ *  speed when no labels came. Pure function. */
+export function sensorList(n = 4, labels = null) {
+  let rays = n - 1;
+  let others = ["speed"];
+  if (Array.isArray(labels) && labels.length) {
+    rays = labels.filter((l) => /^ray\b/.test(String(l))).length;
+    others = labels.filter((l) => !/^ray\b/.test(String(l))).map(String);
+  }
+  const parts = rays > 0 ? [`${RAY_WORDS[rays] || rays} lidar ray${rays === 1 ? "" : "s"}`] : [];
+  parts.push(...others);
+  if (parts.length === 0) return "no sensors";
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
 /** The light-cone paragraph of "The quantum circuit". `visibility` (actions x
  *  features, 0/1) and `needed` (layers for full visibility) come from the
  *  circuit spec: the middle sentence says whether this circuit size leaves
@@ -36,22 +54,25 @@ const sections = ({
   n_qubits: n = 4,
   n_layers: layers = 4,
   n_params: np = {},
+  dead_params: dead,
   visibility,
   min_layers_full_visibility: minLayers,
-} = {}) => [
+} = {}, obsLabels = null) => [
   {
     id: "what",
     title: "What is this?",
     html: `
       <p><strong>traQmania</strong> is a racing game where the driver is a
       <em>quantum circuit</em>. A tiny ${n}-qubit parameterized circuit reads the
-      car's sensors — ${RAY_WORDS[n - 1] || n - 1} lidar rays, speed and heading —
+      car's sensors — ${sensorList(n, obsLabels)} —
       and its measurement
       results decide whether to steer right, go straight, steer left, or
       brake.</p>
       <p>A classical neural network (MLP) of similar size trains on exactly the
       same game, so you can compare the two approaches head to head — or race
-      against either of them yourself.</p>`,
+      against either of them yourself. Compared over many training runs, the
+      classical net is the better learner here (<em>Classical vs
+      quantum</em>).</p>`,
   },
   {
     id: "learn",
@@ -68,7 +89,13 @@ const sections = ({
       next action while a periodically synced target network evaluates it —
       this reduces the over-optimism that plain DQN suffers from.</p>
       <p>Watch the Training tab: the learning curve shows the mean return per
-      episode climbing as the agent figures out the track.</p>`,
+      episode climbing as the agent figures out the track.</p>
+      <p>Learning is not a one-way street. On the harder tracks the agent's
+      greedy policy comes and goes during training — the circuit drives best
+      while it is still exploring and often loses the skill again later — so
+      the bundled drivers are the best <em>snapshot</em> of a training run,
+      picked by greedy test episodes along the way, not the run's final
+      weights.</p>`,
   },
   {
     id: "circuit",
@@ -93,16 +120,23 @@ const sections = ({
     html: `
       <p>The classical baseline is a small <strong>MLP</strong> (multi-layer
       perceptron) trained with the same double DQN algorithm, the same rewards
-      and the same observations. The quantum circuit has only about
-      <strong>${np.total ?? 3 * layers * n + 8} trainable parameters</strong>;
-      the MLP is kept comparably
-      small.</p>
-      <p>To be honest: on a toy task like this the quantum agent has
-      <em>no proven advantage</em> — whether quantum models can beat classical
-      ones on reinforcement learning problems is open research. What this
+      and the same observations. The quantum circuit has only
+      <strong>${np.total ?? 3 * layers * n + 8} trainable parameters</strong>${
+        Number.isInteger(dead) && dead > 0
+          ? ` (${dead} of them structurally dead — the dimmed gates in the circuit diagram)`
+          : ""
+      }; the MLP is kept comparably small.</p>
+      <p>To be honest: the classical net wins this comparison. Measured over
+      many training seeds, it learns the easy tracks in about half the
+      episodes, holds on to what it learned far more reliably, and drives the
+      hard tracks faster. The circuit's one point is on the gp track, where it
+      reaches a (slower) lapping policy earlier — and then does not keep
+      it. The quantum agent has <em>no advantage</em> here, and none is
+      claimed: a circuit this small is simulated exactly on a laptop. What this
       exhibit shows is that a genuinely quantum model <em>can</em> learn a
       control task end to end, and lets you inspect every moving part while it
-      does.</p>`,
+      does. The numbers behind this paragraph, with seeds and intervals, are in
+      <em>Full documentation</em> → The science behind traQmania.</p>`,
   },
   {
     id: "try",
@@ -143,9 +177,10 @@ const sections = ({
 let activeId = null;
 
 /** Build the explain panel (sub-tab nav + sections) inside `root`.
- *  `spec` is the welcome `circuit_spec` (optional: defaults to 4 qubits). */
-export function initExplain(root, spec) {
-  const SECTIONS = sections(spec);
+ *  `spec` is the welcome `circuit_spec` (optional: defaults to 4 qubits),
+ *  `obsLabels` the welcome's `obs_labels` (optional: n - 1 rays and speed). */
+export function initExplain(root, spec, obsLabels = null) {
+  const SECTIONS = sections(spec, obsLabels);
   const nav = document.createElement("nav");
   nav.className = "explain-nav";
   const body = document.createElement("div");

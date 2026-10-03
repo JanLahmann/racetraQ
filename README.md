@@ -163,10 +163,12 @@ and several hurt. What the data showed instead is that the circuit drives
 best while it is still exploring and collapses when epsilon reaches 0.05,
 whereas the MLP only improves once exploration is low. A 0.30 exploration
 floor removes that collapse for the 4-qubit circuit (stability 0.18
-against 0.08) and stops the MLP from learning gp (3 of 10 seeds reach a
-snapshot that laps in half its test episodes, against 7 of 10 at 0.05), so
-the training recipe is now per agent (`[training_presets_quantum.<track>]`).
-It is not universal either: the 10-qubit circuit fails under it.
+against 0.08), while the MLP tends to do worse under it (3 of 10 seeds
+reach a snapshot that laps in half its test episodes, against 7 of 10 at
+0.05 — a consistent trend, not a supported difference), so the training
+recipe is now per agent (`[training_presets_quantum.<track>]`).
+It is not universal either: the 10-qubit engineered-feature circuit does
+not learn gp under it (3 seeds per depth).
 
 **Qubits and depth** (oval and chicane, one recipe, 800 episodes; stability
 and best-snapshot mean lap):
@@ -177,25 +179,37 @@ and best-snapshot mean lap):
 | 6 qubits, 4 blocks (`q6`) | 80 | 8 | 0.75 [0.58, 0.85], 13.3 s | 0.68 [0.45, 0.83], 13.4 s |
 | 8 qubits, 4 blocks | 104 | 6 | 0.46 [0.20, 0.66], 14.2 s | 0.41 [0.28, 0.74], 13.3 s |
 | 8 qubits, 5 blocks (`q8`) | 128 | 6 | 0.53 [0.45, 0.65], 14.4 s | 0.47 [0.31, 0.65], 13.2 s |
+| 10 qubits, 4 blocks | 128 | 6 | 0.42 [0.27, 0.50], 14.3 s | 0.46 [0.31, 0.70], 13.6 s |
+| 10 qubits, 6 blocks (`q10`) | 188 | 6 | 0.51 [0.26, 0.63], 13.3 s | 0.45 [0.32, 0.66], 13.1 s |
 | MLP with 3 / 5 / 7 rays | 76 / 92 / 108 | 8 / 8 / 6 | 0.94 / 0.87 / 0.91, 12.9 / 12.8 / 12.7 s | 0.97 / 0.89 / 0.95, 13.9 / 14.0 / 12.9 s |
+| MLP with 9 rays | 124 | 6 | 0.89 [0.87, 0.93], 12.6 s | 0.93 [0.80, 0.98], 12.7 s |
 
 Why don't more qubits buy faster laps? Part of the answer was inside the
 circuit. With 4 re-uploading blocks and a nearest-neighbour CZ ring, each
 action's readout only sees inputs within 3 qubits of its own, so at 8
 qubits every action is blind to one input (Brake cannot see speed) and at
 10 qubits to three; `python -m traqmania.agents.quantum.lightcone` prints
-the map. Giving the 8-qubit circuit a fifth block made its training more
-reliable (the end-of-training parameters lap in 0.88 [0.62, 0.99] of the
-oval test episodes against 0.36 [0.05, 0.60]), and the `q8` profile and its
-bundled drivers now have five. It still gains nothing over 6 qubits, which
+the map. Giving the 8-qubit circuit a fifth block made its end-of-training
+parameters lap more often on the oval (0.88 [0.62, 0.99] of the test
+episodes against 0.36 [0.05, 0.60] — the one supported difference of ten
+comparisons at 6 seeds per depth; the rest point the same way without
+support), and the `q8` profile and its bundled drivers now have five. It
+still gains nothing over 6 qubits, which
 is where the circuit does best — and where its chicane laps are level with
 the matched MLP's. Seven rays make the MLP about 1 s faster on chicane; the
-extra qubits make the circuit no faster on either track. The
-10-qubit oval and chicane drivers are still the July files (4 blocks,
-partly blind), and so is `quantum_gp_q10`, a single run on an
+extra qubits make the circuit no faster on either track. At 10 qubits
+on the oval a sixth block points the same way as the fifth at 8 qubits
+(end-of-training parameters lap in 0.68 [0.19, 1.00] of the test episodes
+against 0.36 [0.06, 0.85]) without the difference being supported at 6
+seeds; on chicane the two depths are indistinguishable (0.55 vs 0.55
+end-of-training lapped, 13.1 vs 13.6 s), and neither depth is as stable as
+the 6-qubit circuit. The `q10` profile therefore runs 6 blocks (full
+visibility costs nothing measurable) and its bundled oval and chicane
+drivers are 6-block files (72 of 72 test episodes, 13.3 s and 12.6 s).
+`quantum_gp_q10` is still the July file: a single 4-block run on an
 engineered-feature observation that laps gp in 24 of 36 test episodes at
-22.2 s.
-<!-- RESULTS-PENDING: 10-qubit oval and chicane at 4 vs 6 blocks (studies q10_oval / q10_chicane still training on 2026-10-02) and the re-bundled q10 drivers -->
+22.2 s; under the recipe that now ships for 4-qubit gp neither depth learns
+the track at 10 qubits.
 The mechanisms an earlier campaign added for larger registers remain in the
 code and were not re-measured: engineered observation features
 (`[observation] features`), a qubit-scaled action readout (`--actions 6|8`)
@@ -204,17 +218,18 @@ exploratory results".
 
 **One driver, every track — with a catch**: the bundled **universal**
 driver is a single 4-qubit circuit trained from scratch on all four tracks
-round-robin (3000 episodes; the best of 5 seeds on those four tracks). It
-laps in 144 of 144 fresh episodes: oval 13.7 s, chicane 13.9 s, gp 32.2 s,
-combo 41.5 s. It does **not** generalize beyond them: on ten generated
-tracks it completes no lap (0 of 120 episodes), where the July driver it
-replaced lapped all ten, and another seed of the same study laps every
-bundled and every generated track at about twice the lap time. The
-selection rule ranked seeds on the four training tracks only; re-selecting
-the driver with unseen tracks in the ranking is an open item
+round-robin (3000 episodes, 5 seeds). The seed that ranks first on those
+four tracks (144 of 144 fresh episodes at 13.7 / 13.9 / 32.2 / 41.5 s) does
+**not** generalize beyond them — on ten generated tracks it completes no
+lap (0 of 120 episodes) and in the demo's random-track mode it brakes to a
+stop — so the bundled file is seed 3 instead, chosen by hand: it laps every
+bundled track (143 of 144 fresh episodes at 27.7 / 27.4 / 35.3 / 38.5 s)
+and every generated one (240 of 240), at about twice the easy-track lap
+time. Ranking seeds on unseen tracks as well is an open item
 (docs/SCIENCE.md, "One driver, every track"). The hard-track specialists
 transfer better: the gp driver laps oval and chicane in 36 of 36 episodes
-each, combo in 21 of 36, and all ten generated tracks in 120 of 120.
+each, combo in 16–22 of 36 (three sets), and every generated track we
+tried — three sets of ten, 120 of 120 each.
 
 Why we train on a simulator and run inference on hardware: one double-DQN
 update is **~3.4 ms** with the numpy statevector + adjoint path vs
@@ -230,7 +245,7 @@ trained. The quantum recipe for oval and chicane now uses advantage
 learning and acts under emulated device noise (`training.action_gap`,
 `training.act_noise`), and the bundled 4-qubit oval and chicane drivers and
 the 6-qubit oval driver each lap in 24 of 24 episodes on `fake_miami` at
-1024 raw shots.
+1024 raw shots (and in 48 of 48 on three further sets of episodes).
 Over every seed of the studies, nothing selected, 10 of 10 oval and 8 of
 10 chicane seeds lap in at least 11 of 12 device episodes with that recipe,
 against 5 of 8 and 0 of 8 without it. The caveats: this is a simulated
@@ -270,7 +285,8 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
   strokes, crossings, razor hairpins) come back with a hint about what to
   fix; just draw again.
 - **Train**: watch quantum and classical agents learn side-by-side (warm
-  start continues from a checkpoint saved just before the first lap).
+  start continues from a snapshot of the bundled driver's own training
+  run that does not lap yet).
 - **Race**: arrow keys / WASD or a gamepad (analog steering, trigger
   throttle/brake) — race the quantum agent.
 - **Evolution**: training snapshots of the same quantum agent race each other

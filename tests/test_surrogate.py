@@ -9,17 +9,22 @@ spectrum does not — which is what validates "frequencies = sums of
 kernel surrogates fitted from a fixed budget of driving samples reproduce the
 bundled 4-qubit oval driver's Q-values, greedy actions and laps.
 
-The thresholds in (3) were set with margin on the bundled weights (measured
-at 1000 samples on 1500 held-out driving states, sample/frequency seeds 0-4
-with one held-out log and 10-14 with another: nrmse 0.005-0.024, <Z> RMSE
-0.0008-0.0042, greedy agreement >= 0.997; over 36 greedy episodes — three
-different episode seeds for seeds 10-14 — the surrogates lapped 0 to 3
-episodes MORE often than the quantum driver, never less often); they are
-statements about those weights, so re-measure if a retrained driver trips
-them. They do NOT test the spectrum: a kernel with the wrong frequencies or a
-generic Gaussian kernel also stays inside these thresholds on this driver
-(nrmse 0.006-0.03; notebook 07 shows such controls) — the spectrum is tested
-by layers (1) and (2).
+The thresholds in (3) were set with margin on the bundled weights — last
+re-measured 2026-10-03 for the oval driver re-bundled on 2026-10-02 (study
+robust_oval, seed 0; file sha256 1cd3f7a390b9...), at 1000 samples on 1500
+held-out driving states, sample/frequency seeds 0-4 with one held-out log and
+10-14 with another, both methods (20 fits): nrmse 0.019-0.080, <Z> RMSE
+0.0043-0.0196, greedy agreement >= 0.998, regret <= 0.004 of the mean gap;
+over 36 greedy episodes at three episode seeds every surrogate lapped 36/36,
+exactly as the quantum driver does, with mean laps within 0.01 s of its
+12.66 s.  (The July 2026 driver fitted more easily: nrmse 0.005-0.024, <Z>
+RMSE 0.0008-0.0042; the advantage-learning driver has a sharper Q-landscape.)
+They are statements about those weights, so re-measure if a retrained driver
+trips them (auditA/scratch/w3-testsreview/measure_surrogate.py did this
+round). They do NOT test the spectrum: a kernel with the wrong frequencies or
+a generic Gaussian kernel also stays inside these thresholds on this driver
+(notebook 07 shows such controls) — the spectrum is tested by layers (1) and
+(2).
 """
 
 from __future__ import annotations
@@ -441,17 +446,19 @@ def test_surrogate_matches_the_bundled_driver_on_its_own_states(oval, fitted):
     assert fitted.n_samples == 1000
     assert (fitted.n_features, fitted.n_actions) == (qfunc.n_features, qfunc.n_actions)
     result = surrogate.compare(fitted, qfunc, held_out)
-    assert result["nrmse"] < 0.1  # measured 0.005-0.024 over 10 seeds
-    assert result["rmse_expectation"] < 0.02  # <Z> units; measured 0.0008-0.0042
-    assert result["agreement"] > 0.97  # measured >= 0.997
-    assert result["gap_weighted_agreement"] > 0.97
-    assert result["regret"] < 0.1 * result["mean_gap"]
+    # about twice the worst of 20 fits (module docstring): the fits here are
+    # seed 0 — kernel 0.075 / 0.018, rff 0.064 / 0.015
+    assert result["nrmse"] < 0.15  # measured 0.019-0.080 over 10 seeds x 2 methods
+    assert result["rmse_expectation"] < 0.04  # <Z> units; measured 0.0043-0.0196
+    assert result["agreement"] > 0.97  # measured >= 0.998
+    assert result["gap_weighted_agreement"] > 0.97  # measured >= 0.999
+    assert result["regret"] < 0.1 * result["mean_gap"]  # measured <= 0.0034
 
 
 def test_surrogate_drives_the_oval_like_the_quantum_driver(oval, fitted):
     """Asserted because it held for 10/10 sample seeds x both methods (see the
-    module docstring): the surrogate never lapped less often than the quantum
-    driver; the margin here is 3 episodes below."""
+    module docstring): every surrogate lapped exactly as often as the quantum
+    driver (36/36, and 12/12 here); the margin here is 3 episodes below."""
     qfunc, config, _ = oval
     quantum = surrogate.drive_laps(qfunc, "oval", config, episodes=12)
     classical = surrogate.drive_laps(fitted, "oval", config, episodes=12)
