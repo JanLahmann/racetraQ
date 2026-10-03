@@ -60,12 +60,58 @@ def test_resolve_training_cfg_presets_and_warm():
     assert warm["epsilon_start"] == 0.25
     assert warm["epsilon_decay_episodes"] == 40
 
+    # gp: [training_warm_gp] on top of [training_warm] on top of the gp preset
+    # (the recipe itself was retuned in October 2026: the values are the
+    # config's, the precedence is what this pins)
     warm_gp = resolve_training_cfg(config, "gp", warm=True)
-    assert warm_gp["episodes"] == 900
-    assert warm_gp["epsilon_start"] == 0.45
-    assert warm_gp["epsilon_end"] == 0.05  # inherited from [training_warm]
-    assert warm_gp["epsilon_decay_episodes"] == 850
-    assert warm_gp["gamma"] == 0.99
+    own = config["training_warm_gp"]
+    assert own and set(own) > {"episodes"}
+    assert {key: warm_gp[key] for key in own} == own
+    shared = {key: value for key, value in config["training_warm"].items() if key not in own}
+    assert {key: warm_gp[key] for key in shared} == shared
+    assert warm_gp["episodes"] < gp["episodes"]  # a warm run is the short one
+    assert warm_gp["gamma"] == gp["gamma"] == 0.99
+    assert warm_gp["replay_size"] == config["training"]["replay_size"]
+
+    # what the demo's warm button runs (session: agent="quantum"): oval keeps
+    # the quantum preset's advantage-learning / acting-noise recipe under the
+    # warm schedule; on gp the warm sections replace the preset's 0.30 floor
+    quantum = config["training_presets_quantum"]
+    warm_oval = resolve_training_cfg(config, "oval", warm=True, agent="quantum")
+    assert warm_oval["act_noise"] == quantum["oval"]["act_noise"]
+    assert warm_oval["action_gap"] == quantum["oval"]["action_gap"]
+    assert warm_oval["episodes"] == config["training_warm"]["episodes"]
+    warm_gp_q = resolve_training_cfg(config, "gp", warm=True, agent="quantum")
+    assert warm_gp_q["epsilon_end"] == own["epsilon_end"] != quantum["gp"]["epsilon_end"]
+    assert "act_noise" not in warm_gp_q
+
+
+def test_resolve_training_cfg_precedence():
+    """[training] < [training_presets.<track>] < [training_presets_<agent>.<track>]
+    < [training_warm] < [training_warm_gp] — on a synthetic config, so every
+    layer is seen to win over the one below (the shipped tables overlap too
+    little for that: [training_warm_gp] sets every key of [training_warm])."""
+    config = {
+        "training": {"lr": 0.01, "episodes": 100, "epsilon_end": 0.05, "gamma": 0.98},
+        "training_presets": {"gp": {"episodes": 3000, "gamma": 0.99, "epsilon_end": 0.1}},
+        "training_presets_quantum": {"gp": {"epsilon_end": 0.3}, "oval": {"action_gap": 0.8}},
+        "training_warm": {"episodes": 150, "epsilon_end": 0.02},
+        "training_warm_gp": {"episodes": 400},
+    }
+    assert resolve_training_cfg(config, "oval") == config["training"]
+    assert resolve_training_cfg(config, "gp") == {"lr": 0.01, "episodes": 3000,
+                                                  "epsilon_end": 0.1, "gamma": 0.99}
+    assert resolve_training_cfg(config, "gp", agent="quantum")["epsilon_end"] == 0.3
+    assert resolve_training_cfg(config, "gp", agent="mlp")["epsilon_end"] == 0.1  # no layer
+    assert resolve_training_cfg(config, "oval", agent="quantum")["action_gap"] == 0.8
+    assert "action_gap" not in resolve_training_cfg(config, "chicane", agent="quantum")
+    # warm beats the agent layer; the gp warm section beats the shared one
+    assert resolve_training_cfg(config, "gp", warm=True, agent="quantum") == {
+        "lr": 0.01, "episodes": 400, "epsilon_end": 0.02, "gamma": 0.99}
+    assert resolve_training_cfg(config, "oval", warm=True, agent="quantum") == {
+        "lr": 0.01, "episodes": 150, "epsilon_end": 0.02, "gamma": 0.98, "action_gap": 0.8}
+    assert config["training"] == {"lr": 0.01, "episodes": 100, "epsilon_end": 0.05,
+                                  "gamma": 0.98}  # inputs untouched
 
 
 def test_track_payload_shape(tmp_path):

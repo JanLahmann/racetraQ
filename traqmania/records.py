@@ -12,8 +12,9 @@ and re-runs overwrite their own cells.  ``--markdown`` renders the stored
 records as per-track comparison tables without evaluating anything.
 
 Quantum drivers are evaluated under the observation recorded in their weights
-``.meta.json`` (overlaid on the packaged q<n> profile) — the same rule the
-demo server applies via ``runtime.weights_observation``.
+``.meta.json`` (overlaid on the packaged q<n> profile) and with the circuit
+depth and action count the weights need — the same rules the demo server
+applies via ``runtime.weights_observation`` / ``runtime.weights_circuit``.
 """
 
 from __future__ import annotations
@@ -37,6 +38,7 @@ from traqmania.server.runtime import (
     available_tracks,
     weights_actions,
     weights_observation,
+    with_weights_circuit,
 )
 
 RECORDS_PATH = Path(__file__).resolve().parent.parent / "data" / "records.json"
@@ -60,7 +62,8 @@ class Driver:
 
 def _quantum_config(n_qubits: int, path: Path) -> dict:
     """Packaged q<n> profile with the weights' recorded observation and
-    action-set size overlaid."""
+    action-set size overlaid, at the circuit depth the weights need (their
+    sidecar's, else the one their parameter count implies)."""
     config = load_config() if n_qubits == 4 else load_config(f"q{n_qubits}")
     obs = weights_observation(path)
     n_actions = weights_actions(path)
@@ -70,6 +73,13 @@ def _quantum_config(n_qubits: int, path: Path) -> dict:
             config["observation"].update(obs)
         if n_actions:
             config["circuit"]["n_actions"] = n_actions
+    try:
+        shape = with_weights_circuit(config, path)["circuit"]
+    except ValueError:
+        return config  # unusable weights: evaluating this driver says why
+    if int(config["circuit"].get("n_layers", 4)) != shape["n_layers"]:
+        config = copy.deepcopy(config)
+        config["circuit"]["n_layers"] = shape["n_layers"]
     return config
 
 

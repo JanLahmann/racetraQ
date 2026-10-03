@@ -54,6 +54,18 @@ class QuantumQFunction:
     def n_params(self) -> int:
         return self.lam.size + self.theta.size + self.w.size + self.b.size
 
+    def param_groups(self) -> dict[str, slice]:
+        """Named slices of the flat parameter vector: ``lam`` (input scalings),
+        ``theta`` (variational angles) and ``head`` (output weights w and
+        biases b) — the units ``[training] lr_groups`` assigns learning rates to."""
+        n_lam = self.lam.size
+        n_circuit = n_lam + self.theta.size
+        return {
+            "lam": slice(0, n_lam),
+            "theta": slice(n_lam, n_circuit),
+            "head": slice(n_circuit, self.n_params),
+        }
+
     def q_values(self, obs: np.ndarray) -> np.ndarray:
         """Q-values for a batch of observations: (B, F) -> (B, A)."""
         return self.expectations(obs) * self.w + self.b
@@ -62,6 +74,13 @@ class QuantumQFunction:
         """Raw readout expectations <Z_a> before the output head: (B, F) -> (B, A)."""
         obs = np.asarray(obs, dtype=np.float64)
         return self._sim.forward(obs, self.lam, self.theta)[:, : self.n_actions]
+
+    def noisy_q_values(self, obs: np.ndarray, noise, rng: np.random.Generator) -> np.ndarray:
+        """Q-values from NOISY readout expectations: ``noise`` (an
+        ``ExpectationNoise``: attenuation, shot noise, bias — what a device
+        does to <Z_a>) is applied before the output head, one fresh draw from
+        ``rng`` per call.  What ``[training] act_noise`` acts on."""
+        return noise.apply(self.expectations(obs), rng) * self.w + self.b
 
     def all_expectations(self, obs: np.ndarray) -> np.ndarray:
         """<Z_i> of EVERY qubit, (B, F) -> (B, n_qubits) — the first

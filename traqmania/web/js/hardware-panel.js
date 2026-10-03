@@ -1,12 +1,31 @@
 // Hardware tab: run the trained circuit on an IBM Quantum backend (real
 // device, or a local noisy "fake" simulation of one). Sends C->S "hardware"
 // commands and renders S->C "hardware_status" updates: phase pill, live
-// counters, sprint loss chart and before/after eval-return comparison.
+// counters (including how the job runs: execution mode, transpiled two-qubit
+// gate count and depth, shots per job and the attenuation rescale when one is
+// active), the note explaining an execution-mode fallback, the sprint loss
+// chart and the before/after eval-return comparison.
 
 import { hardwareCmd } from "./net.js";
 import { LossChart } from "./charts.js";
 
 const BUSY_PHASES = new Set(["connecting", "transpiling", "running"]);
+
+// How the Estimator jobs are scheduled on the backend (hardware_status
+// execution_mode): a Session is dedicated access, Open Plan accounts fall back
+// to a Batch or to plain job mode.
+const MODE_LABEL = {
+  session: "session (dedicated)",
+  batch: "batch",
+  job: "job mode (each job queues)",
+};
+
+// Attenuation rescale (hardware_status rescale): the measured expectations are
+// divided by an attenuation calibrated with one extra job before the run.
+const RESCALE_LABEL = {
+  global: "global",
+  readout: "per readout",
+};
 
 const PHASE_CLASS = {
   idle: "pill-idle",
@@ -35,6 +54,14 @@ export function initHardwarePanel() {
     replayCaption: $("#hw-replay-caption"),
   };
   const lossChart = new LossChart($("#hw-loss-chart"));
+
+  // Fallback note ("Session unavailable on ... ; using a Batch"): its own line
+  // under the status message, which later statuses keep overwriting.
+  const noteEl = document.createElement("div");
+  noteEl.id = "hw-note";
+  noteEl.className = "hint";
+  noteEl.hidden = true;
+  els.message.after(noteEl);
 
   const counters = new Map(); // label -> formatted value, insertion-ordered
   let evalBefore = null;
@@ -80,6 +107,8 @@ export function initHardwarePanel() {
     counters.clear();
     renderCounters();
     els.message.textContent = "";
+    noteEl.textContent = "";
+    noteEl.hidden = true;
   }
 
   els.lap.addEventListener("click", () => {
@@ -118,6 +147,24 @@ export function initHardwarePanel() {
     setBusy(BUSY_PHASES.has(phase));
     els.replayCaption.hidden = phase !== "replay";
 
+    if (typeof msg.note === "string") {
+      noteEl.textContent = msg.note;
+      noteEl.hidden = msg.note === "";
+    }
+    if (Object.hasOwn(MODE_LABEL, msg.execution_mode)) {
+      counters.set("execution mode", MODE_LABEL[msg.execution_mode]);
+    }
+    if (typeof msg.two_qubit_gates === "number") {
+      counters.set("two-qubit gates", String(msg.two_qubit_gates));
+    }
+    if (typeof msg.circuit_depth === "number") {
+      counters.set("circuit depth", String(msg.circuit_depth));
+    }
+    if (typeof msg.shots === "number") counters.set("shots / job", String(msg.shots));
+    if (Object.hasOwn(RESCALE_LABEL, msg.rescale)) {
+      const f = typeof msg.attenuation === "number" ? `, f = ${msg.attenuation.toFixed(3)}` : "";
+      counters.set("attenuation rescale", `${RESCALE_LABEL[msg.rescale]}${f}`);
+    }
     if (typeof msg.decision === "number") counters.set("decision", String(msg.decision));
     if (typeof msg.seconds_per_decision === "number") {
       counters.set("s / decision", msg.seconds_per_decision.toFixed(2));

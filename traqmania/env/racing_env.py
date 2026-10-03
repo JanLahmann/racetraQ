@@ -303,7 +303,12 @@ class RacingEnv:
         ``(obs, reward, done, info)``; done sub-envs are auto-reset, so the
         returned obs is the fresh spawn while ``info`` reflects the state at
         the end of the decision (before the reset).  info keys: ``progress``,
-        ``lap``, ``last_lap_time`` (seconds or nan), ``off_track``.
+        ``lap``, ``last_lap_time`` (seconds or nan), ``off_track``,
+        ``truncated`` (episode ended by the time limit while still on track —
+        a truncation, not a terminal state) and ``final_obs`` ((n_envs, F)
+        observation of the state BEFORE the auto-reset; rows of sub-envs that
+        did not finish equal the returned obs; None when no sub-env finished
+        this step).
         """
         actions = np.asarray(actions, dtype=np.intp)
         return self._advance(self._steer_tab[actions], self._throttle_tab[actions],
@@ -364,11 +369,22 @@ class RacingEnv:
             "lap": self.lap.copy(),
             "last_lap_time": self.last_lap_time.copy(),
             "off_track": off_track.copy(),
+            "truncated": done & ~off_track,
+            "final_obs": None,
         }
 
+        final_state = None
         if np.any(done):
+            final_state = self.state[done]  # pre-reset copy of the finished cars
             self._spawn(done)
-        return self._obs(), reward, done, info
+        obs = self._obs()
+        if final_state is not None:
+            # Only the finished rows differ from the returned obs, so only they
+            # are re-observed (no RNG involved; the returned obs is untouched).
+            final_obs = obs.copy()
+            final_obs[done] = self.observer.observe(final_state)
+            info["final_obs"] = final_obs
+        return obs, reward, done, info
 
     def state_snapshot(self) -> dict:
         """Copies of the live car arrays for external viewers (e.g. the demo server

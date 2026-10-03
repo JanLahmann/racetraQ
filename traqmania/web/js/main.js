@@ -4,7 +4,7 @@ import * as net from "./net.js";
 import { RaceRenderer, KIND_COLORS } from "./race.js";
 import { initInput, setInputActive } from "./input.js";
 import { QuantumPanel } from "./quantum-panel.js";
-import { renderCircuit } from "./circuit.js";
+import { renderCircuit, renderVisibility } from "./circuit.js";
 import { TrainingChart, LapChart } from "./charts.js";
 import { AttractManager } from "./attract.js";
 import { initDraw } from "./draw.js";
@@ -176,12 +176,13 @@ function requestRandomTrack() {
   net.setTrack("random", seed, length === "medium" ? undefined : length);
 }
 
-// Circuit-size copy (q6/q8/q10 profiles or a live qubit switch): fix up the
-// 4-qubit copy in the captions, the readout hint, the header dropdown and the
-// Explain panel. At the default 4 qubits the authored text is reproduced, so
+// Circuit-size copy (q6/q8/q10 profiles, a live qubit switch or a driver with
+// its own observation): fix up the captions, the readout hint, the header
+// dropdown and the Explain panel from the welcome's circuit_spec and
+// obs_labels. At the default 4 qubits the authored text is reproduced, so
 // switching back from a larger circuit restores it.
-function applyCircuitSize(spec) {
-  attract.setCircuitSpec(spec);
+function applyCircuitSize(spec, obsLabels) {
+  attract.setCircuitSpec(spec, obsLabels);
   const n = spec.n_qubits || 4;
   const sel = $("#qubit-select");
   if (sel && sel.value !== String(n)) sel.value = String(n);
@@ -193,7 +194,7 @@ function applyCircuitSize(spec) {
         : `Pauli-Z expectation values &lt;Z<sub>i</sub>&gt; of all ${n} qubits — ` +
           "the highlighted first four are the action readout.";
   }
-  initExplain($("#panel-explain"), spec);
+  initExplain($("#panel-explain"), spec, obsLabels);
 }
 
 // Observation feature names (welcome.obs_labels): what each encoded input is.
@@ -325,7 +326,9 @@ net.on("welcome", (msg) => {
   );
   if (msg.circuit_spec) {
     renderCircuit(msg.circuit_spec, $("#circuit-diagram"), $("#circuit-legend"));
-    applyCircuitSize(msg.circuit_spec);
+    // light cone: which inputs each action can see (labels change with the driver)
+    renderVisibility(msg.circuit_spec, msg.obs_labels, $("#light-cone"));
+    applyCircuitSize(msg.circuit_spec, msg.obs_labels);
     quantumPanel.setCircuit(msg.circuit_spec);
   }
   applyObsLabels(msg.obs_labels);

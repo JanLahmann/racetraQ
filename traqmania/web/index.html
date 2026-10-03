@@ -44,7 +44,7 @@
 
     <label class="qubit-picker">
       <span>Qubits</span>
-      <select id="qubit-select" aria-label="Qubits" data-tip="Circuit size: more qubits = more sensors (lidar rays) and parameters. Sample efficiency stays flat; compute per decision grows.">
+      <select id="qubit-select" aria-label="Qubits" data-tip="Circuit size: more qubits = more sensors (lidar rays) and parameters, and more compute per decision. At a fixed depth a larger circuit can leave actions blind to some sensors — see Who sees what in the Quantum tab.">
         <option value="4">4</option>
         <option value="6">6</option>
         <option value="8">8</option>
@@ -102,8 +102,9 @@
         <div id="qbars" data-tip="Q-values: the agent's estimate of future reward for each action (steer right, straight, steer left, brake). The tallest bar wins and steers the car — 10 times per second."></div>
         <div id="qaction" class="qaction">—</div>
         <h2>The circuit</h2>
-        <div id="circuit-diagram" class="circuit-scroll" data-tip="The actual gate sequence being executed: encoding rotations write the sensors onto the qubits (re-uploaded every layer), trainable rotations are the learned weights, CZ gates entangle neighbours."></div>
+        <div id="circuit-diagram" class="circuit-scroll" data-tip="The actual gate sequence being executed: encoding rotations write the sensors onto the qubits (re-uploaded every layer), trainable rotations are the learned weights, CZ gates entangle neighbours. Dimmed gates cannot influence any action."></div>
         <div id="circuit-legend"></div>
+        <div id="light-cone" hidden></div>
       </div>
 
       <div class="panel" id="panel-training">
@@ -123,7 +124,7 @@
           </label>
           <label class="check">
             <input id="train-warm" type="checkbox">
-            <span>Warm start (pre-trained weights)</span>
+            <span>Warm start (early checkpoint of the bundled driver's run)</span>
           </label>
           <div class="btn-row">
             <button type="button" id="train-start" class="accent-btn">Start training</button>
@@ -138,7 +139,7 @@
       </div>
 
       <div class="panel" id="panel-hardware">
-        <h2>Real quantum hardware</h2>
+        <h2>Quantum hardware</h2>
         <p class="hint">Run the trained circuit on an IBM Quantum backend.
         <em>Simulated device</em> is a local noisy simulation of a real device
         — results in seconds. <em>Real IBM Quantum</em> submits jobs to an

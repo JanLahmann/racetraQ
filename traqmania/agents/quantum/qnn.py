@@ -7,8 +7,10 @@ qiskit-machine-learning's ``EstimatorQNN`` on a choice of Aer backends:
 
 - ``aer_statevector``: exact expectation values (Aer EstimatorV2, precision 0).
 - ``aer_shots``: shot-based sampling (precision = 1/sqrt(shots)).
-- ``aer_noisy``: shot-based with a noise model — built from a
-  ``qiskit_ibm_runtime`` fake backend when that package is installed, else a
+- ``aer_noisy``: shot-based with a noise model — the Aer twin of a
+  ``qiskit_ibm_runtime`` fake device when that package is installed (default
+  ``fake_miami``; see ``traqmania.hardware.local_simulator``: noise model
+  built once, devices beyond 7 qubits as an n-qubit device patch), else a
   simple depolarizing model (so this path works without qiskit-ibm-runtime).
 
 The trainable input scalings ``lam`` are handled analytically outside the
@@ -38,14 +40,24 @@ def _depolarizing_noise_model():
     return noise_model
 
 
-def _fake_backend(name: str | None):
-    """A fake IBM backend instance, or None if qiskit-ibm-runtime is unavailable."""
+def _noise_simulator(name: str | None, n_qubits: int, n_layers: int, n_actions: int):
+    """Aer twin of a fake IBM device, or None if qiskit-ibm-runtime is unavailable.
+
+    ``name`` takes any spelling ('fake_fez', 'FakeFez', 'FakeManilaV2';
+    default ``hardware.DEFAULT_FAKE``); an unknown name raises ``ValueError``.
+    The twin is the one the hardware path runs on for the UNPRUNED circuit —
+    its noise model is built once and cached.
+    """
     try:
-        from qiskit_ibm_runtime import fake_provider
+        import qiskit_ibm_runtime  # noqa: F401
     except ImportError:
         return None
-    cls = getattr(fake_provider, name or "FakeManilaV2", None)
-    return cls() if cls is not None else None
+    from traqmania import hardware
+
+    fake = hardware.get_backend(
+        use_fake=True, fake_name=name or hardware.DEFAULT_FAKE, min_qubits=n_qubits
+    )
+    return hardware.local_simulator(fake, n_qubits, n_layers, n_actions, prune=False)
 
 
 class QiskitQFunction:
@@ -105,15 +117,17 @@ class QiskitQFunction:
         # Aer EstimatorV2 computes exact expectation values at precision 0.
         precision = 0.0 if exact else 1.0 / float(np.sqrt(self.shots))
         if self.backend == "aer_noisy":
-            fake = _fake_backend(noise_backend_name)
-            if fake is not None:
+            sim = _noise_simulator(
+                noise_backend_name, self.n_qubits, self.n_layers, self.n_actions
+            )
+            if sim is not None:
                 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-                from qiskit_aer import AerSimulator
 
-                sim = AerSimulator.from_backend(fake)
                 backend_options["noise_model"] = sim.options.noise_model
                 backend_options["basis_gates"] = sim.configuration().basis_gates
-                pm = generate_preset_pass_manager(optimization_level=1, backend=sim)
+                pm = generate_preset_pass_manager(
+                    optimization_level=1, backend=sim, seed_transpiler=self.seed
+                )
                 # Transpile once here and map the observables onto the physical
                 # qubits ourselves: EstimatorQNN's own pass_manager path runs the
                 # circuit through the pass manager but leaves the observables on

@@ -8,6 +8,7 @@ import threading
 import numpy as np
 import pytest
 
+from traqmania.agents.quantum.qdqn import QuantumQFunction
 from traqmania.config import load_config
 from traqmania.server import protocol as P
 from traqmania.server import session as session_mod
@@ -175,6 +176,69 @@ def test_switch_to_untrained_8_degrades_gracefully(tmp_path, monkeypatch):
     assert session.mode == "attract"
     errors = by_type(session.drain_outbox(), "error")
     assert errors and "quantum_oval_q8.npz" in errors[0]["message"]
+
+
+def test_switch_keeps_the_sections_the_server_was_started_with(tmp_path):
+    # a q{n} profile is about [circuit] and [observation] only: the exhibition
+    # kiosk must stay a kiosk, and a [hardware] overlay must survive the switch
+    config = load_config("exhibition")
+    config["hardware"]["prune_light_cone"] = False
+    config["hardware"]["fake_name"] = "fake_fez"
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    session.drain_outbox()
+    ui = dict(config["ui"])
+    assert ui["kiosk"] is True and ui["attract_idle_seconds"] == 20
+
+    for n in (6, 4):
+        session.handle_message(P.Qubits(n=n))
+        msgs = session.drain_outbox()
+        assert not by_type(msgs, "error")
+        welcome = by_type(msgs, "welcome")[-1]
+        assert welcome["circuit_spec"]["n_qubits"] == n
+        assert welcome["ui"] == ui
+        assert welcome["circuit_spec"]["pruned_on_hardware"] is False
+        assert session.config["hardware"]["fake_name"] == "fake_fez"
+        assert session.config["server"] == config["server"]
+    # the size itself still comes from the packaged profile
+    assert session.config["observation"]["ray_angles_deg"] == [-60.0, 0.0, 60.0]
+
+
+def test_weights_of_another_depth_are_adopted_not_refused(tmp_path, monkeypatch):
+    # a driver brings its own depth, like its observation and action count:
+    # 4-block weights without a sidecar (like the files bundled so far) under
+    # [circuit] n_layers = 5 load and drive as the 4-block circuit they are,
+    # and the welcome's circuit_spec says so; the configured 5 blocks stay
+    # what a fresh training run builds
+    weights = tmp_path / "weights"
+    weights.mkdir()
+    shutil.copy(WEIGHTS_DIR / "quantum_oval.npz", weights / "quantum_oval.npz")
+    params = QuantumQFunction({"n_qubits": 8, "n_layers": 4}, seed=3).get_params()
+    np.savez(weights / "quantum_oval_q8.npz", params=params)
+    monkeypatch.setattr(session_mod, "WEIGHTS_DIR", weights)
+    config = load_config("q8")
+    config["circuit"]["n_layers"] = 5
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    msgs = session.drain_outbox()
+    assert not by_type(msgs, "error")
+    spec = session.welcome_payload()["circuit_spec"]
+    assert spec["n_layers"] == 4 and spec["n_params"]["total"] == 104
+    assert by_type(msgs, "welcome")[-1]["circuit_spec"] == spec  # re-broadcast
+    assert len(session.cars) == 1 and session.cars[0].qfunc.n_layers == 4
+    assert np.array_equal(session.cars[0].qfunc.get_params(), params)
+    for switch in (P.SetMode(mode="race"), P.SetMode(mode="hardware"),
+                   P.SetMode(mode="attract")):
+        session.handle_message(switch)
+        assert session.mode == switch.mode
+        assert not by_type(session.drain_outbox(), "error")
+    for _ in range(12):
+        session.tick()
+    assert not by_type(session.drain_outbox(), "error")
+    session._sync_to_weights(use_weights=False)  # what a train start does
+    assert session.welcome_payload()["circuit_spec"]["n_layers"] == 5
+    session.handle_message(P.Qubits(n=4))  # the default size still drives
+    assert not by_type(session.drain_outbox(), "error") and len(session.cars) == 1
+    # (a parameter count that fits NO depth is still refused:
+    # tests/test_depth_aware_weights.py)
 
 
 @pytest.mark.parametrize("n", [3, 5, 12])

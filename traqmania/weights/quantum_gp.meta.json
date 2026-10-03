@@ -1,8 +1,134 @@
 {
   "agent": "quantum",
   "track": "gp",
-  "config_hash": "fe9b775eec49",
+  "config_hash": "6a3c043db946",
   "episodes": 3000,
-  "provenance": "overnight sweep winner (epsilon_decay 2000, gamma 0.99, seed 42); greedy eval 2 seeds x 8 eps: 23 laps, best 20.1 s",
-  "date": "2026-07-11"
+  "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+  },
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      0.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 4
+  },
+  "date": "2026-10-02",
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 3000,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.99,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.3,
+    "epsilon_decay_episodes": 2000,
+    "n_parallel_envs": 8,
+    "seed": 7,
+    "warm_start": false,
+    "bootstrap_truncation": true
+  },
+  "provenance": "best snapshot of seed 7, chosen from the 10-seed study study_gp1 variant eps30_trunc (quantum on gp, 3000 episodes, training.epsilon_end=0.30, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 26.7 s, mean 27.9 s; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 0.96 [0.82, 1.00] of the study's eval episodes, final params in 0.02 [0.00, 0.08], stability 0.17 [0.12, 0.22]; 10/10 seeds lap in at least half",
+  "selection": {
+    "study": "study_gp1",
+    "variant": "eps30_trunc",
+    "profile": null,
+    "overrides": [
+      "training.epsilon_end=0.30",
+      "training.bootstrap_truncation=true"
+    ],
+    "chosen_seed": 7,
+    "n_seeds": 10,
+    "rank_by": "fresh",
+    "rule": "seeds ranked by the study's 36-episode reliability eval of the best snapshot (lapped fraction, then mean lap); the top 3 re-evaluated on 72 fresh distinct greedy episodes (env seed 31000) and the driver chosen by that result (lapped fraction, then mean lap); the fresh numbers are the ones recorded (they also picked among the 3 candidates, so a small selection effect remains in them)",
+    "study_eval": {
+      "episodes": 36,
+      "eval_seed": 20000
+    },
+    "source": "cells/eps30_trunc/seed7/quantum_gp.npz",
+    "weights_sha256": "a48616cda92ef05ffb8df8bb18d063ad9d825f53b6b71f004eb06b61371c3d3a",
+    "candidates": [
+      {
+        "seed": 7,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 27.935,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 27.937,
+        "fresh_best_lap": 26.7
+      },
+      {
+        "seed": 3,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 32.292,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 71,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 32.382,
+        "fresh_best_lap": 30.8
+      },
+      {
+        "seed": 1,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 40.206,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 40.001,
+        "fresh_best_lap": 35.9
+      }
+    ],
+    "seed_spread": {
+      "n_seeds": 10,
+      "best_snapshot_lapped": {
+        "iqm": 0.9556,
+        "ci_low": 0.8249,
+        "ci_high": 0.9972,
+        "median": 0.9722,
+        "n": 10
+      },
+      "final_params_lapped": {
+        "iqm": 0.0222,
+        "ci_low": 0.0028,
+        "ci_high": 0.0778,
+        "median": 0.0278,
+        "n": 10
+      },
+      "stability": {
+        "iqm": 0.1682,
+        "ci_low": 0.1172,
+        "ci_high": 0.2159,
+        "median": 0.1625,
+        "n": 10
+      },
+      "seeds_lapping_half": 10,
+      "interval": "95% percentile bootstrap of the IQM over seeds, 2000 resamples, RNG seed 0"
+    },
+    "fresh_eval": {
+      "episodes": 72,
+      "eval_seed": 31000,
+      "lapped": 72,
+      "lapped_fraction": 1.0,
+      "laps": 143,
+      "mean_lap": 27.937,
+      "best_lap": 26.7
+    }
+  }
 }

@@ -111,7 +111,8 @@ function renderTable(lines, start) {
 
 /** Render markdown to an HTML string. */
 export function renderMarkdown(md) {
-  const lines = md.split("\n");
+  // HTML comments (editing markers in the docs) are not content.
+  const lines = md.replace(/<!--[\s\S]*?-->/g, "").split("\n");
   const html = [];
   let i = 0;
   while (i < lines.length) {

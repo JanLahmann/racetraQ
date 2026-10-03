@@ -2,19 +2,24 @@
 
 Same setup as tests/test_hardware.py: no network, no IBM account — the worker
 thread calls ``get_backend(use_fake=True)`` and runs on the Aer-simulated fake
-twin. Skipped wholesale when qiskit-ibm-runtime is not installed. The session
-is driven via direct ``tick()`` calls (no asyncio); ticking loops sleep 1 ms
-to yield the GIL to the hardware thread, exactly like the training smoke test.
+twin (the Nighthawk device patch by default). Skipped wholesale when
+qiskit-ibm-runtime is not installed. The session is driven via direct
+``tick()`` calls (no asyncio); ticking loops sleep 1 ms to yield the GIL to
+the hardware thread, exactly like the training smoke test.
 """
 
 from __future__ import annotations
 
 import time
 
+import numpy as np
 import pytest
 
 pytest.importorskip("qiskit_ibm_runtime")
 
+from traqmania import hardware  # noqa: E402
+from traqmania.agents.quantum import lightcone  # noqa: E402
+from traqmania.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
 from traqmania.config import load_config  # noqa: E402
 from traqmania.server import protocol as P  # noqa: E402
 from traqmania.server.session import DemoSession  # noqa: E402
@@ -87,12 +92,30 @@ def test_hardware_mode_idle_then_lap_and_replay(tmp_path):
                                            "done", "replay")]
         assert order == sorted(order)
 
+        # the second transpiling status says where and how the circuit runs
+        transpiled = [s for s in statuses if s["phase"] == "transpiling"]
+        assert transpiled[0]["backend_name"] == "fake_miami"
+        how = transpiled[-1]
+        assert how["backend_name"].startswith("fake_miami (4-qubit patch")
+        assert how["execution_mode"] == "session"
+        assert how["two_qubit_gates"] == 12  # pruned CZ ring, zero SWAPs
+        assert how["circuit_depth"] > 0
+        assert "note" not in how  # no fallback, nothing to explain
+        assert how["message"].startswith("circuit transpiled: 12 two-qubit gates")
+        assert "(light-cone pruned)" in how["message"]
+        assert "raw device noise" in how["message"]  # resilience level 0
+        assert how["shots"] == 128  # the message's shots, per decision
+        assert "rescale" not in how and "attenuation" not in how  # off by default
+        assert "rescale" not in how["message"]
+
         running = [s for s in statuses if s["phase"] == "running"]
         assert running[0]["decision"] >= 1
         assert running[0]["seconds_per_decision"] > 0.0
-        assert running[0]["backend_name"]
+        assert running[0]["backend_name"] == how["backend_name"]
         done = next(s for s in statuses if s["phase"] == "done")
         assert done["seconds_per_decision"] > 0.0  # 3 decisions: no lap_time expected
+        assert done["execution_mode"] == "session"
+        assert done["two_qubit_gates"] == 12
 
         # replay: pinned hardware ghost loops alongside a live fastsim car
         for _ in range(30):
@@ -133,6 +156,12 @@ def test_hardware_sprint_smoke(tmp_path):
 
         done = next(s for s in statuses if s["phase"] == "done")
         assert "eval_return_before" in done and "eval_return_after" in done
+        assert done["execution_mode"] == "session"
+        assert done["two_qubit_gates"] == 12 and done["circuit_depth"] > 0
+        # what the sprint did with its two steps, and the shots it ran at
+        assert done["message"].startswith("SPSA on head: steps taken ")
+        assert "/2" in done["message"] and "hardware loss" in done["message"]
+        assert done["shots"] == 128 and "rescale" not in done
         assert states  # idle car broadcast throughout; sprint has no replay
         assert session._hw_replay is None
     finally:
@@ -173,5 +202,169 @@ def test_hardware_abort_and_mode_switch(tmp_path):
         leaked = [m for m in session.drain_outbox() if m["type"] == "hardware_status"]
         assert leaked == []
         assert session.hw_job is None
+    finally:
+        session.shutdown()
+
+
+def test_execution_mode_fallback_note_reaches_the_ui(tmp_path, monkeypatch):
+    """An account without Sessions: the mode actually used and the reason for
+    the fallback travel in hardware_status (the note used to be dropped)."""
+    note = "Session unavailable on fake (code 1352); Batch unavailable on fake (nope); " \
+           "using job mode (each job queues on its own)"
+    monkeypatch.setattr(hardware, "open_execution_mode",
+                        lambda backend: (None, "job", note))
+    session = DemoSession(load_config(), ghosts_dir=tmp_path)
+    try:
+        session.handle_message(
+            P.HardwareMsg(action="lap", backend="fake", shots=128, max_decisions=2))
+        statuses, _ = run_until(session, {"done", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        how = [s for s in statuses if s["phase"] == "transpiling"][-1]
+        assert how["execution_mode"] == "job" and how["note"] == note
+        done = next(s for s in statuses if s["phase"] == "done")
+        assert done["execution_mode"] == "job" and done["note"] == note
+    finally:
+        session.shutdown()
+
+
+def test_rescale_and_decision_shots_reach_the_ui(tmp_path):
+    """[hardware] rescale turns the attenuation rescale on (one calibration
+    job before the first decision) and decision_shots sets a lap's shots when
+    the client names none; both are reported in hardware_status."""
+    config = load_config()
+    config["hardware"] = {**config["hardware"], "rescale": "readout", "decision_shots": 256,
+                          "calibration_samples": 16, "calibration_shots": 1024}
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    try:
+        session.handle_message(P.HardwareMsg(action="lap", backend="fake", max_decisions=2))
+        statuses, _ = run_until(session, {"done", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        how = [s for s in statuses if s["phase"] == "transpiling"][-1]
+        assert how["shots"] == 256
+        assert how["rescale"] == "readout" and 0.85 < how["attenuation"] < 1.0
+        assert "raw device noise + per-readout attenuation rescale (calibrated f = 0.9" \
+            in how["message"]
+        done = next(s for s in statuses if s["phase"] == "done")
+        assert done["rescale"] == "readout" and done["attenuation"] == how["attenuation"]
+
+        # a sprint keeps [hardware] shots; shots named by the client always win
+        session.handle_message(
+            P.HardwareMsg(action="sprint", backend="fake", iterations=1, shots=64))
+        statuses, _ = run_until(session, {"done", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        assert [s for s in statuses if s["phase"] == "transpiling"][-1]["shots"] == 64
+    finally:
+        session.shutdown()
+
+
+def test_hardware_lap_runs_the_drivers_own_depth(tmp_path, monkeypatch):
+    """A 6-block driver under the default 4-block profile: hardware mode adopts
+    its depth (the welcome's circuit_spec shows it) and the lap's circuit is
+    the pruned 6-block one — 20 CZ on the Nighthawk patch, not the 12 of the
+    profile's 4 blocks."""
+    import traqmania.server.runtime as runtime_mod
+    import traqmania.server.session as session_mod
+
+    weights = tmp_path / "weights"
+    weights.mkdir()
+    params = QuantumQFunction({"n_qubits": 4, "n_layers": 6}, seed=1).get_params()
+    np.savez(weights / "quantum_oval.npz", params=params)  # no sidecar: inferred
+    monkeypatch.setattr(session_mod, "WEIGHTS_DIR", weights)
+    monkeypatch.setattr(runtime_mod, "WEIGHTS_DIR", weights)
+    cz = int(lightcone.live_gates(4, 6, 4)["cz"].sum())
+    assert cz == 20
+
+    session = DemoSession(load_config(), ghosts_dir=tmp_path)
+    try:
+        session.handle_message(P.SetMode(mode="hardware"))
+        msgs = session.drain_outbox()
+        assert not [m for m in msgs if m["type"] == "error"]
+        spec = session.welcome_payload()["circuit_spec"]
+        assert spec["n_layers"] == 6 and spec["counts"]["cz"] - spec["dead_gates"]["cz"] == cz
+        assert session.cars[0].qfunc.n_layers == 6
+
+        session.handle_message(
+            P.HardwareMsg(action="lap", backend="fake", shots=128, max_decisions=3))
+        statuses, _ = run_until(session, {"replay", "error"})
+        assert "error" not in [s["phase"] for s in statuses], statuses
+        how = [s for s in statuses if s["phase"] == "transpiling"][-1]
+        assert how["two_qubit_gates"] == cz  # zero SWAPs on the square lattice
+        assert how["message"].startswith(f"circuit transpiled: {cz} two-qubit gates")
+        assert "(light-cone pruned)" in how["message"]
+        done = next(s for s in statuses if s["phase"] == "done")
+        assert done["two_qubit_gates"] == cz
+        # 3 decisions from the start line: the spawn pose plus one per decision
+        assert len(session._hw_replay["points"]) == 4
+    finally:
+        session.shutdown()
+
+
+def test_hardware_config_picks_the_backend(tmp_path, monkeypatch):
+    """[hardware] backend_name / fake_name reach get_backend (backend_name used
+    to be ignored: the web UI always took the least busy device)."""
+    calls: list[tuple] = []
+
+    def fake_get_backend(name=None, use_fake=False, fake_name=None, min_qubits=5):
+        calls.append((name, use_fake, fake_name, min_qubits))
+        raise RuntimeError("stub: no backend")
+
+    monkeypatch.setattr(hardware, "get_backend", fake_get_backend)
+    config = load_config()
+    config["hardware"] = {**config["hardware"], "backend_name": "ibm_kingston",
+                          "fake_name": "fake_fez"}
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    try:
+        for backend in ("real", "fake"):
+            session.handle_message(
+                P.HardwareMsg(action="lap", backend=backend, max_decisions=1))
+            statuses, _ = run_until(session, {"error"})
+            assert "stub: no backend" in statuses[-1]["message"]
+            connecting = next(s for s in statuses if s["phase"] == "connecting")
+            assert ("ibm_kingston" if backend == "real" else "fake_fez") in connecting["message"]
+        assert calls == [("ibm_kingston", False, "fake_fez", 5),
+                         ("ibm_kingston", True, "fake_fez", 5)]
+
+        # defaults: least busy real device, the default fake
+        calls.clear()
+        session.config["hardware"] = {"shots": 128}
+        session.handle_message(P.HardwareMsg(action="lap", backend="real", max_decisions=1))
+        run_until(session, {"error"})
+        assert calls == [(None, False, hardware.DEFAULT_FAKE, 5)]
+    finally:
+        session.shutdown()
+
+
+def test_training_eval_env_runs_one_env_per_eval_episode(tmp_path):
+    """The snapshot-eval factory sizes its env to [training] eval_episodes
+    (default 12): one round of distinct episodes, not a 4-env round repeated."""
+    for eval_episodes, expected in ((None, 12), (5, 5)):
+        config = load_config()
+        config["reward"] = {**config["reward"], "max_decisions": 20}
+        config["training"] = {**config["training"], "n_parallel_envs": 2}
+        if eval_episodes is not None:
+            config["training"]["eval_episodes"] = eval_episodes
+        session = DemoSession(config, ghosts_dir=tmp_path)
+        try:
+            session.handle_message(P.Train(action="start", agent="mlp", episodes=1))
+            factory = session.jobs["mlp"].trainer.env_factory
+            assert factory().n_envs == expected
+        finally:
+            session.shutdown()
+
+
+def test_training_act_noise_applies_to_the_quantum_agent_only(tmp_path):
+    """[training] act_noise is noise on readout expectations: the quantum
+    trainer acts under it, the classical baseline trains as before."""
+    config = load_config()
+    config["reward"] = {**config["reward"], "max_decisions": 20}
+    config["training"] = {**config["training"], "n_parallel_envs": 2,
+                          "act_noise": {"attenuation": 0.95, "shots": 1024}}
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    try:
+        session.handle_message(P.Train(action="start", agent="both", episodes=1))
+        noise = session.jobs["quantum"].trainer.act_noise
+        assert (noise.attenuation, noise.shots) == (0.95, 1024)
+        assert session.jobs["mlp"].trainer.act_noise is None
+        assert config["training"]["act_noise"] == {"attenuation": 0.95, "shots": 1024}
     finally:
         session.shutdown()

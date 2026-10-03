@@ -99,7 +99,16 @@ class MultiTrackEnv:
         info = {
             key: np.concatenate([part[key] for part in info_parts])[g]
             for key in info_parts[0]
+            if key != "final_obs"
         }
+        # final_obs is None for a sub-env where nothing finished this step: its
+        # rows then equal the returned obs (None overall when nothing finished).
+        info["final_obs"] = None
+        if any(part["final_obs"] is not None for part in info_parts):
+            info["final_obs"] = np.concatenate([
+                obs_t if part["final_obs"] is None else part["final_obs"]
+                for obs_t, part in zip(obs_parts, info_parts, strict=True)
+            ], axis=0)[g]
         return (
             np.concatenate(obs_parts, axis=0)[g],
             np.concatenate(reward_parts)[g],

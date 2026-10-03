@@ -1,0 +1,201 @@
+{
+ "schema": 1,
+ "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/pro",
+ "baseline": "pro",
+ "bootstrap": {
+  "resamples": 2000,
+  "seed": 0,
+  "ci": 0.95,
+  "method": "stratified percentile bootstrap over seeds"
+ },
+ "reliable_fraction": 0.5,
+ "thresholds": [
+  0.5,
+  0.9
+ ],
+ "eval": {
+  "episodes": 36,
+  "seed": 20000
+ },
+ "git_commits": [],
+ "failed_cells": [],
+ "variants": {
+  "pro": {
+   "recipe": {
+    "name": "pro",
+    "agent": "mlp",
+    "track": "multi",
+    "profile": null,
+    "episodes": 5000,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "training.bootstrap_truncation=true",
+     "circuit.n_qubits=14",
+     "observation.ray_angles_deg=[-60.0,-45.0,-30.0,-15.0,0.0,15.0,30.0,45.0,60.0]",
+     "observation.features=[\"rays\",\"speed\",\"curvature_ahead\",\"lateral_offset\",\"heading_error\",\"corner_speed_ratio\"]",
+     "mlp.hidden=128",
+     "training.epsilon_decay_episodes=2500",
+     "training.gamma=0.99"
+    ]
+   },
+   "n_params": 2436,
+   "n_seeds": 3,
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 3,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 3,
+     "iqm": {
+      "value": 0.8101851851851851,
+      "ci_low": 0.75,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 0.7777777777777778,
+      "ci_low": 0.75,
+      "ci_high": 1.0
+     }
+    },
+    "final_lapped_frac": {
+     "n": 3,
+     "iqm": {
+      "value": 0.9722222222222222,
+      "ci_low": 0.8333333333333334,
+      "ci_high": 1.0
+     },
+     "median": {
+      "value": 1.0,
+      "ci_low": 0.8333333333333334,
+      "ci_high": 1.0
+     }
+    },
+    "stability": {
+     "n": 3,
+     "iqm": {
+      "value": 0.6835442117184667,
+      "ci_low": 0.6675170068027212,
+      "ci_high": 0.7189716312056739
+     },
+     "median": {
+      "value": 0.6786941580756013,
+      "ci_low": 0.6675170068027212,
+      "ci_high": 0.7189716312056739
+     }
+    },
+    "best_mean_lap": {
+     "n": 3,
+     "iqm": {
+      "value": 14.504305845641667,
+      "ci_low": 14.0033336134,
+      "ci_high": 15.264166971950003
+     },
+     "median": {
+      "value": 14.439583622125,
+      "ci_low": 14.003333613399999,
+      "ci_high": 15.26416697195
+     }
+    },
+    "first_clean_episode": {
+     "n": 3,
+     "iqm": {
+      "value": 1518.3333333333333,
+      "ci_low": 1322.0,
+      "ci_high": 1584.0
+     },
+     "median": {
+      "value": 1551.0,
+      "ci_low": 1322.0,
+      "ci_high": 1584.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 3,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 250,
+     "iqm": {
+      "value": 233.33333333333334,
+      "ci_low": 100.0,
+      "ci_high": 300.0
+     },
+     "median": {
+      "value": 250.0,
+      "ci_low": 100.0,
+      "ci_high": 300.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 3,
+     "fraction_reached": 1.0,
+     "episodes_half_of_seeds": 2100,
+     "iqm": {
+      "value": 1825.0,
+      "ci_low": 300.0,
+      "ci_high": 2250.0
+     },
+     "median": {
+      "value": 2100.0,
+      "ci_low": 300.0,
+      "ci_high": 2250.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 28,
+     "final_lapped": 36,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7777777777777778,
+     "final_lapped_frac": 1.0,
+     "best_mean_lap": 14.439583622125,
+     "first_clean_episode": 1584,
+     "stability": 0.7189716312056739,
+     "episodes_to_50": 300,
+     "episodes_to_90": 2100,
+     "wall_time_s": 1222.4517505830154
+    },
+    {
+     "seed": 1,
+     "best_lapped": 36,
+     "final_lapped": 36,
+     "eval_episodes": 36,
+     "best_lapped_frac": 1.0,
+     "final_lapped_frac": 1.0,
+     "best_mean_lap": 15.26416697195,
+     "first_clean_episode": 1322,
+     "stability": 0.6786941580756013,
+     "episodes_to_50": 250,
+     "episodes_to_90": 300,
+     "wall_time_s": 1252.6809517500224
+    },
+    {
+     "seed": 2,
+     "best_lapped": 27,
+     "final_lapped": 30,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.75,
+     "final_lapped_frac": 0.8333333333333334,
+     "best_mean_lap": 14.003333613399999,
+     "first_clean_episode": 1551,
+     "stability": 0.6675170068027212,
+     "episodes_to_50": 100,
+     "episodes_to_90": 2250,
+     "wall_time_s": 1228.121474332991
+    }
+   ]
+  }
+ }
+}

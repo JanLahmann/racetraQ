@@ -19,7 +19,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install
-        run: pip install -e ".[dev]"
+        # the hardware extra too: its tests run on local fake backends only
+        # (no IBM account, no network), and are skipped when it is missing
+        run: pip install -e ".[dev,hardware]"
+      - name: Node is on PATH
+        # tests/test_lightcone.py drives the web diagram's JS through node and
+        # skips without it; fail here rather than skip those tests silently
+        run: node --version
       - name: Lint
         run: ruff check .
       - name: Test
@@ -37,7 +43,7 @@ jobs:
           cache: pip
       - name: Install
         run: pip install -e ".[notebooks,hardware]"
-      - name: Execute notebooks 01-04 and 06
+      - name: Execute notebooks 01-04, 06 and 07
         run: |
           jupyter nbconvert --to notebook --execute --output-dir /tmp/nb-out \
             --ExecutePreprocessor.timeout=900 \
@@ -45,7 +51,8 @@ jobs:
             notebooks/02_q_learning_from_scratch.ipynb \
             notebooks/03_quantum_circuits_as_q_functions.ipynb \
             notebooks/04_training_the_quantum_driver.ipynb \
-            notebooks/06_scaling_and_features.ipynb
+            notebooks/06_scaling_and_features.ipynb \
+            notebooks/07_light_cones_and_classical_surrogates.ipynb
       - name: Execute notebook 05 (hardware cells no-op)
         env:
           TRAQMANIA_SKIP_HW: "1"

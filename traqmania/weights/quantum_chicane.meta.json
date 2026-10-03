@@ -1,7 +1,174 @@
 {
   "agent": "quantum",
   "track": "chicane",
-  "config_hash": "8859ff42f92f",
+  "config_hash": "6fcc93cea34b",
   "episodes": 800,
-  "date": "DATE"
+  "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+  },
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      0.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 4
+  },
+  "date": "2026-10-02",
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 800,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.98,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.05,
+    "epsilon_decay_episodes": 250,
+    "n_parallel_envs": 8,
+    "seed": 7,
+    "warm_start": false,
+    "bootstrap_truncation": true,
+    "action_gap": 0.8,
+    "act_noise": {
+      "attenuation": 0.95,
+      "shots": 1024
+    }
+  },
+  "provenance": "best snapshot of seed 7, chosen from the 10-seed study robust_chicane variant gap8an (quantum on chicane, 800 episodes, training.bootstrap_truncation=true, training.action_gap=0.8, training.act_noise={attenuation=0.95,shots=1024}); seeds ranked by the study's 36-episode reliability eval, the top 4 re-evaluated on fresh episodes and chosen by the simulated-device laps, then that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.0 s, mean 12.6 s; simulated device (fake_miami (4-qubit patch: physical qubits 4, 5, 14, 15), 1024 shots, rescale off, resilience 0): laps in 8/8 episodes; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.87, 1.00] of the study's eval episodes, final params in 0.63 [0.39, 0.88], stability 0.63 [0.49, 0.73]; 9/10 seeds lap in at least half",
+  "selection": {
+    "study": "robust_chicane",
+    "variant": "gap8an",
+    "profile": null,
+    "overrides": [
+      "training.bootstrap_truncation=true",
+      "training.action_gap=0.8",
+      "training.act_noise={attenuation=0.95,shots=1024}"
+    ],
+    "chosen_seed": 7,
+    "n_seeds": 10,
+    "rank_by": "device",
+    "rule": "seeds ranked by the study's 36-episode reliability eval of the best snapshot (lapped fraction, then mean lap); the top 4 re-evaluated on 72 fresh distinct greedy episodes (env seed 31000) and the driver chosen by that result (episodes lapped on the simulated device, then lapped fraction, then mean lap); the fresh numbers are the ones recorded (they also picked among the 4 candidates, so a small selection effect remains in them)",
+    "study_eval": {
+      "episodes": 36,
+      "eval_seed": 20000
+    },
+    "source": "cells/gap8an/seed7/quantum_chicane.npz",
+    "weights_sha256": "0108bc0344dfed7c3fd5d6da632295cc6adbd102e88e2bdde291b40a9bf32066",
+    "candidates": [
+      {
+        "seed": 7,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 12.626,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 12.639,
+        "fresh_best_lap": 12.0,
+        "device_lapped": 8,
+        "device_episodes": 8
+      },
+      {
+        "seed": 3,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 13.062,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 13.07,
+        "fresh_best_lap": 12.5,
+        "device_lapped": 8,
+        "device_episodes": 8
+      },
+      {
+        "seed": 4,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 13.171,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 13.167,
+        "fresh_best_lap": 12.6,
+        "device_lapped": 8,
+        "device_episodes": 8
+      },
+      {
+        "seed": 8,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 13.262,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 13.262,
+        "fresh_best_lap": 12.7,
+        "device_lapped": 8,
+        "device_episodes": 8
+      }
+    ],
+    "seed_spread": {
+      "n_seeds": 10,
+      "best_snapshot_lapped": {
+        "iqm": 0.9972,
+        "ci_low": 0.8694,
+        "ci_high": 1.0,
+        "median": 1.0,
+        "n": 10
+      },
+      "final_params_lapped": {
+        "iqm": 0.6278,
+        "ci_low": 0.3917,
+        "ci_high": 0.875,
+        "median": 0.5833,
+        "n": 10
+      },
+      "stability": {
+        "iqm": 0.6342,
+        "ci_low": 0.4931,
+        "ci_high": 0.7334,
+        "median": 0.6486,
+        "n": 10
+      },
+      "seeds_lapping_half": 9,
+      "interval": "95% percentile bootstrap of the IQM over seeds, 2000 resamples, RNG seed 0"
+    },
+    "fresh_eval": {
+      "episodes": 72,
+      "eval_seed": 31000,
+      "lapped": 72,
+      "lapped_fraction": 1.0,
+      "laps": 288,
+      "mean_lap": 12.639,
+      "best_lap": 12.0
+    },
+    "device_eval": {
+      "fake": "fake_miami",
+      "backend": "fake_miami (4-qubit patch: physical qubits 4, 5, 14, 15)",
+      "shots": 1024,
+      "rescale": "off",
+      "resilience": 0,
+      "episodes": 8,
+      "lapped": 8,
+      "crashed": 0,
+      "max_decisions": 200,
+      "eval_seed": 31000,
+      "simulator_seed": 0,
+      "two_qubit_gates": 12,
+      "mean_lap": 13.938
+    }
+  }
 }
