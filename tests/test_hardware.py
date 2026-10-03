@@ -1277,3 +1277,57 @@ def test_cli_fake_name_implies_fake(capsys, monkeypatch):
     assert "backend: fake_fez (fake, local simulation)" in out
     assert "runs on: fake_fez (4-qubit patch" in out
     assert "decisions: 1" in out
+
+
+def test_lap_reopens_a_batch_the_service_closed(fake_backend, monkeypatch):
+    """A Batch/Session has a maximum lifetime (10 minutes on the Open Plan): the
+    service then refuses jobs with error 1217 'Session has been closed'. The
+    Q-function must open a fresh mode of the same kind and retry the job, so a
+    long rollout survives; the result counts the re-opens."""
+    monkeypatch.setattr(qiskit_ibm_runtime, "Session", _stub_mode([], refuse=OPEN_PLAN))
+    real_make = hardware._make_estimator  # a real (local) Batch carries the jobs
+    calls = {"n": 0}
+
+    class Closed(Exception):
+        pass
+
+    def make_estimator(mode, backend, shots, resilience):
+        estimator = real_make(mode, backend, shots, resilience)
+        real_run = estimator.run
+
+        def run(pubs, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 3:  # the third job finds the batch closed server-side
+                raise Closed('\'400 Client Error: Bad Request ... {"errors":[{"code":1217,'
+                             '"message":"Session has been closed."')
+            return real_run(pubs, **kwargs)
+
+        estimator.run = run
+        return estimator
+
+    monkeypatch.setattr(hardware, "_make_estimator", make_estimator)
+    result = hardware.run_hardware_lap("oval", OVAL_WEIGHTS, fake_backend, shots=128,
+                                       max_decisions=4)
+    assert result["decisions"] == 4 and result["mode"] == "batch"
+    assert result["mode_reopens"] == 1
+    assert calls["n"] == 5  # 4 decisions + the one retried job
+
+
+def test_job_mode_does_not_retry_a_closed_mode_error(fake_backend, monkeypatch):
+    """In job mode there is nothing to re-open: the error propagates."""
+    monkeypatch.setattr(qiskit_ibm_runtime, "Session", _stub_mode([], refuse=OPEN_PLAN))
+    monkeypatch.setattr(qiskit_ibm_runtime, "Batch", _stub_mode([], refuse="no batches"))
+    real_make = hardware._make_estimator
+
+    def make_estimator(mode, backend, shots, resilience):
+        estimator = real_make(mode, backend, shots, resilience)
+
+        def run(pubs, **kwargs):
+            raise RuntimeError('{"code":1217,"message":"Session has been closed."}')
+
+        estimator.run = run
+        return estimator
+
+    monkeypatch.setattr(hardware, "_make_estimator", make_estimator)
+    with pytest.raises(RuntimeError, match="1217"):
+        hardware.run_hardware_lap("oval", OVAL_WEIGHTS, fake_backend, shots=128, max_decisions=2)

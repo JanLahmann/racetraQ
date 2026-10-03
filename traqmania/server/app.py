@@ -25,6 +25,8 @@ REPO_ROOT = WEB_DIR.parent.parent  # only meaningful in a source checkout
 # it from other docs open on GitHub.
 _DOC_SOURCES = (
     ("README", "README.md", "traQmania"),
+    ("EXPLAINER", "docs/EXPLAINER.md", "Explainer"),
+    ("REPORT", "docs/REPORT.md", "Report"),
     ("EXHIBITION", "docs/EXHIBITION.md", "Exhibiting"),
     ("SCIENCE", "docs/SCIENCE.md", "Science"),
     ("ARCHITECTURE", "docs/ARCHITECTURE.md", "Architecture"),

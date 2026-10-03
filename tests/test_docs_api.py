@@ -21,7 +21,7 @@ def test_docs_index_lists_repo_docs(client):
     if not discover_docs():
         assert docs == []  # bare install: feature reports empty, UI hides it
         return
-    assert ids == ["README", "EXHIBITION", "SCIENCE", "ARCHITECTURE"]
+    assert ids == ["README", "EXPLAINER", "REPORT", "EXHIBITION", "SCIENCE", "ARCHITECTURE"]
     assert all(d["title"] for d in docs)
 
 

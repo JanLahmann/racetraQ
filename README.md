@@ -20,8 +20,9 @@ quantum circuit learn to race — then grab the keyboard and try to beat it.
   IBM device (a local noise-model twin of a Nighthawk or Heron processor, no
   account needed). The bundled 4-qubit oval and chicane drivers are trained
   for device noise and complete their laps there. With an IBM Quantum account
-  the same code submits to a real device; no lap on a physical QPU is
-  reported yet.
+  the same code submits to a real device: on 2026-10-03 the oval driver
+  completed one full lap on IBM's `ibm_marrakesh` (141 decisions, 14.1 s,
+  raw device noise; docs/SCIENCE.md, "Hardware").
 - Built to be checked: a light-cone analysis that says what each action's
   readout can and cannot see, a multi-seed study harness with bootstrap
   statistics, bundled drivers chosen from those studies by a recorded rule
@@ -304,6 +305,12 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
 
 ## Documentation
 
+- [Explainer](docs/EXPLAINER.md) — the whole project in plain words for a
+  visitor, journalist or student: what the car sees, what the qubits do, what
+  was measured, and what is not claimed.
+- [Technical report](docs/REPORT.md) — the research-level write-up: setting,
+  evaluation protocol, the light-cone result, every multi-seed table with its
+  data source, honest assessment, reproducibility and open questions.
 - [Exhibition runbook](docs/EXHIBITION.md) — laptop/Pi/kiosk setups, a scripted
   5-minute demo, per-mode talking points, hardware-mode prerequisites,
   troubleshooting.

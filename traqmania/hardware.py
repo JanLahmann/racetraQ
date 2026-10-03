@@ -45,6 +45,7 @@ qiskit-ibm-runtime imports live inside functions. Run the CLI with
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import threading
 import time
@@ -499,6 +500,13 @@ def open_execution_mode(backend) -> tuple[Any, str, str | None]:
     return None, "job", "; ".join(refused) + "; using job mode (each job queues on its own)"
 
 
+def _mode_closed_error(exc: BaseException) -> bool:
+    """Does this runtime error say the Session/Batch was closed by the service
+    (IBM error 1217: maximum lifetime or interactive timeout exceeded)?"""
+    text = str(exc)
+    return "1217" in text or "has been closed" in text
+
+
 def _is_ibm_backend(backend) -> bool:
     from qiskit_ibm_runtime import IBMBackend
 
@@ -640,10 +648,45 @@ class HardwareQFunction:
         )
         self.two_qubit_gates = _two_qubit_gates(self._isa_circuit)
         self.depth = int(self._isa_circuit.depth())
+        self._mode = session  # the Session/Batch the Estimator runs in (None: job mode)
+        self.mode_reopens = 0
         self._estimator = _make_estimator(
             session if session is not None else backend, backend, self.shots,
             self.resilience_level,
         )
+
+    @property
+    def mode(self):
+        """The Session/Batch currently in use (re-opened ones included), or None."""
+        return self._mode
+
+    def close_mode(self) -> None:
+        """Close the Session/Batch this Q-function runs in, if any."""
+        if self._mode is not None:
+            try:
+                self._mode.close()
+            finally:
+                self._mode = None
+
+    def reopen_mode(self) -> None:
+        """Replace a Session/Batch the service has closed by a fresh one of the
+        same kind and rebuild the Estimator in it.
+
+        A Batch or Session has a maximum lifetime (10 minutes on the Open
+        Plan) and an interactive timeout; a rollout of 140 sequential
+        decisions outlives both, and the service then refuses further jobs
+        with error 1217 ("Session has been closed"). Re-opening keeps the
+        rollout going at the price of one more queue wait.
+        """
+        if self._mode is None:
+            raise RuntimeError("no Session/Batch to re-open (job mode)")
+        kind = type(self._mode)
+        with contextlib.suppress(Exception):  # already closed server-side
+            self._mode.close()
+        self._mode = kind(backend=self.backend)
+        self.mode_reopens += 1
+        self._estimator = _make_estimator(self._mode, self.backend, self.shots,
+                                          self.resilience_level)
 
     def _pub(self, obs: np.ndarray) -> tuple:
         """Estimator PUB for a batch of observations: (circuit, observables, bindings)."""
@@ -668,7 +711,13 @@ class HardwareQFunction:
             if simulator is not None:
                 simulator.seed_simulator = self._simulator_seed + self.jobs
         self.jobs += 1
-        result = self._estimator.run([self._pub(obs)]).result()[0]
+        try:
+            result = self._estimator.run([self._pub(obs)]).result()[0]
+        except Exception as exc:  # noqa: BLE001 - runtime error types vary by version
+            if self._mode is None or not _mode_closed_error(exc):
+                raise
+            self.reopen_mode()
+            result = self._estimator.run([self._pub(obs)]).result()[0]
         evs = np.asarray(result.data.evs, dtype=np.float64).reshape(self.n_actions, batch)
         return evs.T
 
@@ -999,7 +1048,7 @@ def run_hardware_lap(
         elapsed = time.perf_counter() - t0
     finally:
         if mode is not None:
-            mode.close()
+            qfunc.close_mode()
 
     return {
         "lapped": lapped,
@@ -1008,6 +1057,7 @@ def run_hardware_lap(
         "seconds_per_decision": elapsed / max(1, decisions),
         "trajectory": trajectory,
         "aborted": aborted,
+        "mode_reopens": qfunc.mode_reopens,
         **run_info,
     }
 
@@ -1328,7 +1378,7 @@ def spsa_sprint(
             loss_before, loss_after = (float(v) for v in np.mean(fresh, axis=0))
     finally:
         if mode is not None:
-            mode.close()
+            hw.close_mode()
     seconds = time.perf_counter() - t0
 
     return_after = exact_return(result["x"])

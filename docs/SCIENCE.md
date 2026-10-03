@@ -11,17 +11,15 @@ code; this page is the condensed reference.
 > gp ("Training") — that the headline numbers rested on one to three seeds
 > and on snapshots chosen from four evaluation episodes, and that the
 > hardware path targeted retired devices ("Hardware"). The code is fixed or
-> instrumented for all of it. On 2026-10-02 every bundled driver except the
-> 10-qubit ones was retrained and re-selected from multi-seed studies;
-> "Measured results" reports those studies, and their per-seed summaries are
-> in `data/studies/`. The headline changed with them: under 8–10 seeds the
-> matched classical baseline is ahead of the circuit on most metrics
-> ("Honest claims"). Still open: 10-qubit chicane (that study's 18
-> training runs finished on 2026-10-03, after this page was written, and
-> are not yet exported or folded in; the 10-qubit oval study is in) and with it the depth of the `q10` profile and its
-> re-bundled drivers, a universal driver that also laps unseen tracks (the
-> re-selected one does not — "One driver, every track"), and any lap on a
-> physical QPU.
+> instrumented for all of it. On 2026-10-02/03 every bundled driver was
+> retrained and re-selected from multi-seed studies ("Measured results"
+> reports those studies; their per-seed summaries are in `data/studies/`),
+> except `quantum_gp_q10`, which stays a July single run. The headline
+> changed with them: under 8–10 seeds the matched classical baseline is
+> ahead of the circuit on most metrics ("Honest claims"). Still open: a
+> universal driver selected on unseen tracks as well (the bundled one was
+> chosen by hand — "One driver, every track"), and a full lap on a physical
+> QPU ("Hardware": a first attempt on `ibm_marrakesh` is recorded there).
 
 ## The circuit
 
@@ -676,15 +674,37 @@ which laps in 36 of 36 exact episodes and in 16 of 24 on the device path
 (18 of 24, 8 of 12 and 10 of 12 on the three further sets: 52 of 72 in
 all) — the median gap is 0.7, about 0.7 standard deviations.
 
+**A lap on a physical QPU (2026-10-03).** The bundled 4-qubit oval driver
+(`quantum_oval.npz`, trained with the noise-robust recipe and selected on
+the simulated Nighthawk) drove one full oval lap on **`ibm_marrakesh`**, a
+156-qubit Heron r2, through the IBM Quantum Open Plan: 141 decisions at
+1024 shots each, resilience level 0 (raw device noise, no mitigation),
+light-cone-pruned circuit routed to 27 CZ gates on the heavy-hex lattice.
+It completed the lap in **14.1 s** of simulated driving (the same driver
+laps in 12.7 s on the exact simulator) without leaving the track, in 27
+minutes of wall-clock time and about 280 QPU-seconds. Sessions are refused
+on the Open Plan (error 1352), so the run used a Batch, which the service
+closes after 10 minutes; the hardware path now re-opens the batch and
+retries the job (it happened twice; each re-open cost one queue wait of
+2–4 minutes, the other decisions took 7 s median). Against the exact
+simulator on the same car states, the device's greedy action agreed in 90
+% of the 140 decisions, and the device Q-values were lower by 4–12 units
+per action (the attenuation the noise model predicts; root-mean-square
+difference 8.4 against an exact top-2 action gap of 8.3 median). A first
+attempt without the re-open logic reached decision 75, still on track,
+before the batch lifetime ended. One lap on one device on one day is a
+data point, not a reliability number; the per-decision log is in
+`data/qpu/ibm_marrakesh_oval_2026-10-03.json`.
+
 What this does not show:
 
 - **A simulated device.** `fake_miami` is a calibration snapshot of one
   Nighthawk, and only the 4 or 6 physical qubits the circuit lands on are
   simulated: no drift, no crosstalk from the rest of the chip, no queue.
   Other devices were not sampled; a single lap of the chicane driver on the
-  heavy-hex `fake_fez` (27 CZ, TREX) completed, which is one run. No lap on
-  a physical QPU is reported in this document. With an account the same
-  code submits to a real device.
+  heavy-hex `fake_fez` (27 CZ, TREX) completed, which is one run. The one
+  physical-QPU lap above is a single run on a Heron, not the device the
+  driver was selected on.
 - **Not a guarantee per seed.** Chicane seed 9 of the noise-robust study
   did not learn the track well (17 of 36 exact episodes in the study's
   eval) and laps in 4 of 12 on the device path; seed 0 laps in 9. In the
@@ -985,10 +1005,13 @@ options), next to an MLP on the same observation:
   every pairing of seeds (P 1.00 for both); its laps are faster than the
   4-block circuit's in every pairing and not supportedly faster than the
   6-block one's (P 0.83 [0.50, 1.00]).
-- **10 qubits on chicane** is the open item (marker under "Light cones"):
-  4 of that study's 18 runs were still training when this was written. No
-  10-qubit chicane number is claimed until it is in, and the depth of the
-  `q10` profile is decided then.
+- **10 qubits on chicane** (`data/studies/chicane_q10`, 6 seeds per depth):
+  4 and 6 blocks are indistinguishable — end-of-training lapped 0.55 against
+  0.55, stability 0.46 [0.31, 0.70] against 0.45 [0.32, 0.66], laps 13.6 s
+  against 13.1 s (P 0.51 [0.17, 0.88]) — and the matched MLP is again
+  steadier (0.93 [0.80, 0.98]) and faster (12.7 s). The `q10` profile runs 6
+  blocks because full visibility costs nothing measurable and helped on the
+  oval.
 
 ### One driver, every track (cross-track generalization)
 
@@ -1295,7 +1318,8 @@ Being honest matters more than being exciting:
   device episodes over four sets ("Hardware"). At inference time, more shots and a per-readout rescale
   restore drivers with moderate margins, not a knife-edge one. Still open:
   which of the two training levers matters, the hard tracks, whatever a
-  calibration snapshot of one device leaves out — and any physical QPU.
+  calibration snapshot of one device leaves out — and physical QPUs beyond
+  the single `ibm_marrakesh` lap of 2026-10-03.
 
 ## References
 
