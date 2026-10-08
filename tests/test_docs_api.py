@@ -4,8 +4,8 @@ import pytest
 
 fastapi_testclient = pytest.importorskip("fastapi.testclient")
 
-from traqmania.config import load_config  # noqa: E402
-from traqmania.server.app import create_app, discover_docs  # noqa: E402
+from racetraq.config import load_config  # noqa: E402
+from racetraq.server.app import create_app, discover_docs  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -16,7 +16,7 @@ def client():
 def test_docs_index_lists_repo_docs(client):
     docs = client.get("/api/docs").json()["docs"]
     ids = [d["id"] for d in docs]
-    # in a source checkout the README (traQmania) leads; every entry carries
+    # in a source checkout the README (racetraQ) leads; every entry carries
     # its curated menu title, and the parked TM2020 concept stays off the menu
     if not discover_docs():
         assert docs == []  # bare install: feature reports empty, UI hides it

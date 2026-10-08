@@ -10,9 +10,9 @@ import time
 
 import numpy as np
 
-from traqmania.config import load_config
-from traqmania.server import protocol as P
-from traqmania.server.runtime import (
+from racetraq.config import load_config
+from racetraq.server import protocol as P
+from racetraq.server.runtime import (
     evolution_stage_specs,
     load_agent,
     load_ghost,
@@ -20,7 +20,7 @@ from traqmania.server.runtime import (
     save_ghost,
     track_payload,
 )
-from traqmania.server.session import DemoSession, keys_to_controls
+from racetraq.server.session import DemoSession, keys_to_controls
 
 
 def make_config(**sections):
@@ -248,7 +248,7 @@ def test_evolution_stage_specs_oval_and_fallback(tmp_path, monkeypatch):
     # (every bundled track ships stages now, so stage the situation in tmp)
     import shutil
 
-    from traqmania.server import runtime as runtime_mod
+    from racetraq.server import runtime as runtime_mod
 
     weights = tmp_path / "weights"
     weights.mkdir()

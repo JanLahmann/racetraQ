@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from traqmania.agents.base import ACTIONS, N_ACTIONS
-from traqmania.agents.classical import MLPQFunction
+from racetraq.agents.base import ACTIONS, N_ACTIONS
+from racetraq.agents.classical import MLPQFunction
 
 
 def test_action_table():

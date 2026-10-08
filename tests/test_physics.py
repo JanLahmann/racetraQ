@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.env.car import CarPhysics
+from racetraq.config import load_config
+from racetraq.env.car import CarPhysics
 
 
 @pytest.fixture

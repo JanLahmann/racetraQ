@@ -2,7 +2,7 @@
 
 import pytest
 
-from traqmania.server import protocol as P
+from racetraq.server import protocol as P
 
 CLIENT_MSGS = [
     P.Hello(),
@@ -112,7 +112,7 @@ def test_welcome_carries_the_light_cone_circuit_spec(n_qubits):
     only the original keys keep working."""
     import json
 
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     spec = circuit_spec({"circuit": {"n_qubits": n_qubits}})
     msg = P.Welcome(mode="attract", track={"name": "oval"}, tracks=["oval"],

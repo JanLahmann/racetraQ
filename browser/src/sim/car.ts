@@ -1,4 +1,4 @@
-/** Car physics — a port of traqmania/env/car.py (one car, one substep). */
+/** Car physics — a port of racetraq/env/car.py (one car, one substep). */
 
 export interface PhysicsConfig {
   dt: number;

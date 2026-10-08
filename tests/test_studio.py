@@ -9,13 +9,13 @@ from pathlib import Path
 
 import pytest
 
-from traqmania import studio
-from traqmania.config import load_config
-from traqmania.env.racing_env import CarObserver
-from traqmania.env.track import Track
-from traqmania.server import protocol as P
-from traqmania.server.session import DemoSession
-from traqmania.server.studio import StudioController
+from racetraq import studio
+from racetraq.config import load_config
+from racetraq.env.racing_env import CarObserver
+from racetraq.env.track import Track
+from racetraq.server import protocol as P
+from racetraq.server.session import DemoSession
+from racetraq.server.studio import StudioController
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))

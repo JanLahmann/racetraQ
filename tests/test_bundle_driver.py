@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 TOOL_PATH = Path(__file__).resolve().parent.parent / "tools" / "bundle_driver.py"
-_spec = importlib.util.spec_from_file_location("traqmania_bundle_driver_tool", TOOL_PATH)
+_spec = importlib.util.spec_from_file_location("racetraq_bundle_driver_tool", TOOL_PATH)
 bundle = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(bundle)
 study = bundle.study
@@ -59,8 +59,8 @@ def make_cell(root, variant, seed, *, agent="mlp", track="oval", profile=None,
     shape whose first parameters carry the script the ``scripted`` fixture
     plays back: [seed, fresh lapped fraction, fresh mean lap, study lapped,
     study mean lap, per-track fresh fractions (4), device lapped fraction]."""
-    from traqmania.config import apply_overrides, load_config
-    from traqmania.train_headless import build_qfunc, save_weights
+    from racetraq.config import apply_overrides, load_config
+    from racetraq.train_headless import build_qfunc, save_weights
 
     cell = study.cell_dir(root, variant, seed)
     cell.mkdir(parents=True)
@@ -289,7 +289,7 @@ def test_seed_spread_statistics_in_the_sidecar(oval_study, scripted, tmp_path):
 
 def test_sidecar_carries_the_cell_fields_a_real_date_and_feeds_the_runtime_readers(
         oval_study, scripted, tmp_path):
-    from traqmania.server import runtime
+    from racetraq.server import runtime
 
     out_dir = tmp_path / "out"
     assert run(oval_study, "--out-dir", str(out_dir)) == 0
@@ -472,7 +472,7 @@ def test_multi_track_study_is_evaluated_per_track(tmp_path, scripted, capsys):
 
 
 def test_real_rollouts_under_the_cells_own_profile_and_overrides(tmp_path, capsys):
-    from traqmania.server import runtime
+    from racetraq.server import runtime
 
     root = tmp_path / "study_real"
     features = ["rays", "speed", "curvature_ahead", "corner_speed_ratio"]
@@ -537,7 +537,7 @@ def test_real_rollouts_under_the_cells_own_profile_and_overrides(tmp_path, capsy
 def scripted_device(monkeypatch):
     """hw_reliability's device_row replaced by the script (params[9] = lapped
     fraction on the device); its argument parser is the real one."""
-    import traqmania.hardware as hardware
+    import racetraq.hardware as hardware
 
     hw = bundle.hw_tool()
     calls = []
@@ -571,7 +571,7 @@ def quantum_study(tmp_path):
 
 def test_device_check_is_reported_and_ranks_only_on_request(
         quantum_study, scripted, scripted_device, tmp_path, capsys):
-    from traqmania import hardware
+    from racetraq import hardware
 
     out_dir = tmp_path / "out"
     args = ("--device-episodes", "4", "--shots", "2048", "--fake", "fake_test",

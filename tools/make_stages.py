@@ -14,7 +14,7 @@ replays it:
   and trains the config's recipe).  The recorded table is the whole recipe:
   a replay skips today's per-track presets (``train_headless --preset
   none``), which may have gained keys the driver was trained without;
-- the run goes through ``traqmania.train_headless.train`` — the code path
+- the run goes through ``racetraq.train_headless.train`` — the code path
   that trained the driver (``tools/study.py`` calls it once per cell) — with
   a trainer that also keeps the parameters of every snapshot eval;
 - the best snapshot of the replay must equal the bundled driver PARAMETER
@@ -31,7 +31,7 @@ lexicographically ``(episodes lapped, -mean lap, mean return)`` over
 snapshots spanning early -> late are selected — the first of the chain that
 laps, two intermediates, the best — such that each scores STRICTLY better
 than the one before in the trainer's eval and NO WORSE in the exact one, and
-saved to ``traqmania/weights/quantum_<track>_stage<i>[_q<n>].npz`` plus a
+saved to ``racetraq/weights/quantum_<track>_stage<i>[_q<n>].npz`` plus a
 ``.meta.json`` sidecar: ``episodes`` (the "ep N" car label in evolution
 mode), both evals of that snapshot and the circuit / observation / training
 blocks of a ``train_headless`` sidecar.
@@ -68,10 +68,10 @@ from typing import Any
 
 import numpy as np
 
-from traqmania import train_headless
-from traqmania.agents.training import DQNTrainer
-from traqmania.config import load_config, parse_override
-from traqmania.server.runtime import WEIGHTS_DIR, with_weights_config
+from racetraq import train_headless
+from racetraq.agents.training import DQNTrainer
+from racetraq.config import load_config, parse_override
+from racetraq.server.runtime import WEIGHTS_DIR, with_weights_config
 
 N_STAGES = 4
 DEFAULT_SEED = 42  # --fresh without --seed
@@ -273,7 +273,7 @@ def exact_eval(npz: Path, track_name: str, profile: str | None,
     episodes on the exact simulator (``records.evaluate``; no acting noise),
     driven as the demo loads the file — at the depth, action count and
     observation its sidecar records."""
-    from traqmania import records
+    from racetraq import records
 
     config = with_weights_config(load_config(profile=profile), npz)
     driver = records.Driver(npz.name.split(".")[0], "quantum", track_name,
@@ -391,7 +391,7 @@ def make_stages(track_name: str = "oval", seed: int | None = None,
     total_episodes = int(run_meta["episodes"])
     acting_noise = None
     if run_meta.get("training", {}).get("act_noise"):
-        from traqmania.agents.quantum.noise import ExpectationNoise
+        from racetraq.agents.quantum.noise import ExpectationNoise
 
         noise = ExpectationNoise.from_config(run_meta["training"]["act_noise"])
         acting_noise = noise.describe() if noise is not None else None
@@ -585,7 +585,7 @@ def main() -> None:
                              "bundled driver (the last stage is then a copy of it)")
     parser.add_argument("--out", default=None,
                         help="weights directory to read the driver from and write to "
-                             "(default: the bundled traqmania/weights)")
+                             "(default: the bundled racetraq/weights)")
     args = parser.parse_args()
     make_stages(args.track, args.seed, args.episodes, args.profile, args.init,
                 overrides=args.overrides, weights_dir=args.out, fresh=args.fresh,

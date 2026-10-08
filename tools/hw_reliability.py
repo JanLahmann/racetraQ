@@ -6,10 +6,10 @@ measures that for one weights file and track — lap completion and
 decisions-until-crash — on two paths:
 
 - **emulation**: fastsim plus the expectation-noise model of
-  ``traqmania.agents.quantum.noise`` (a slope and a bias per readout, fitted
+  ``racetraq.agents.quantum.noise`` (a slope and a bias per readout, fitted
   to the device once, plus shot noise) — cheap, so it runs many distinct
   episodes (default 36);
-- **device**: the real local device-patch path (``traqmania.hardware`` on the
+- **device**: the real local device-patch path (``racetraq.hardware`` on the
   Aer twin of a fake backend, ~0.1-0.2 s per decision) — a few episodes,
   capped at ``--device-max-decisions``.
 
@@ -36,7 +36,7 @@ soon after the first lap).
 earlier.json`` reuses the fitted models of an earlier run.
 
 Only numpy and the standard library are imported at module level;
-``traqmania`` (and, for the device path, qiskit) is loaded lazily.
+``racetraq`` (and, for the device path, qiskit) is loaded lazily.
 """
 
 from __future__ import annotations
@@ -64,8 +64,8 @@ MODEL_SAMPLES = 64
 RESCALE_CHOICES = ("off", "global", "readout")
 
 
-def _find_traqmania() -> None:
-    if importlib.util.find_spec("traqmania") is None:  # checkout without an install
+def _find_racetraq() -> None:
+    if importlib.util.find_spec("racetraq") is None:  # checkout without an install
         sys.path.insert(0, str(REPO_ROOT))
 
 
@@ -84,8 +84,8 @@ def weights_config(weights: Path, profile: str | None) -> dict:
     need (``runtime.weights_circuit``: the sidecar's ``circuit`` block, else
     the depth their parameter count implies at the profile's qubit count).
     Raises ``ValueError`` for weights that fit no depth."""
-    from traqmania.config import load_config
-    from traqmania.server.runtime import weights_circuit, with_weights_observation
+    from racetraq.config import load_config
+    from racetraq.server.runtime import weights_circuit, with_weights_observation
 
     config = with_weights_observation(load_config(profile), weights)
     circuit = config.setdefault("circuit", {})
@@ -152,8 +152,8 @@ def summarize(result: dict) -> dict:
 
 
 def _make_env(track_name: str, config: dict, n_envs: int, seed: int):
-    from traqmania.env.racing_env import RacingEnv
-    from traqmania.env.track import Track
+    from racetraq.env.racing_env import RacingEnv
+    from racetraq.env.track import Track
 
     track = Track.load(track_name, config["track"]["resample_spacing"])
     return RacingEnv(track, config, n_envs=n_envs, seed=seed)
@@ -165,7 +165,7 @@ def _make_env(track_name: str, config: dict, n_envs: int, seed: int):
 def fit_device_model(args: argparse.Namespace, config: dict, params: np.ndarray,
                      resilience: int) -> dict:
     """Calibration fit of the fake device for this driver (one high-shot job)."""
-    from traqmania.agents.quantum import noise
+    from racetraq.agents.quantum import noise
 
     circuit = config["circuit"]
     return noise.calibrate(
@@ -179,7 +179,7 @@ def fit_device_model(args: argparse.Namespace, config: dict, params: np.ndarray,
 def emulation_row(fast: Any, config: dict, args: argparse.Namespace, model: dict,
                   shots: int, rescale: str, resilience: int | None, row_seed: int) -> dict:
     """``args.episodes`` emulated episodes under ``model`` at ``shots`` shots."""
-    from traqmania.agents.quantum.noise import ExpectationNoise, NoisyQFunction
+    from racetraq.agents.quantum.noise import ExpectationNoise, NoisyQFunction
 
     device_noise = ExpectationNoise(attenuation=model["attenuation"], shots=shots,
                                     bias=model["bias"])
@@ -202,7 +202,7 @@ def emulation_row(fast: Any, config: dict, args: argparse.Namespace, model: dict
 def device_row(config: dict, params: np.ndarray, args: argparse.Namespace, backend: Any,
                shots: int, rescale: str, resilience: int, row_seed: int) -> dict:
     """``args.device_episodes`` episodes on the local device-patch path."""
-    from traqmania import hardware
+    from racetraq import hardware
 
     hw = hardware.HardwareQFunction(config["circuit"], backend, shots=shots,
                                     resilience_level=resilience,
@@ -328,9 +328,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(args: argparse.Namespace) -> dict:
     """Run every requested setting; returns the report dict."""
-    _find_traqmania()
-    from traqmania import hardware
-    from traqmania.agents.quantum.qdqn import QuantumQFunction
+    _find_racetraq()
+    from racetraq import hardware
+    from racetraq.agents.quantum.qdqn import QuantumQFunction
 
     rescales = [item.strip() for item in args.rescale.split(",") if item.strip()]
     unknown = sorted(set(rescales) - set(RESCALE_CHOICES))
@@ -344,8 +344,8 @@ def run(args: argparse.Namespace) -> dict:
 
     weights = Path(args.weights)
     config = weights_config(weights, args.profile)
-    from traqmania.config import load_config
-    from traqmania.server.runtime import observation_note
+    from racetraq.config import load_config
+    from racetraq.server.runtime import observation_note
 
     note = observation_note(load_config(args.profile), config)
     if note:  # stderr: stdout is the report

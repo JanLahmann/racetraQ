@@ -8,8 +8,8 @@ returns ~1.0. The training_cfg keys mirror [training] in config/default.toml.
 
 import numpy as np
 
-from traqmania.agents.classical import MLPQFunction
-from traqmania.agents.training import DQNTrainer
+from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.training import DQNTrainer
 
 TRAINING_CFG = {
     "algo": "double_dqn",

@@ -7,16 +7,16 @@ import json
 import numpy as np
 import pytest
 
-from traqmania.agents.base import ACTION_SIZES, ACTIONS, action_labels, action_set
-from traqmania.agents.classical import MLPQFunction
-from traqmania.agents.quantum.circuit import circuit_spec
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.agents.training import DQNTrainer
-from traqmania.config import load_config
-from traqmania.env.racing_env import CarObserver, RacingEnv
-from traqmania.env.track import Track
-from traqmania.server import protocol as P
-from traqmania.server.runtime import weights_actions
+from racetraq.agents.base import ACTION_SIZES, ACTIONS, action_labels, action_set
+from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.quantum.circuit import circuit_spec
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.agents.training import DQNTrainer
+from racetraq.config import load_config
+from racetraq.env.racing_env import CarObserver, RacingEnv
+from racetraq.env.track import Track
+from racetraq.server import protocol as P
+from racetraq.server.runtime import weights_actions
 
 
 def _track(config, name="oval"):
@@ -202,8 +202,8 @@ def test_eval_snapshot_uses_lapped_and_mean_lap():
 
 
 def test_session_adopts_and_reverts_action_count(tmp_path, monkeypatch):
-    import traqmania.server.runtime as runtime_mod
-    import traqmania.server.session as session_mod
+    import racetraq.server.runtime as runtime_mod
+    import racetraq.server.session as session_mod
 
     weights = tmp_path / "weights"
     weights.mkdir()

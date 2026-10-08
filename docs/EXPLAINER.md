@@ -1,11 +1,11 @@
-# traQmania in plain words
+# racetraQ in plain words
 
 A short explainer for visitors, journalists and students. The long version,
 with every table and caveat, is [SCIENCE.md](SCIENCE.md).
 
 ## What is this?
 
-traQmania is a racing game in which the driver is a tiny quantum circuit. A
+racetraQ is a racing game in which the driver is a tiny quantum circuit. A
 small car laps a track; ten times a second it reads its sensors, and a
 circuit of four qubits decides whether to steer left, steer right, go
 straight or brake. Nobody programmed the circuit to drive. It learned by

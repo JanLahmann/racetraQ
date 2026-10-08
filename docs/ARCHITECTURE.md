@@ -1,4 +1,4 @@
-# traQmania architecture
+# racetraQ architecture
 
 How the pieces fit: a numpy physics/RL core, a FastAPI + WebSocket demo server
 that ticks one shared session, a vanilla-ES-module browser frontend, and an
@@ -8,7 +8,7 @@ optional bridge to IBM Quantum hardware.
 
 ```mermaid
 flowchart LR
-    subgraph browser [Browser - traqmania/web]
+    subgraph browser [Browser - racetraq/web]
         main[main.js\nboot + wiring]
         net[net.js\nws client, reconnect]
         race[race.js\ncanvas renderer]
@@ -16,7 +16,7 @@ flowchart LR
         input[input.js\nkeys -> bitmask]
     end
 
-    subgraph server [Server - traqmania/server]
+    subgraph server [Server - racetraq/server]
         app[app.py\nFastAPI: /health, /ws, static]
         ws[ws.py\nHub + per-socket loop]
         proto[protocol.py\ntyped messages, strict validation]
@@ -24,7 +24,7 @@ flowchart LR
         runtime[runtime.py\nagents/tracks/ghosts/config glue]
     end
 
-    subgraph core [Core - traqmania]
+    subgraph core [Core - racetraq]
         env[env/: track.py, car.py,\nracing_env.py]
         agents[agents/: quantum fastsim+adjoint,\nlight cone, MLP, DQNTrainer, SPSA]
         hw[hardware.py\nEstimator lap + SPSA sprint]
@@ -48,44 +48,44 @@ flowchart LR
 
 | Module | Responsibility |
 |---|---|
-| `traqmania/__main__.py` | CLI entry point: profile/config/host/port flags, starts uvicorn. |
-| `traqmania/config.py` | `default.toml` + profile overlay (`pi4`, `pi5`, `exhibition`, plus the circuit-size overlays `q6`/`q8`/`q10` — each sets `[circuit] n_qubits` and the matching `[observation] ray_angles_deg`, `q8` also `n_layers = 5`) + optional extra TOML; `./config/*.toml` in the working dir shadows packaged profiles. Also `resolve_training_cfg(config, track, warm, agent)` — the one precedence rule for training recipes, shared by the server and headless training: `[training]`, then `[training_presets.<track>]`, then `[training_presets_<agent>.<track>]`, then the warm-start recipes (see "Training recipes, studies and bundled drivers") and `parse_override` / `apply_overrides` (the dotted `section.key=value` overrides behind `train_headless --set` and `tools/study.py`). |
-| `traqmania/env/track.py` | Closed-loop track geometry: resampling, arc-length projection, lidar raycasts, spatial-hash acceleration, validation. |
-| `traqmania/env/car.py` | Vectorized bicycle-ish car physics (throttle/brake/drag, speed-dependent steering). |
-| `traqmania/env/racing_env.py` | Gym-style vector env: obs = lidar rays (`[observation] ray_angles_deg`, 3 by default) + speed, progress reward, checkpoint/lap bonuses, off-track penalty, auto-reset. `step()` info also reports `truncated` (ended by the time limit, still on track) and `final_obs` (the observation before the auto-reset) for `[training] bootstrap_truncation`. |
-| `traqmania/env/trackgen.py` | Procedural track generator (numpy-only): `generate_track(seed, difficulty, length)` builds a deterministic closed loop that passes the exact `Track.load` validation (see "Random tracks" below); `LENGTH_PRESETS` maps short/medium/long to base-radius ranges and perimeter caps. |
-| `traqmania/env/racing_line.py` | The model-based "hero" driver (expert demo): curvature-minimizing racing line, brake/accel-feasible speed profile from `[physics]`, pure-pursuit `RacingLineController` returning continuous (steer, throttle, brake). Not a learned agent. |
-| `traqmania/env/multi_track.py` | `MultiTrackEnv`: round-robin mixture of per-track `RacingEnv`s behind the identical vector-env interface, so `DQNTrainer` trains one policy over several tracks unchanged; `random_pool` builds the mixture from generated tracks. |
-| `traqmania/agents/base.py` | `QFunction` protocol + the 4 discrete actions (right/straight/left at full throttle, coast-brake — car steer +1 turns left on screen). |
-| `traqmania/agents/quantum/circuit.py` | Canonical Qiskit circuit (single source of truth) + JSON `circuit_spec` for the browser diagram, including the light-cone fields `visibility`, `dead_params`, `min_layers_full_visibility`, `dead_gates`, a `live` flag on every gate and `pruned_on_hardware`. |
-| `traqmania/agents/quantum/lightcone.py` | Structural light-cone analysis (numpy only): `feature_visibility` (which features each readout ⟨Z_a⟩ can depend on), `live_gates` / `live_parameter_mask` (what can influence a readout at all — the rest has exactly zero gradient), `min_layers_full_visibility`, `blind_spots` / `blind_spot_warning` (human-readable, printed by `train_headless`), `pruned_circuit` (the live gates only, same expectation values — what the hardware path runs). CLI: `python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4`. |
-| `traqmania/agents/quantum/fastsim.py`, `adjoint.py` | Hand-written numpy statevector simulator and adjoint (backprop-style) gradients. |
-| `traqmania/agents/quantum/noise.py` | Expectation-value noise model (numpy only at import): `ExpectationNoise` (attenuation, shots, bias — what a device does to ⟨Z_a⟩), `NoisyQFunction`, `ReadoutCorrection` (the calibrated rescale behind `HardwareQFunction(rescale=...)`), `calibrate` / `validate` against the local device patch (CLI: `python -m traqmania.agents.quantum.noise calibrate\|validate --fake fake_miami`). The model is semi-quantitative — what it gets right and wrong is measured in SCIENCE.md, "Why a driver fails under noise, and what helps". |
-| `traqmania/agents/quantum/surrogate.py` | Classical Fourier surrogates of the trained circuit (numpy only): the frequency spectrum set by the trained input scalings, (`frequency_spectrum` / `spectrum_size`: the product upper bound the encoding allows), `gate_coefficients` (the exact Fourier coefficients of a readout — which of those frequencies are really used), and `fit_surrogate` (`full` least squares, random Fourier features, kernel ridge) returning a `FourierSurrogate` that can drive in place of the circuit (`drive_laps`, `compare`). Backs notebook 07 — light cones and classical surrogates. |
-| `traqmania/agents/quantum/qdqn.py` | `QuantumQFunction`: fastsim-backed `QFunction`, flat `[lam, theta, w, b]` layout, P = 3·L·n + 8 params (56 at 4 qubits, 80 at 6); `param_groups()` names the `lam` / `theta` / `head` slices for per-group learning rates. |
-| `traqmania/agents/quantum/qnn.py` | Same circuit via qiskit-machine-learning `EstimatorQNN` (parity checks, shots/noise backends; `aer_noisy` uses the local device twin from `hardware.local_simulator`). |
-| `traqmania/agents/classical/mlp.py` | 76-parameter numpy MLP baseline (4-8-4, tanh) with analytic backprop; `param_groups()`: `body` / `head`. |
-| `traqmania/agents/training/dqn.py` | Double-DQN loop over vectorized envs, Adam, replay buffer — shared by both backends. Snapshot eval (one round of `eval_episodes` distinct greedy episodes every `eval_every` episodes; `history["eval_log"]`, `final_eval`, `trainer.final_params`) and the optional `[training]` knobs `bootstrap_truncation`, `loss` / `huber_delta`, `lr_groups`, `lr_end`, `target_update` / `tau`, `grad_clip`, `reward_scale`, plus, for robustness to device noise, `act_noise` (act and select snapshots under an `ExpectationNoise`; TD targets and gradients stay exact) and `action_gap` (advantage learning). In the trainer every knob is off unless the recipe sets it; `default.toml` turns `bootstrap_truncation` on for everyone and `act_noise` / `action_gap` on for the quantum agent on oval and chicane. |
-| `traqmania/agents/training/spsa.py` | Minimal SPSA minimizer used by hardware sprints: two loss evaluations per iteration, plus the optional safeguards the sprint turns on — per-parameter `scale` (0 freezes a parameter), a `max_step` trust region, `blocking` (reject a step the loss does not confirm), `accept` (a veto on a proposed point, costing no loss evaluation) and `calibrate_gain`. |
-| `traqmania/hardware.py` | IBM Quantum via `qiskit-ibm-runtime`, real or simulated. `get_backend` (real QPU, or a fake by name — default `fake_miami`, a Nighthawk calibration snapshot; unknown names raise), `local_simulator` / `execution_backend` (the Aer twin of a fake, built once: fakes of up to 7 qubits whole, larger devices — the 120–156-qubit ones above all — as a *device patch* of just the physical qubits the routed circuit touches), `open_execution_mode` (Session → Batch → job fallback, with the reason), `HardwareQFunction` (inference-only; light-cone-pruned ISA circuit, client-side `executor_estimator.Estimator` with `EstimatorV2` fallback, `resilience_level` 0/1/2, optional calibrated attenuation `rescale`), `run_hardware_lap`, `spsa_sprint` (by default: output head only, blocking, and a guard that vetoes steps costing more than 10 % of the exact-simulator greedy return; TD targets follow the recipe in the weights' sidecar; the result lists `accepted` and `vetoed` per iteration, and `sprint_steps_text` words them). CLI: `python -m traqmania.hardware lap\|sprint [--track T] [--profile q6] [--fake] [--fake-name NAME] [--backend NAME] [--weights W.npz] [--shots N] [--resilience 0\|1\|2] [--rescale off\|global\|readout] [--no-prune]`, plus `--max-decisions N` for a lap and `--iterations N --batch N --groups lam,theta,head --no-blocking --no-guard` for a sprint. `[hardware]` config: `backend_name`, `fake_name`, `shots`, `decision_shots`, `spsa_iterations`, `spsa_groups`, `spsa_blocking`, `spsa_guard`, `resilience_level`, `prune_light_cone`, `rescale`, `calibration_samples`, `calibration_shots`. |
-| `traqmania/server/protocol.py` | Typed WS messages; strict client-side validation (`ProtocolError`). |
-| `traqmania/studio.py` | Training studio, the pure part: sensor presets (`lidar`: n−1 rays + speed, what every bundled driver and study uses; `corner`: the rays + `corner_speed_ratio`), `studio_config` (the q<n> profile with the run's sensors and action set), `option_problem`, `catalog` (setup options, study numbers and time estimates per track × size), `compare` (a run against the study runs), the per-track booth board (`studio_<track>.json` in the leaderboard dir; ranked by the best test's lapped share, then mean lap). |
-| `traqmania/server/studio.py` | `StudioController`, the session side of studio mode: phases setup → training → done → race / watch; starts the quantum job under the studio config with a random seed, follows the trainer's periodic tests, stops at `[studio] time_limit_s` (300) or once the best test laps every drive and six more tests bring no improvement; files named runs that lapped; gives the session its profile config back when another mode takes over and re-applies the run's config and track when the model drives again. |
-| `traqmania/data/studio_stats.json` | Generated by `tools/export_studio.py`: per (track, qubits) the closest study runs (first-lap episodes, best tests) and the live training speed per size measured through the server's own training path (`--calibrate`, stored in `data/studies/studio_calibration.json`). |
-| `traqmania/server/session.py` | `DemoSession`: the mode state machine and synchronous 60 Hz `tick()`; training threads; ghost recording. |
-| `traqmania/server/runtime.py` | Loading bundled agents/weights/tracks/ghosts, track payloads; what a weights file brings along (`weights_observation`, `weights_actions`, `weights_circuit`: its circuit depth and action count; `with_weights_config` overlays all of it on a config); re-exports `config.resolve_training_cfg`. |
-| `traqmania/server/ws.py` | Connection `Hub`, broadcast fan-out, per-socket receive loop, `DriverLock` (exclusive control, spectators watch). |
-| `traqmania/server/app.py` | FastAPI factory: `/health`, `/ws`, `/api/docs` + `/api/docs/{id}` (repo markdown for the in-UI docs browser; empty outside a source checkout) and `/docs-assets` (images), static frontend mounted last. |
-| `traqmania/train_headless.py` | Offline training CLI that produces the bundled `weights/*.npz` (+ `.meta.json`, history JSON). The recipe is `[training]` with the track's `[training_presets.<track>]` and then the agent's `[training_presets_<agent>.<track>]` merged on top (`--preset none` skips both); `--set section.key=value` overrides any config value (an unknown `training.` key is an error), `--episodes` / `--seed` win over everything, and `--save-final` also writes `<name>.final.npz`, the end-of-training parameters. The sidecar records the circuit shape, observation, action count and the resolved training table. Besides the bundled names, `--track multi` trains one policy on the oval+chicane+gp+combo mixture and `--track random` on a `MultiTrackEnv.random_pool` of generated tracks (seeded from `--seed`); weights save under the literal names (`quantum_multi.npz` / `quantum_random.npz`) — the universal-driver candidates. |
-| `traqmania/records.py` | `python -m traqmania.records [--episodes N] [--seed S] [--drivers a,b] [--tracks x,y] [--out FILE]`: greedy evaluation of every bundled driver on every bundled track (each under its own recorded observation, depth and action count) into `data/records.json`. |
-| `traqmania/bench.py` | Micro-benchmarks (env steps, forward passes, DQN updates). |
+| `racetraq/__main__.py` | CLI entry point: profile/config/host/port flags, starts uvicorn. |
+| `racetraq/config.py` | `default.toml` + profile overlay (`pi4`, `pi5`, `exhibition`, plus the circuit-size overlays `q6`/`q8`/`q10` — each sets `[circuit] n_qubits` and the matching `[observation] ray_angles_deg`, `q8` also `n_layers = 5`) + optional extra TOML; `./config/*.toml` in the working dir shadows packaged profiles. Also `resolve_training_cfg(config, track, warm, agent)` — the one precedence rule for training recipes, shared by the server and headless training: `[training]`, then `[training_presets.<track>]`, then `[training_presets_<agent>.<track>]`, then the warm-start recipes (see "Training recipes, studies and bundled drivers") and `parse_override` / `apply_overrides` (the dotted `section.key=value` overrides behind `train_headless --set` and `tools/study.py`). |
+| `racetraq/env/track.py` | Closed-loop track geometry: resampling, arc-length projection, lidar raycasts, spatial-hash acceleration, validation. |
+| `racetraq/env/car.py` | Vectorized bicycle-ish car physics (throttle/brake/drag, speed-dependent steering). |
+| `racetraq/env/racing_env.py` | Gym-style vector env: obs = lidar rays (`[observation] ray_angles_deg`, 3 by default) + speed, progress reward, checkpoint/lap bonuses, off-track penalty, auto-reset. `step()` info also reports `truncated` (ended by the time limit, still on track) and `final_obs` (the observation before the auto-reset) for `[training] bootstrap_truncation`. |
+| `racetraq/env/trackgen.py` | Procedural track generator (numpy-only): `generate_track(seed, difficulty, length)` builds a deterministic closed loop that passes the exact `Track.load` validation (see "Random tracks" below); `LENGTH_PRESETS` maps short/medium/long to base-radius ranges and perimeter caps. |
+| `racetraq/env/racing_line.py` | The model-based "hero" driver (expert demo): curvature-minimizing racing line, brake/accel-feasible speed profile from `[physics]`, pure-pursuit `RacingLineController` returning continuous (steer, throttle, brake). Not a learned agent. |
+| `racetraq/env/multi_track.py` | `MultiTrackEnv`: round-robin mixture of per-track `RacingEnv`s behind the identical vector-env interface, so `DQNTrainer` trains one policy over several tracks unchanged; `random_pool` builds the mixture from generated tracks. |
+| `racetraq/agents/base.py` | `QFunction` protocol + the 4 discrete actions (right/straight/left at full throttle, coast-brake — car steer +1 turns left on screen). |
+| `racetraq/agents/quantum/circuit.py` | Canonical Qiskit circuit (single source of truth) + JSON `circuit_spec` for the browser diagram, including the light-cone fields `visibility`, `dead_params`, `min_layers_full_visibility`, `dead_gates`, a `live` flag on every gate and `pruned_on_hardware`. |
+| `racetraq/agents/quantum/lightcone.py` | Structural light-cone analysis (numpy only): `feature_visibility` (which features each readout ⟨Z_a⟩ can depend on), `live_gates` / `live_parameter_mask` (what can influence a readout at all — the rest has exactly zero gradient), `min_layers_full_visibility`, `blind_spots` / `blind_spot_warning` (human-readable, printed by `train_headless`), `pruned_circuit` (the live gates only, same expectation values — what the hardware path runs). CLI: `python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4`. |
+| `racetraq/agents/quantum/fastsim.py`, `adjoint.py` | Hand-written numpy statevector simulator and adjoint (backprop-style) gradients. |
+| `racetraq/agents/quantum/noise.py` | Expectation-value noise model (numpy only at import): `ExpectationNoise` (attenuation, shots, bias — what a device does to ⟨Z_a⟩), `NoisyQFunction`, `ReadoutCorrection` (the calibrated rescale behind `HardwareQFunction(rescale=...)`), `calibrate` / `validate` against the local device patch (CLI: `python -m racetraq.agents.quantum.noise calibrate\|validate --fake fake_miami`). The model is semi-quantitative — what it gets right and wrong is measured in SCIENCE.md, "Why a driver fails under noise, and what helps". |
+| `racetraq/agents/quantum/surrogate.py` | Classical Fourier surrogates of the trained circuit (numpy only): the frequency spectrum set by the trained input scalings, (`frequency_spectrum` / `spectrum_size`: the product upper bound the encoding allows), `gate_coefficients` (the exact Fourier coefficients of a readout — which of those frequencies are really used), and `fit_surrogate` (`full` least squares, random Fourier features, kernel ridge) returning a `FourierSurrogate` that can drive in place of the circuit (`drive_laps`, `compare`). Backs notebook 07 — light cones and classical surrogates. |
+| `racetraq/agents/quantum/qdqn.py` | `QuantumQFunction`: fastsim-backed `QFunction`, flat `[lam, theta, w, b]` layout, P = 3·L·n + 8 params (56 at 4 qubits, 80 at 6); `param_groups()` names the `lam` / `theta` / `head` slices for per-group learning rates. |
+| `racetraq/agents/quantum/qnn.py` | Same circuit via qiskit-machine-learning `EstimatorQNN` (parity checks, shots/noise backends; `aer_noisy` uses the local device twin from `hardware.local_simulator`). |
+| `racetraq/agents/classical/mlp.py` | 76-parameter numpy MLP baseline (4-8-4, tanh) with analytic backprop; `param_groups()`: `body` / `head`. |
+| `racetraq/agents/training/dqn.py` | Double-DQN loop over vectorized envs, Adam, replay buffer — shared by both backends. Snapshot eval (one round of `eval_episodes` distinct greedy episodes every `eval_every` episodes; `history["eval_log"]`, `final_eval`, `trainer.final_params`) and the optional `[training]` knobs `bootstrap_truncation`, `loss` / `huber_delta`, `lr_groups`, `lr_end`, `target_update` / `tau`, `grad_clip`, `reward_scale`, plus, for robustness to device noise, `act_noise` (act and select snapshots under an `ExpectationNoise`; TD targets and gradients stay exact) and `action_gap` (advantage learning). In the trainer every knob is off unless the recipe sets it; `default.toml` turns `bootstrap_truncation` on for everyone and `act_noise` / `action_gap` on for the quantum agent on oval and chicane. |
+| `racetraq/agents/training/spsa.py` | Minimal SPSA minimizer used by hardware sprints: two loss evaluations per iteration, plus the optional safeguards the sprint turns on — per-parameter `scale` (0 freezes a parameter), a `max_step` trust region, `blocking` (reject a step the loss does not confirm), `accept` (a veto on a proposed point, costing no loss evaluation) and `calibrate_gain`. |
+| `racetraq/hardware.py` | IBM Quantum via `qiskit-ibm-runtime`, real or simulated. `get_backend` (real QPU, or a fake by name — default `fake_miami`, a Nighthawk calibration snapshot; unknown names raise), `local_simulator` / `execution_backend` (the Aer twin of a fake, built once: fakes of up to 7 qubits whole, larger devices — the 120–156-qubit ones above all — as a *device patch* of just the physical qubits the routed circuit touches), `open_execution_mode` (Session → Batch → job fallback, with the reason), `HardwareQFunction` (inference-only; light-cone-pruned ISA circuit, client-side `executor_estimator.Estimator` with `EstimatorV2` fallback, `resilience_level` 0/1/2, optional calibrated attenuation `rescale`), `run_hardware_lap`, `spsa_sprint` (by default: output head only, blocking, and a guard that vetoes steps costing more than 10 % of the exact-simulator greedy return; TD targets follow the recipe in the weights' sidecar; the result lists `accepted` and `vetoed` per iteration, and `sprint_steps_text` words them). CLI: `python -m racetraq.hardware lap\|sprint [--track T] [--profile q6] [--fake] [--fake-name NAME] [--backend NAME] [--weights W.npz] [--shots N] [--resilience 0\|1\|2] [--rescale off\|global\|readout] [--no-prune]`, plus `--max-decisions N` for a lap and `--iterations N --batch N --groups lam,theta,head --no-blocking --no-guard` for a sprint. `[hardware]` config: `backend_name`, `fake_name`, `shots`, `decision_shots`, `spsa_iterations`, `spsa_groups`, `spsa_blocking`, `spsa_guard`, `resilience_level`, `prune_light_cone`, `rescale`, `calibration_samples`, `calibration_shots`. |
+| `racetraq/server/protocol.py` | Typed WS messages; strict client-side validation (`ProtocolError`). |
+| `racetraq/studio.py` | Training studio, the pure part: sensor presets (`lidar`: n−1 rays + speed, what every bundled driver and study uses; `corner`: the rays + `corner_speed_ratio`), `studio_config` (the q<n> profile with the run's sensors and action set), `option_problem`, `catalog` (setup options, study numbers and time estimates per track × size), `compare` (a run against the study runs), the per-track booth board (`studio_<track>.json` in the leaderboard dir; ranked by the best test's lapped share, then mean lap). |
+| `racetraq/server/studio.py` | `StudioController`, the session side of studio mode: phases setup → training → done → race / watch; starts the quantum job under the studio config with a random seed, follows the trainer's periodic tests, stops at `[studio] time_limit_s` (300) or once the best test laps every drive and six more tests bring no improvement; files named runs that lapped; gives the session its profile config back when another mode takes over and re-applies the run's config and track when the model drives again. |
+| `racetraq/data/studio_stats.json` | Generated by `tools/export_studio.py`: per (track, qubits) the closest study runs (first-lap episodes, best tests) and the live training speed per size measured through the server's own training path (`--calibrate`, stored in `data/studies/studio_calibration.json`). |
+| `racetraq/server/session.py` | `DemoSession`: the mode state machine and synchronous 60 Hz `tick()`; training threads; ghost recording. |
+| `racetraq/server/runtime.py` | Loading bundled agents/weights/tracks/ghosts, track payloads; what a weights file brings along (`weights_observation`, `weights_actions`, `weights_circuit`: its circuit depth and action count; `with_weights_config` overlays all of it on a config); re-exports `config.resolve_training_cfg`. |
+| `racetraq/server/ws.py` | Connection `Hub`, broadcast fan-out, per-socket receive loop, `DriverLock` (exclusive control, spectators watch). |
+| `racetraq/server/app.py` | FastAPI factory: `/health`, `/ws`, `/api/docs` + `/api/docs/{id}` (repo markdown for the in-UI docs browser; empty outside a source checkout) and `/docs-assets` (images), static frontend mounted last. |
+| `racetraq/train_headless.py` | Offline training CLI that produces the bundled `weights/*.npz` (+ `.meta.json`, history JSON). The recipe is `[training]` with the track's `[training_presets.<track>]` and then the agent's `[training_presets_<agent>.<track>]` merged on top (`--preset none` skips both); `--set section.key=value` overrides any config value (an unknown `training.` key is an error), `--episodes` / `--seed` win over everything, and `--save-final` also writes `<name>.final.npz`, the end-of-training parameters. The sidecar records the circuit shape, observation, action count and the resolved training table. Besides the bundled names, `--track multi` trains one policy on the oval+chicane+gp+combo mixture and `--track random` on a `MultiTrackEnv.random_pool` of generated tracks (seeded from `--seed`); weights save under the literal names (`quantum_multi.npz` / `quantum_random.npz`) — the universal-driver candidates. |
+| `racetraq/records.py` | `python -m racetraq.records [--episodes N] [--seed S] [--drivers a,b] [--tracks x,y] [--out FILE]`: greedy evaluation of every bundled driver on every bundled track (each under its own recorded observation, depth and action count) into `data/records.json`. |
+| `racetraq/bench.py` | Micro-benchmarks (env steps, forward passes, DQN updates). |
 | `tools/study.py` | Multi-seed study harness. `run` trains a (variant × seed) grid, one subprocess per cell, resumable; each cell saves best-snapshot and final weights and evaluates both over 36 distinct greedy episodes. `report` aggregates over seeds: IQM and median with bootstrap confidence intervals, stability, sample complexity, probability of improvement over a baseline (`report.md`, `report.json`). |
 | `tools/bundle_driver.py` | From a study to a bundled driver: ranks a variant's seeds by the study's 36-episode eval, re-runs that eval for the top candidates (the check that this checkout still drives the weights as the study did; `--skip-replay`), re-evaluates them on 72 fresh episodes (`--eval-seed`, refused when it coincides with a seed the study used), optionally drives them on the simulated device (`--device-episodes N`, ranking first with `--rank-by device`), and writes `<name>.npz` plus a sidecar with a `selection` block. `--list` prints a study's variants with their seed spreads; `--dry-run` writes nothing; a driver below `--min-lapped` (0.9) or an existing target needs `--force` / `--overwrite`. |
 | `tools/export_study.py` | `python tools/export_study.py STUDY_DIR --name NAME [--out data/studies]`: the committable summary of a study — `report.md`, `report.json`, and `cells.json` with one record per finished cell (variant, seed, overrides, parameter count, first clean lap, the in-training eval log, both 36-episode evals, mean return per 100 episodes, wall time). |
 | `data/studies/<name>/` | Those summaries for every study behind SCIENCE.md's "Measured results" (the weights and full logs of the runs are not in the repository). |
 | `tools/hw_reliability.py` | Lap completion and decisions-until-crash of one weights file under device noise: many emulated episodes (the `noise.py` model) plus a few on the local device patch, across shots (`--shots`, default 1024,4096,16384), rescale settings (`--rescale`, default off,readout) and resilience levels (`--resilience`, default 0,1); `--device-episodes N` sets the device-path sample (default 3 — use 8 or more to judge a driver), `--no-device` emulates only. Emulated rescale rows are optimistic, and "mean lap" is not comparable between emulated and device rows (different decision caps). |
 | `tools/make_stages.py` | Evolution-stage weights and the warm-start checkpoint, as earlier snapshots of the bundled driver's own training run: replays that run from the driver's sidecar (seed, episodes, recipe, depth, observation) and writes nothing unless the replay's best snapshot equals the driver parameter for parameter (`--allow-mismatch` overrides; `--fresh` trains the config's recipe instead). Saves 4 snapshots that improve from one to the next and end on the driver, `quantum_<track>_stage{1..4}[_q<n>].npz` (+ `.meta.json` with the episode count shown as the car label), and `quantum_<track>_warmstart[_q<n>].npz`, the last snapshot that does not lap before the run starts lapping in half of an eval's episodes. |
-| `traqmania/web/` | Frontend ES modules (`main`, `net`, `race`, `input`, `charts`, `circuit`, `quantum-panel`, `hardware-panel`, `studio-panel`, `attract`, `explain`, `docs`, `md`, `draw`, `tooltip`); no build step, served statically. |
+| `racetraq/web/` | Frontend ES modules (`main`, `net`, `race`, `input`, `charts`, `circuit`, `quantum-panel`, `hardware-panel`, `studio-panel`, `attract`, `explain`, `docs`, `md`, `draw`, `tooltip`); no build step, served statically. |
 
 ## Qubit-count profiles (q6 / q8 / q10)
 
@@ -103,7 +103,7 @@ exactly that pair of config values, and `q8` the circuit depth as well:
   recorded in its sidecar). On a track
   without weights at the active size, the modes that need them stay
   unavailable until you train, e.g.
-  `python -m traqmania.train_headless --agent quantum --profile q8 --track gp`.
+  `python -m racetraq.train_headless --agent quantum --profile q8 --track gp`.
 
 **Depth and the light cone.** Each readout only depends on features within
 ring distance `n_layers − 1` of its qubit (`agents/quantum/lightcone.py`;
@@ -191,7 +191,7 @@ sidecar's `training` block records.
 tools/study.py run     -> <study>/cells/<variant>/seed<k>/   weights, final weights, history, result.json
 tools/study.py report  -> <study>/report.md, report.json     statistics over seeds
 tools/export_study.py  -> data/studies/<name>/               report.md, report.json, cells.json (committed)
-tools/bundle_driver.py -> traqmania/weights/<name>.npz + <name>.meta.json
+tools/bundle_driver.py -> racetraq/weights/<name>.npz + <name>.meta.json
 ```
 
 **The sidecar** (`<name>.meta.json`). Loaders read three blocks — `circuit`
@@ -265,7 +265,7 @@ only — not on generated ones (see the fallback chain above).
 ## WebSocket protocol reference
 
 > **Keep in sync:** this section is hand-generated from
-> `traqmania/server/protocol.py`. If you change the protocol, change this
+> `racetraq/server/protocol.py`. If you change the protocol, change this
 > table in the same commit. Every message is a JSON object with a `"type"`
 > field. Client→server messages are **strictly validated**: unknown types,
 > unknown fields, wrong value types, and out-of-enum values all get an
@@ -571,7 +571,7 @@ disconnects.
 
 ### Add a track
 
-Drop `traqmania/env/tracks/<name>.json`:
+Drop `racetraq/env/tracks/<name>.json`:
 
 ```json
 {
@@ -599,12 +599,12 @@ The track appears automatically in `welcome.tracks` and the UI picker
 need weights though: train and save them with
 
 ```sh
-python -m traqmania.train_headless --agent quantum --track hairpin
-python -m traqmania.train_headless --agent mlp --track hairpin
+python -m racetraq.train_headless --agent quantum --track hairpin
+python -m racetraq.train_headless --agent mlp --track hairpin
 python tools/make_stages.py --track hairpin   # evolution stages + warm-start checkpoint (replays the quantum run above)
 ```
 
-which writes `traqmania/weights/{quantum,mlp}_hairpin.npz` + `.meta.json`
+which writes `racetraq/weights/{quantum,mlp}_hairpin.npz` + `.meta.json`
 (at a non-default qubit count, pass e.g. `--profile q6` and the quantum
 filenames gain the `_q6` tag — see the filename rule above).
 Slow-to-learn tracks can get a `[training_presets.hairpin]` section in
@@ -614,7 +614,7 @@ that order by `config.resolve_training_cfg`).
 
 ### Add an agent
 
-Implement the `QFunction` protocol from `traqmania/agents/base.py` — batched
+Implement the `QFunction` protocol from `racetraq/agents/base.py` — batched
 numpy, parameters in one flat vector:
 
 ```python

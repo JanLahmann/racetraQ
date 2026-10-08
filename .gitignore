@@ -16,5 +16,5 @@ runs/
 .claude/settings.local.json
 
 # runtime-recorded ghost laps and leaderboards are per-installation state
-traqmania/data/ghosts/
-traqmania/data/leaderboard/
+racetraq/data/ghosts/
+racetraq/data/leaderboard/

@@ -1,6 +1,6 @@
-# Exhibiting traQmania
+# Exhibiting racetraQ
 
-A practical runbook for running traQmania at a booth, in a classroom, or on a
+A practical runbook for running racetraQ at a booth, in a classroom, or on a
 museum kiosk. For what the science means, see [SCIENCE.md](SCIENCE.md); for
 how the system works, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -14,7 +14,7 @@ how the system works, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Requires Python ≥ 3.11. Everything (training included) runs locally on CPU.
 Pass server flags straight through, e.g. `./run.sh --port 8010`
-(set `TRAQMANIA_PORT=8010` too so the auto-opened browser URL matches).
+(set `RACETRAQ_PORT=8010` too so the auto-opened browser URL matches).
 
 ### Raspberry Pi (QuBins)
 
@@ -33,16 +33,16 @@ coffee break; a warm start skips most of it.
 Or containerized (the image is multi-arch and built on a QuBins base):
 
 ```sh
-docker run --rm -p 8000:8000 ghcr.io/janlahmann/traqmania
+docker run --rm -p 8000:8000 ghcr.io/janlahmann/racetraq
 # podman works identically:
-podman run --rm -p 8000:8000 ghcr.io/janlahmann/traqmania
+podman run --rm -p 8000:8000 ghcr.io/janlahmann/racetraq
 ```
 
 To use a profile inside the container, override the command:
 
 ```sh
-docker run --rm -p 8000:8000 ghcr.io/janlahmann/traqmania \
-  python -m traqmania --host 0.0.0.0 --port 8000 --profile pi5
+docker run --rm -p 8000:8000 ghcr.io/janlahmann/racetraq \
+  python -m racetraq --host 0.0.0.0 --port 8000 --profile pi5
 ```
 
 ### Kiosk / exhibition mode
@@ -51,7 +51,7 @@ docker run --rm -p 8000:8000 ghcr.io/janlahmann/traqmania \
 ./run.sh --profile exhibition
 ```
 
-The `exhibition` profile (`traqmania/config/exhibition.toml`):
+The `exhibition` profile (`racetraq/config/exhibition.toml`):
 
 - binds `0.0.0.0` — the UI is reachable from other devices on the LAN
   (visitors' phones can watch);
@@ -63,7 +63,7 @@ The `exhibition` profile (`traqmania/config/exhibition.toml`):
 Profiles stack with an extra overlay via `--config <file.toml>`, and any
 `./config/<name>.toml` in the working directory shadows the packaged profile
 of the same name — so a Pi kiosk is `./run.sh --profile pi5 --config
-traqmania/config/exhibition.toml`. Run the browser fullscreen, e.g.
+racetraq/config/exhibition.toml`. Run the browser fullscreen, e.g.
 `chromium-browser --kiosk http://localhost:8000`.
 
 ### The 6-qubit variant
@@ -106,7 +106,7 @@ eight training runs per size (SCIENCE.md, "Scaling and the light cone"). At
 10 qubits only the oval has been re-measured — six runs each with four and
 with six layers, neither better than six qubits. Do not quote a 10-qubit
 chicane result: those runs are not analysed yet.
-`python -m traqmania.agents.quantum.lightcone --qubits 8` prints the map if
+`python -m racetraq.agents.quantum.lightcone --qubits 8` prints the map if
 a physicist asks.
 
 ## The 5-minute demo
@@ -271,7 +271,7 @@ A narrative that works cold, in order. Controls for the race segment:
   your model" — a visitor racing the circuit they just trained is the best
   moment of the booth. The studio board (one per track) ranks named runs
   that lapped: share of test drives lapped first, then mean lap time.
-  Clear it by deleting `traqmania/data/leaderboard/studio_<track>.json`.
+  Clear it by deleting `racetraq/data/leaderboard/studio_<track>.json`.
 - **Evolution:** all cars run the identical architecture; only the training
   amount differs. Labels show "ep N" for mid-training checkpoints and "best"
   for the shipped driver. Tracks without stage snapshots show just two cars:
@@ -411,13 +411,13 @@ For a booth: run the simulated device live and describe the real path
 truthfully, or pre-run the CLI and show the transcript:
 
 ```sh
-python -m traqmania.hardware lap --track oval --fake                # simulated Nighthawk, 4 qubits
-python -m traqmania.hardware lap --track chicane --fake
-python -m traqmania.hardware lap --track oval --fake --profile q6   # 6 qubits
-python -m traqmania.hardware lap --track chicane --fake-name fake_fez --resilience 1
-python -m traqmania.hardware lap --track chicane --fake --no-prune   # full circuit, 16 CZ
-python -m traqmania.hardware sprint --track oval --fake --iterations 20
-python -m traqmania.hardware lap --track oval --backend ibm_kingston --max-decisions 5   # real device
+python -m racetraq.hardware lap --track oval --fake                # simulated Nighthawk, 4 qubits
+python -m racetraq.hardware lap --track chicane --fake
+python -m racetraq.hardware lap --track oval --fake --profile q6   # 6 qubits
+python -m racetraq.hardware lap --track chicane --fake-name fake_fez --resilience 1
+python -m racetraq.hardware lap --track chicane --fake --no-prune   # full circuit, 16 CZ
+python -m racetraq.hardware sprint --track oval --fake --iterations 20
+python -m racetraq.hardware lap --track oval --backend ibm_kingston --max-decisions 5   # real device
 ```
 
 The CLI prints the backend (and patch), execution mode, any fallback
@@ -457,9 +457,9 @@ running":** press **Stop** on the Training tab first; track switches and new
 runs are blocked while a job is live.
 
 **Resetting ghosts:** the best-lap ghost per track lives in
-`traqmania/data/ghosts/<track>.json` and is overwritten whenever anyone —
+`racetraq/data/ghosts/<track>.json` and is overwritten whenever anyone —
 including a talented visitor — beats it with a clean lap. To reset to the
-bundled records in a git checkout: `git checkout -- traqmania/data/ghosts/`.
+bundled records in a git checkout: `git checkout -- racetraq/data/ghosts/`.
 To simply clear one: delete the file and restart (no ghost is shown until a
 new clean lap is driven). In a container, ghosts reset with the container.
 
@@ -473,7 +473,7 @@ the message lists the ones it does.
 **The hardware car leaves the track after a few seconds:** on oval or
 chicane at 4 qubits and on the oval at 6 that should be rare now (24 laps
 in 24 measured episodes each) — check that the bundled weights were not
-overwritten by a local training run (`git status traqmania/weights`). On
+overwritten by a local training run (`git status racetraq/weights`). On
 any other track or size it is expected: those drivers were not trained for
 device noise (see step 5 of the demo).
 

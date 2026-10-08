@@ -4,10 +4,10 @@ rows; boards persist per bundled track and reset for ephemeral tracks."""
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.server import protocol as P
-from traqmania.server.runtime import load_leaderboard, save_leaderboard
-from traqmania.server.session import DemoSession, _Car
+from racetraq.config import load_config
+from racetraq.server import protocol as P
+from racetraq.server.runtime import load_leaderboard, save_leaderboard
+from racetraq.server.session import DemoSession, _Car
 
 
 @pytest.fixture()

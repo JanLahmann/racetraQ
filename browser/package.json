@@ -1,9 +1,9 @@
 {
-  "name": "traqmania-browser",
+  "name": "racetraq-browser",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "traQmania browser edition — the trained quantum drivers racing entirely in the browser (inference only, no server)",
+  "description": "racetraQ browser edition — the trained quantum drivers racing entirely in the browser (inference only, no server)",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

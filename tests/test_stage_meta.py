@@ -34,12 +34,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania.config import load_config, resolve_training_cfg
-from traqmania.server import protocol as P
-from traqmania.server.runtime import weights_circuit
-from traqmania.server.session import DemoSession
+from racetraq.config import load_config, resolve_training_cfg
+from racetraq.server import protocol as P
+from racetraq.server.runtime import weights_circuit
+from racetraq.server.session import DemoSession
 
-WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "traqmania" / "weights"
+WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "racetraq" / "weights"
 N_STAGES = 4
 # (track, filename tag) of every stage family that ships
 FAMILIES = [("oval", ""), ("chicane", ""), ("gp", ""), ("combo", ""), ("oval", "_q6")]

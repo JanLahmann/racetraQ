@@ -1,4 +1,4 @@
-# traQmania: technical report on the October 2026 re-measurement
+# racetraQ: technical report on the October 2026 re-measurement
 
 *A variational quantum circuit as the Q-function of a double DQN, measured
 against a matched classical baseline with a multi-seed protocol.*
@@ -6,7 +6,7 @@ against a matched classical baseline with a multi-seed protocol.*
 Written 2026-10-03 from the project's records, in this order of authority:
 [docs/SCIENCE.md](SCIENCE.md); the study summaries in
 [`data/studies/`](../data/studies) (`report.md`, `report.json`, `cells.json`);
-the `selection` blocks of `traqmania/weights/*.meta.json`;
+the `selection` blocks of `racetraq/weights/*.meta.json`;
 [`data/records.md`](../data/records.md); [docs/ARCHITECTURE.md](ARCHITECTURE.md);
 notebooks 03–07; the README. Every number is copied from one of those files and
 sourced next to its table; nothing was re-run. A non-technical companion is
@@ -14,7 +14,7 @@ sourced next to its table; nothing was re-run. A non-technical companion is
 
 ## Abstract
 
-traQmania trains a data re-uploading variational quantum circuit (4–10 qubits,
+racetraQ trains a data re-uploading variational quantum circuit (4–10 qubits,
 56–188 parameters) as the Q-function of a double DQN that drives a car around
 four tracks from lidar and speed, against a parameter-matched MLP under the
 same trainer. An October 2026 audit found the 8- and 10-qubit circuits
@@ -41,18 +41,18 @@ action agreement with the exact simulator) is reported as a single data point.
 
 | Item | Definition | Source |
 |---|---|---|
-| Tracks | `oval`, `chicane` (flat-out), `gp` (hairpin, braking required), `combo` (hairpin plus chicane); half-width 7.0 (oval, chicane) or 6.0 (gp, combo); four checkpoints each | `traqmania/env/tracks/*.json` |
-| Time base | 60 Hz physics, 6 substeps per decision: agents decide at 10 Hz and hold the action | `traqmania/config/default.toml` `[physics]` |
+| Tracks | `oval`, `chicane` (flat-out), `gp` (hairpin, braking required), `combo` (hairpin plus chicane); half-width 7.0 (oval, chicane) or 6.0 (gp, combo); four checkpoints each | `racetraq/env/tracks/*.json` |
+| Time base | 60 Hz physics, 6 substeps per decision: agents decide at 10 Hz and hold the action | `racetraq/config/default.toml` `[physics]` |
 | Car (physics v2) | `accel` 11, `brake` 16, `drag` 0.35, `v_max` 25 | same |
 | Observation | n features for n qubits: n − 1 lidar rays evenly spaced over [−60°, +60°], normalised by `ray_max_dist` 30, plus speed v/v_max; every scalar in [0, 1]; default 3 rays + speed. Egocentric, no absolute position | SCIENCE.md "The circuit"; `racing_env.py` |
-| Actions | 4 discrete: right / straight / left at full throttle, and coast-brake (steer 0, throttle 0, brake 1). 6- and 8-action sets exist; no weights with more than 4 actions are bundled | `traqmania/agents/base.py` |
+| Actions | 4 discrete: right / straight / left at full throttle, and coast-brake (steer 0, throttle 0, brake 1). 6- and 8-action sets exist; no weights with more than 4 actions are bundled | `racetraq/agents/base.py` |
 | Reward | signed centerline progress × 1.0; `checkpoint_bonus` 5 per checkpoint; `lap_bonus` 50; `offtrack_penalty` 10, and leaving the track ends the episode | `default.toml` `[reward]` |
 | Time limit | `max_decisions` 600 = 60 s, a truncation (no penalty, `truncated` flag); since the audit the TD target bootstraps through it | same; SCIENCE.md "Trainer options" |
 | Training env | 8 parallel cars | `default.toml` `[training]` |
 
 ### 1.2 Agents
 
-**Quantum circuit** (`traqmania/agents/quantum/circuit.py`, one definition for
+**Quantum circuit** (`racetraq/agents/quantum/circuit.py`, one definition for
 the numpy, `EstimatorQNN` and hardware paths): n qubits, L re-uploading blocks
 on |0…0⟩. Block l: encoding `RY(λ[l,i]·s[i])` on every qubit (all n features
 re-uploaded every block); variational `RY(θ[l,i,0])` then `RZ(θ[l,i,1])`; CZ
@@ -127,7 +127,7 @@ laps on the simulated device first (`rank_by: "device"`, 8 device episodes) for
 `quantum_oval`, `quantum_chicane`, `quantum_oval_q6`. The sidecar records the
 fresh numbers, never the shortlisting ones, every candidate and the recipe's
 seed spread. A later re-check used 36 episodes on env seed 47 000
-(`python -m traqmania.records --episodes 36 --seed 47000`), then 61 000 and
+(`python -m racetraq.records --episodes 36 --seed 47000`), then 61 000 and
 88 000, which no selection saw (sidecars `selection.rule`; SCIENCE.md "The
 bundled drivers").
 
@@ -181,7 +181,7 @@ qubit a, so every action sees every feature only when **L ≥ ⌊n/2⌋ + 1**.
 | Features hidden from each action | 0 | 0 | 1 | 3 |
 | Blocks needed for full visibility | 3 | 4 | 5 | 6 |
 
-(source: SCIENCE.md "Light cones"; `python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4`.)
+(source: SCIENCE.md "Light cones"; `python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4`.)
 
 "Dead" is structural: exactly zero gradient for every input. At 4 qubits the
 dead set is the four final-block RZ angles; beyond that whole encoding and RY
@@ -273,7 +273,7 @@ in-training evals on oval and chicane run under emulated device noise.)
 | `mlp_oval` / `mlp_chicane` | — | 8 / 8 | 72, 12.6 s / 72, 13.3 s | 36, 12.6 s / 36, 13.3 s |
 | `mlp_gp` / `mlp_combo` | — | 10 / 10 | 72, 22.5 s / 72, 36.9 s | 36, 22.5 s / 36, 36.9 s |
 
-(source: SCIENCE.md "The bundled drivers"; `traqmania/weights/<name>.meta.json`
+(source: SCIENCE.md "The bundled drivers"; `racetraq/weights/<name>.meta.json`
 `selection.fresh_eval`; `data/records.md`. Note: `records.md` was generated
 with the July 10-qubit files; the 6-block drivers were bundled afterwards from
 `data/studies/oval_q10` and `chicane_q10`, variant `L6`, seed 2 in both.
@@ -669,15 +669,15 @@ IBM's teaching material [19] set the bar this project does not meet.
   optionally drives candidates on the device path, copies the weights byte for
   byte and writes the `selection` block (`candidates`, `seed_spread`,
   `fresh_eval`, `device_eval`, `weights_sha256`).
-- Sidecars `traqmania/weights/<name>.meta.json` record circuit shape,
+- Sidecars `racetraq/weights/<name>.meta.json` record circuit shape,
   observation, action count, the resolved training table and provenance; every
   loader builds the circuit a file needs from them.
 - `tools/make_stages.py --track T` replays the bundled driver's run from its
   sidecar and writes evolution-stage weights only if the replay's best snapshot
   equals the driver parameter for parameter.
-- Hardware: `tools/hw_reliability.py`, `python -m traqmania.hardware lap|sprint
-  --fake`, `python -m traqmania.agents.quantum.noise calibrate|validate`;
-  cross-track matrix: `python -m traqmania.records --episodes 36 --seed 47000`.
+- Hardware: `tools/hw_reliability.py`, `python -m racetraq.hardware lap|sprint
+  --fake`, `python -m racetraq.agents.quantum.noise calibrate|validate`;
+  cross-track matrix: `python -m racetraq.records --episodes 36 --seed 47000`.
 - Notebooks 03–07 regenerate the light-cone derivations, the multi-seed tables
   from `data/studies/`, the hardware measurements and the surrogates; the
   `tests/` suite pins the light cone, the surrogates, the simulator parity and

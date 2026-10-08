@@ -20,10 +20,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania import train_headless
-from traqmania.agents.training import DQNTrainer
-from traqmania.config import load_config
-from traqmania.server.runtime import WEIGHTS_DIR, weights_circuit
+from racetraq import train_headless
+from racetraq.agents.training import DQNTrainer
+from racetraq.config import load_config
+from racetraq.server.runtime import WEIGHTS_DIR, weights_circuit
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INF = float("inf")
@@ -36,7 +36,7 @@ EPISODES, SEED = 40, 3
 
 @pytest.fixture(scope="module")
 def tool():
-    spec = importlib.util.spec_from_file_location("traqmania_make_stages",
+    spec = importlib.util.spec_from_file_location("racetraq_make_stages",
                                                   REPO_ROOT / "tools" / "make_stages.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

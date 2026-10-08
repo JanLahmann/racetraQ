@@ -5,9 +5,9 @@ import copy
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.env.racing_env import RacingEnv
-from traqmania.env.track import Track
+from racetraq.config import load_config
+from racetraq.env.racing_env import RacingEnv
+from racetraq.env.track import Track
 
 # ACTIONS indices: 0 = steer -1 (clockwise), 1 = straight, 2 = steer +1 (counter-
 # clockwise, toward the +60 deg ray), 3 = coast-brake; all but 3 at full throttle.

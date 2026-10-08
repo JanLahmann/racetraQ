@@ -64,7 +64,7 @@ export function QuantumBrain({
     if (!quantum || !decision?.gates) return;
     const qasm = circuitToQasm(layoutCircuit(quantum.nQubits, decision.gates));
     track('composer open', { qubits: quantum.nQubits, track: car.observer?.track.name });
-    window.open(composerUrl(qasm, `traQmania decision (${quantum.nQubits} qubits)`), '_blank', 'noopener');
+    window.open(composerUrl(qasm, `racetraQ decision (${quantum.nQubits} qubits)`), '_blank', 'noopener');
   };
 
   return (

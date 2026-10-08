@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-command start: create/refresh a venv, install traqmania, launch the server.
+# One-command start: create/refresh a venv, install racetraq, launch the server.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -15,9 +15,9 @@ source "$VENV/bin/activate"
 pip install --quiet --upgrade pip
 pip install --quiet -e .
 
-URL="http://127.0.0.1:${TRAQMANIA_PORT:-8000}"
-echo "traQmania starting at $URL"
+URL="http://127.0.0.1:${RACETRAQ_PORT:-8000}"
+echo "racetraQ starting at $URL"
 (command -v open >/dev/null && sleep 2 && open "$URL" &) 2>/dev/null || true
 (command -v xdg-open >/dev/null && sleep 2 && xdg-open "$URL" &) 2>/dev/null || true
 
-exec python -m traqmania "$@"
+exec python -m racetraq "$@"

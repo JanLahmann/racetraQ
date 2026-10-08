@@ -45,7 +45,7 @@ Study directory layout::
     DIR/DONE                             written when every cell is finished
     DIR/report.md, DIR/report.json       written by ``report``
 
-Only numpy and the standard library are imported at module level; ``traqmania``
+Only numpy and the standard library are imported at module level; ``racetraq``
 is loaded lazily — its config loader by ``run`` (to check override keys), the
 trainer inside the cell worker.
 """
@@ -354,8 +354,8 @@ def resolve_variant(spec: str, defaults: dict[str, Any],
     return recipe
 
 
-def _find_traqmania() -> None:
-    if importlib.util.find_spec("traqmania") is None:  # checkout without an install
+def _find_racetraq() -> None:
+    if importlib.util.find_spec("racetraq") is None:  # checkout without an install
         sys.path.insert(0, str(REPO_ROOT))
 
 
@@ -370,8 +370,8 @@ def new_config_keys(recipe: dict) -> list[str]:
     for an override that does not parse.
     """
     try:
-        _find_traqmania()
-        from traqmania.config import load_config, parse_override
+        _find_racetraq()
+        from racetraq.config import load_config, parse_override
 
         config = load_config(profile=recipe["profile"])
     except (ImportError, OSError):  # e.g. an unknown profile: the cells report it
@@ -418,7 +418,7 @@ def weights_config(spec: dict, weights_path: Path) -> dict:
     overrides, then the observation / circuit shape / action count recorded in
     the weights' own ``.meta.json`` sidecar on top (the loaders' rule — see
     ``runtime.weights_observation`` / ``weights_actions``)."""
-    from traqmania.config import apply_overrides, load_config
+    from racetraq.config import apply_overrides, load_config
 
     config = load_config(profile=spec["profile"])
     apply_overrides(config, spec["overrides"])
@@ -436,10 +436,10 @@ def weights_config(spec: dict, weights_path: Path) -> dict:
 
 def _eval_env(spec: dict, config: dict):
     """Fresh env of ``eval_episodes`` parallel cars on the cell's track(s)."""
-    from traqmania.env.multi_track import MultiTrackEnv
-    from traqmania.env.racing_env import RacingEnv
-    from traqmania.env.track import Track
-    from traqmania.train_headless import MULTI_TRACK_NAMES
+    from racetraq.env.multi_track import MultiTrackEnv
+    from racetraq.env.racing_env import RacingEnv
+    from racetraq.env.track import Track
+    from racetraq.train_headless import MULTI_TRACK_NAMES
 
     n_envs, seed = int(spec["eval_episodes"]), int(spec["eval_seed"])
     spacing = config["track"]["resample_spacing"]
@@ -494,9 +494,9 @@ def run_cell(cell: Path) -> None:
     spec = json.loads((cell / SPEC_NAME).read_text(encoding="utf-8"))
     if hasattr(os, "nice"):
         os.nice(NICENESS)
-    _find_traqmania()
-    from traqmania.config import parse_override
-    from traqmania.train_headless import build_qfunc, train
+    _find_racetraq()
+    from racetraq.config import parse_override
+    from racetraq.train_headless import build_qfunc, train
 
     t0 = time.perf_counter()
     summary = train(

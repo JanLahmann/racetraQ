@@ -8,12 +8,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.env import multi_track
-from traqmania.env.multi_track import MultiTrackEnv
-from traqmania.env.racing_env import RacingEnv
-from traqmania.env.track import Track
-from traqmania.env.trackgen import CHECKPOINTS, generate_track
+from racetraq.config import load_config
+from racetraq.env import multi_track
+from racetraq.env.multi_track import MultiTrackEnv
+from racetraq.env.racing_env import RacingEnv
+from racetraq.env.track import Track
+from racetraq.env.trackgen import CHECKPOINTS, generate_track
 
 # ACTIONS indices, same convention as test_racing_env.
 STEER_NEG, STRAIGHT, STEER_POS, BRAKE = 0, 1, 2, 3
@@ -256,7 +256,7 @@ def test_random_pool_deterministic(config):
 
 @pytest.mark.parametrize("track_arg", ["multi", "random"])
 def test_train_headless_multi_and_random(tmp_path, track_arg):
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     history_path = tmp_path / "history.json"
     summary = train("mlp", track_arg, episodes=10, seed=1, profile=None,
@@ -272,7 +272,7 @@ def test_train_headless_multi_and_random(tmp_path, track_arg):
 # --------------------------------------------------------------- import hygiene
 
 
-@pytest.mark.parametrize("module", ["traqmania.env.trackgen", "traqmania.env.multi_track"])
+@pytest.mark.parametrize("module", ["racetraq.env.trackgen", "racetraq.env.multi_track"])
 def test_new_env_modules_are_qiskit_free(module):
     check = (
         f"import {module}, sys; "

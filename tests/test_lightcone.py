@@ -17,8 +17,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania.agents.quantum import adjoint, lightcone
-from traqmania.agents.quantum.fastsim import (
+from racetraq.agents.quantum import adjoint, lightcone
+from racetraq.agents.quantum.fastsim import (
     FastStatevectorSim,
     apply_ry,
     apply_rz,
@@ -388,7 +388,7 @@ def test_blind_spot_warning_names_the_fix_and_the_blind_spots():
 def test_circuit_spec_exposes_the_light_cone(n, layers, n_actions):
     import json
 
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     spec = circuit_spec({"circuit": {"n_qubits": n, "n_layers": layers,
                                      "n_actions": n_actions}})
@@ -402,7 +402,7 @@ def test_circuit_spec_exposes_the_light_cone(n, layers, n_actions):
 
 
 def test_circuit_spec_light_cone_at_the_shipped_sizes():
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     dead = {n: circuit_spec({"n_qubits": n})["dead_params"] for n in (4, 6, 8, 10)}
     assert dead == {4: 4, 6: 12, 8: 26, 10: 46}
@@ -426,7 +426,7 @@ _SPEC_KIND = {"ry_enc": "enc", "ry": "ry", "rz": "rz", "cz": "cz"}  # spec gate 
 @pytest.mark.parametrize("n, layers, n_actions",
                          [(4, 4, 4), (6, 4, 4), (8, 4, 4), (10, 4, 4), (8, 5, 6), (10, 2, 8)])
 def test_circuit_spec_flags_every_gate_live_or_dead(n, layers, n_actions):
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     spec = circuit_spec({"circuit": {"n_qubits": n, "n_layers": layers,
                                      "n_actions": n_actions}})
@@ -448,7 +448,7 @@ def test_circuit_spec_flags_every_gate_live_or_dead(n, layers, n_actions):
 @pytest.mark.parametrize("n, layers, n_actions", [(4, 4, 4), (10, 4, 4), (8, 5, 6)])
 def test_circuit_spec_live_gates_are_the_pruned_hardware_circuit(n, layers, n_actions):
     """What the diagram leaves undimmed is, gate for gate, what hardware runs."""
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     spec = circuit_spec({"circuit": {"n_qubits": n, "n_layers": layers,
                                      "n_actions": n_actions}})
@@ -462,7 +462,7 @@ def test_circuit_spec_live_gates_are_the_pruned_hardware_circuit(n, layers, n_ac
 
 
 def test_circuit_spec_keeps_the_keys_older_clients_read():
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     spec = circuit_spec({"circuit": {"n_qubits": 6, "n_layers": 4}})
     assert spec["n_qubits"] == 6 and spec["n_layers"] == 4 and spec["n_actions"] == 4
@@ -484,8 +484,8 @@ def test_circuit_spec_keeps_the_keys_older_clients_read():
 def test_circuit_spec_says_whether_hardware_prunes_the_dead_gates():
     """"Skipped on hardware" in the page is only true while the hardware path
     prunes: the spec carries ``[hardware] prune_light_cone``."""
-    from traqmania.agents.quantum.circuit import circuit_spec
-    from traqmania.config import load_config
+    from racetraq.agents.quantum.circuit import circuit_spec
+    from racetraq.config import load_config
 
     assert circuit_spec({"n_qubits": 4})["pruned_on_hardware"] is True  # [circuit] alone
     config = load_config()
@@ -506,7 +506,7 @@ def _run_node(probe: str, js_file: str, payload) -> list:
         pytest.skip("node is not installed")
     run = subprocess.run(
         [node, "--input-type=module", "-e", probe,
-         str(REPO_ROOT / "traqmania" / "web" / "js" / js_file)],
+         str(REPO_ROOT / "racetraq" / "web" / "js" / js_file)],
         input=json.dumps(payload), capture_output=True, text=True, timeout=120,
     )
     assert run.returncode == 0, run.stderr
@@ -591,7 +591,7 @@ def test_web_diagram_and_matrix_render_the_spec():
     import re
     import xml.etree.ElementTree as ET
 
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     gp10 = ["ray -60°", "ray -30°", "ray 0°", "ray +30°", "ray +60°", "speed",
             "curvature ahead", "lateral offset", "heading error", "corner speed"]
@@ -726,7 +726,7 @@ def test_web_explain_light_cone_paragraph_follows_the_spec():
     """Explain -> "The quantum circuit" (web/js/explain.js under node): the
     light-cone paragraph states what the spec says about this circuit size,
     and a welcome re-templates the copy without closing the open sub-tab."""
-    from traqmania.agents.quantum.circuit import circuit_spec
+    from racetraq.agents.quantum.circuit import circuit_spec
 
     specs = [circuit_spec({"n_qubits": 4}), circuit_spec({"n_qubits": 10}),
              circuit_spec({"n_qubits": 10, "n_layers": 6}),
@@ -754,7 +754,7 @@ def _aer_expectations(qc, index_x, index_theta, x, theta_flat, n_actions):
     """Exact <Z_a> (B, A) of ``qc`` on Aer, binding x[:, index_x] and theta[index_theta]."""
     from qiskit_aer.primitives import EstimatorV2
 
-    from traqmania.agents.quantum.circuit import observables, split_parameters
+    from racetraq.agents.quantum.circuit import observables, split_parameters
 
     input_params, weight_params = split_parameters(qc)
     values = {
@@ -783,7 +783,7 @@ def _ops(qc) -> list[tuple]:
                          [(4, 4, None), (6, 4, None), (10, 4, None), (8, 5, 6), (10, 4, 8),
                           (2, 3, None), (3, 5, None), (5, 1, None), (7, 2, 1)])
 def test_pruned_circuit_equals_full_circuit_on_aer(n, layers, n_actions):
-    from traqmania.agents.quantum.circuit import build_circuit
+    from racetraq.agents.quantum.circuit import build_circuit
 
     actions = min(4, n) if n_actions is None else n_actions
     rng = np.random.default_rng(100 * n + layers)
@@ -808,7 +808,7 @@ def test_pruned_circuit_equals_full_circuit_on_aer(n, layers, n_actions):
 @pytest.mark.parametrize(("n", "layers", "n_actions"), [(4, 4, None), (6, 4, None), (10, 4, None),
                                                         (8, 5, 6), (2, 3, None)])
 def test_pruned_circuit_keeps_names_order_and_indices(n, layers, n_actions):
-    from traqmania.agents.quantum.circuit import build_circuit, split_parameters
+    from racetraq.agents.quantum.circuit import build_circuit, split_parameters
 
     full = build_circuit(n, layers)
     pruned = lightcone.pruned_circuit(n, layers, n_actions)
@@ -836,7 +836,7 @@ def test_pruned_circuit_keeps_names_order_and_indices(n, layers, n_actions):
 
 
 def test_pruned_circuit_drops_two_qubit_gates():
-    from traqmania.agents.quantum.circuit import build_circuit
+    from racetraq.agents.quantum.circuit import build_circuit
 
     assert build_circuit(4, 4).count_ops()["cz"] == 16
     assert lightcone.pruned_circuit(4, 4).circuit.count_ops()["cz"] == 12
@@ -848,7 +848,7 @@ def test_pruned_circuit_drops_two_qubit_gates():
 @pytest.mark.parametrize(("n", "layers"), [(4, 4), (6, 3), (8, 4)])
 def test_pruned_circuit_is_exact_at_special_angles(n, layers):
     """Dead gates commute for EVERY angle — also at the 0 / pi/2 / pi corners."""
-    from traqmania.agents.quantum.circuit import build_circuit
+    from racetraq.agents.quantum.circuit import build_circuit
 
     rng = np.random.default_rng(n + layers)
     x = rng.choice([0.0, np.pi / 2, np.pi, -np.pi / 2], size=(4, layers * n))
@@ -885,9 +885,9 @@ def test_report_lists_the_audit_findings(capsys):
 
 
 def test_module_runs_as_script_without_qiskit():
-    """``python -m traqmania.agents.quantum.lightcone`` works, warning-free, numpy-only."""
+    """``python -m racetraq.agents.quantum.lightcone`` works, warning-free, numpy-only."""
     result = subprocess.run(
-        [sys.executable, "-W", "error", "-m", "traqmania.agents.quantum.lightcone",
+        [sys.executable, "-W", "error", "-m", "racetraq.agents.quantum.lightcone",
          "--qubits", "8", "--layers", "4", "--actions", "6"],
         cwd=REPO_ROOT, capture_output=True, text=True,
     )
@@ -896,8 +896,8 @@ def test_module_runs_as_script_without_qiskit():
     assert "14/96" in result.stdout
 
     check = (
-        "import sys, traqmania.agents.quantum as q; "
-        "assert 'traqmania.agents.quantum.lightcone' not in sys.modules; "
+        "import sys, racetraq.agents.quantum as q; "
+        "assert 'racetraq.agents.quantum.lightcone' not in sys.modules; "
         "q.lightcone.live_gates(6, 4); q.lightcone.blind_spots(['f'] * 8, 4); "
         "assert 'qiskit' not in sys.modules"
     )

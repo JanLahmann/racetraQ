@@ -1,4 +1,4 @@
-/** The discrete action sets — traqmania/agents/base.py. */
+/** The discrete action sets — racetraq/agents/base.py. */
 
 /** (steer, throttle, brake); steer +1 = left turn on screen. */
 export const FULL_ACTIONS: readonly (readonly [number, number, number])[] = [

@@ -1,10 +1,10 @@
-# Concept: traQmania × real TrackMania 2020 (via tmrl)
+# Concept: racetraQ × real TrackMania 2020 (via tmrl)
 
 *Status: concept only — not scheduled. Captured 2026-07-10 so we can pick it up later.*
 
 ## Goal
 
-An optional mode where the traQmania quantum agent drives the **real TrackMania 2020
+An optional mode where the racetraQ quantum agent drives the **real TrackMania 2020
 game** — "a 56-parameter quantum circuit drives a real video game" — as a show-stopper
 for talks. The browser demo remains the always-works exhibit; this is additive.
 
@@ -17,7 +17,7 @@ for talks. The browser demo remains the always-works exhibit; this is additive.
 - TM2020 free Starter Access + OpenPlanet plugin. **Windows only.** One game instance,
   real-time — no vectorization, no fastsim: data collection is ~1,000× slower than our
   simulator.
-- traQmania's `QFunction` contract: any adapter env that yields our observation shape
+- racetraQ's `QFunction` contract: any adapter env that yields our observation shape
   can reuse `QuantumQFunction`, `DQNTrainer`, and the weights format unchanged.
 
 ## Parameter reality check
@@ -27,7 +27,7 @@ for talks. The browser demo remains the always-works exhibit; this is additive.
 | tmrl default lidar SAC (MLP 256×256, ~80-dim input) | ~90k (actor), ~270k with critics |
 | tmrl vision CNN | millions |
 | Yosh's record-setting IQN agents | millions, months of training |
-| traQmania VQC | **56** (4q) / ~120 (6q) |
+| racetraQ VQC | **56** (4q) / ~120 (6q) |
 
 A VQC cannot and should not compete on lap times. The story is **parameter frugality**:
 competent driving at 3–4 orders of magnitude fewer trained parameters.
@@ -52,7 +52,7 @@ competent driving at 3–4 orders of magnitude fewer trained parameters.
 
 - Windows + game + plugin fragility → never the primary exhibit.
 - Live on-stage *training* infeasible (real-time env); show inference + pre-trained.
-- Sim-trained traQmania weights do NOT transfer (different dynamics) — training must
+- Sim-trained racetraQ weights do NOT transfer (different dynamics) — training must
   happen in-game (overnight is realistic for phase 1's tiny model).
 - tmrl's default algorithms are continuous-action SAC; our DQN is discrete — either
   map 4 discrete actions to game inputs (fine for phase 1) or extend to a small

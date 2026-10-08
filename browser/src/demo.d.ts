@@ -1,4 +1,4 @@
-/** Types for the server demo's canvas renderer (traqmania/web/js/race.js),
+/** Types for the server demo's canvas renderer (racetraq/web/js/race.js),
  *  which the browser edition imports unchanged via the @demo alias. */
 declare module '@demo/race.js' {
   export interface RenderCar {

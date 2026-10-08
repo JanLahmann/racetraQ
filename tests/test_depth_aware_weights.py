@@ -17,14 +17,14 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import traqmania.server.runtime as runtime_mod
-import traqmania.server.session as session_mod
-from traqmania.agents.quantum.circuit import circuit_spec
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.config import load_config
-from traqmania.records import _quantum_config
-from traqmania.server import protocol as P
-from traqmania.server.runtime import (
+import racetraq.server.runtime as runtime_mod
+import racetraq.server.session as session_mod
+from racetraq.agents.quantum.circuit import circuit_spec
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.config import load_config
+from racetraq.records import _quantum_config
+from racetraq.server import protocol as P
+from racetraq.server.runtime import (
     WEIGHTS_DIR,
     load_agent,
     observation_note,
@@ -34,7 +34,7 @@ from traqmania.server.runtime import (
     with_weights_circuit,
     with_weights_config,
 )
-from traqmania.server.session import DemoSession
+from racetraq.server.session import DemoSession
 
 BUNDLED = WEIGHTS_DIR  # the real bundle (read-only here), before any monkeypatch
 
@@ -266,7 +266,7 @@ def test_with_weights_config_overlays_observation_and_shape(tmp_path):
 
 def _hw_reliability_tool():
     tool_path = Path(__file__).resolve().parents[1] / "tools" / "hw_reliability.py"
-    spec = importlib.util.spec_from_file_location("traqmania_hw_reliability_depth", tool_path)
+    spec = importlib.util.spec_from_file_location("racetraq_hw_reliability_depth", tool_path)
     tool = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tool)
     return tool
@@ -315,7 +315,7 @@ FAST = ["reward.max_decisions=25", "training.eval_episodes=5", "training.eval_ev
 
 
 def test_train_headless_init_brings_its_depth_and_actions(tmp_path, capsys):
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     init = tmp_path / "init" / "quantum_oval_q6.npz"
     init.parent.mkdir()
@@ -360,7 +360,7 @@ def test_train_headless_init_brings_its_depth_and_actions(tmp_path, capsys):
 def test_train_headless_init_at_the_config_shape_is_unchanged(tmp_path, capsys):
     """An init file of the configured shape (every bundled warm start): no
     announcement, no change to the resolved config."""
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     write_driver(tmp_path, "start", 4, 4)
     np.savez(tmp_path / "bad.npz", params=np.zeros(57))

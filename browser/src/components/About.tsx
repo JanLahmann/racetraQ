@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { outbound } from '../analytics';
 import type { Manifest } from '../data';
 
-const REPO = 'https://github.com/JanLahmann/traQmania';
+const REPO = 'https://github.com/JanLahmann/racetraQ';
 
 export function About({ manifest, onClose }: { manifest: Manifest; onClose: () => void }) {
   useEffect(() => {
@@ -29,7 +29,7 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
           by reinforcement learning (double deep Q-learning): thousands of practice laps, rewarded for progress
           along the track and penalised for leaving it. Training happened offline in{' '}
           <a href={REPO} target="_blank" rel="noopener" {...outbound(REPO)}>
-            traQmania
+            racetraQ
           </a>{' '}
           (Python and Qiskit). This page only drives: it ships {quantum} trained quantum drivers and runs every
           circuit in your browser on{' '}

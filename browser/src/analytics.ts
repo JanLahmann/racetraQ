@@ -1,23 +1,23 @@
 /**
  * Umami events, Fun with Quantum family taxonomy v2 (Fun-with-Quantum/family/EVENTS.md): every
  * family site reports to one shared Umami website, so each event is named `<Site>: <what happened>`
- * (lower case after the colon); `<Site>` is the member's manifest label, here its name "traQmania".
+ * (lower case after the colon); `<Site>` is the member's manifest label, here its name "racetraQ".
  * Best-effort: no-ops when the tracker isn't loaded (dev, previews, self-hosted copies, blockers).
  *
  * Events sent by the browser edition:
- * - `traQmania: mode change`    — mode (watch | race | evolution), track
- * - `traQmania: track change`   — track, mode
- * - `traQmania: driver change`  — driver (weights id), qubits
- * - `traQmania: rival change`   — rival (none | mlp | pro)
- * - `traQmania: race lap`       — track, lap_time (s, 1 decimal), clean (yes | no), opponent
- * - `traQmania: composer open`  — qubits, track (decision circuit sent to IBM Quantum Composer)
- * - `traQmania: about open`
- * - `traQmania: outbound click` — host (a `data-umami-event` link)
+ * - `racetraQ: mode change`    — mode (watch | race | evolution), track
+ * - `racetraQ: track change`   — track, mode
+ * - `racetraQ: driver change`  — driver (weights id), qubits
+ * - `racetraQ: rival change`   — rival (none | mlp | pro)
+ * - `racetraQ: race lap`       — track, lap_time (s, 1 decimal), clean (yes | no), opponent
+ * - `racetraQ: composer open`  — qubits, track (decision circuit sent to IBM Quantum Composer)
+ * - `racetraQ: about open`
+ * - `racetraQ: outbound click` — host (a `data-umami-event` link)
  */
 
 type Umami = { track: (name: string, data?: Record<string, string>) => void };
 
-export const SITE_LABEL = 'traQmania';
+export const SITE_LABEL = 'racetraQ';
 
 export function eventName(what: string): string {
   return `${SITE_LABEL}: ${what}`;

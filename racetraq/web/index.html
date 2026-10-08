@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>racetraQ — quantum racing</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">racetra<span class="brand-q">Q</span></div>
+
+    <nav class="modes" id="mode-buttons" aria-label="Mode">
+      <button data-mode="attract" class="mode-btn" data-tip="Attract mode: the trained quantum circuit drives on its own — watch the gauges and Q-values decide every tenth of a second.">Watch</button>
+      <button data-mode="train" class="mode-btn" data-tip="Train a fresh (or warm-started) agent live with double DQN and watch the learning curve grow.">Train</button>
+      <button data-mode="evolution" class="mode-btn" data-tip="Four snapshots of the same circuit at increasing training ages race each other — see what training buys.">Evolution</button>
+      <button data-mode="race" class="mode-btn" data-tip="Grab the wheel yourself (arrow keys / WASD / gamepad) and race the AI. Named clean laps enter the leaderboard.">Race</button>
+      <button data-mode="studio" class="mode-btn" data-tip="Training studio: pick track, qubits, sensors and actions, train your own quantum driver live (5 minutes max), compare it with our studies, then race it.">Studio</button>
+      <button data-mode="hardware" class="mode-btn" data-tip="Run the trained circuit on an IBM Quantum backend — a local noisy simulation, or the real machine (queue times apply).">Hardware</button>
+    </nav>
+
+    <label class="track-picker">
+      <span>Track</span>
+      <select id="track-select" aria-label="Track" data-tip="Bundled tracks (simple to hard), 🎲 generated surprise tracks, or draw your own with the pencil."></select>
+    </label>
+    <button type="button" id="track-reroll" class="reroll-btn" title="New random track"
+            aria-label="New random track" hidden>🎲</button>
+    <button type="button" id="track-draw" class="reroll-btn" title="Draw your own track"
+            aria-label="Draw your own track">✏️</button>
+    <input type="text" id="track-seed" class="seed-input" inputmode="numeric"
+           placeholder="seed" aria-label="Random track seed" hidden
+           title="Type a saved seed and press 🎲 (or Enter) to reload that exact track; leave empty for a fresh one">
+    <select id="track-length" class="length-select" aria-label="Random track length" hidden
+            title="Random track length (long laps are for driving, not training)">
+      <option value="short">short</option>
+      <option value="medium" selected>medium</option>
+      <option value="long">long</option>
+    </select>
+
+    <label class="driver-picker" id="driver-picker" hidden
+           title="Which training the quantum driver uses — try the gp-trained driver on another track">
+      <span>Driver</span>
+      <select id="driver-select" aria-label="Quantum driver"></select>
+    </label>
+
+    <label class="qubit-picker">
+      <span>Qubits</span>
+      <select id="qubit-select" aria-label="Qubits" data-tip="Circuit size: more qubits = more sensors (lidar rays) and parameters, and more compute per decision. At a fixed depth a larger circuit can leave actions blind to some sensors — see Who sees what in the Quantum tab.">
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+      </select>
+    </label>
+
+    <div id="race-controls" hidden>
+      <label>
+        <span>vs</span>
+        <select id="race-opponent">
+          <option value="quantum">Quantum</option>
+          <option value="mlp">MLP</option>
+        </select>
+      </label>
+      <input type="text" id="race-name" maxlength="24" placeholder="your name"
+             title="Clean laps under this name enter the leaderboard — leave empty to race off the record">
+      <button id="race-start" class="accent-btn">Start</button>
+      <button id="race-reset">Reset</button>
+    </div>
+
+    <div class="spacer"></div>
+    <div id="gamepad-pill" class="pill pill-pad" hidden>🎮 controller active</div>
+    <div id="control-pill" class="pill" hidden
+         title="One visitor at a time controls the shared demo; the wheel frees up after ~90 s of driver inactivity"></div>
+    <div id="status-pill" class="pill pill-off">connecting…</div>
+  </header>
+
+  <main id="layout">
+    <section id="stage">
+      <canvas id="race-canvas"></canvas>
+      <div id="episode-overlay" hidden></div>
+      <div id="best-banner" hidden></div>
+      <div id="evo-legend" hidden></div>
+      <div id="toast" hidden></div>
+    </section>
+
+    <aside id="sidebar">
+      <div id="sidebar-resizer" role="separator" aria-orientation="vertical"
+           title="Drag to resize — double-click to reset"></div>
+      <nav class="tabs" id="sidebar-tabs" aria-label="Panels">
+        <button data-tab="quantum" class="tab-btn active">Quantum</button>
+        <button data-tab="training" class="tab-btn">Training</button>
+        <button data-tab="studio" class="tab-btn">Studio</button>
+        <button data-tab="board" class="tab-btn">🏆</button>
+        <button data-tab="hardware" class="tab-btn">Hardware</button>
+        <button data-tab="explain" class="tab-btn">Explain</button>
+      </nav>
+
+      <div class="panel active" id="panel-quantum">
+        <h2>Live qubit readout</h2>
+        <p class="hint" id="qubit-hint">Pauli-Z expectation values &lt;Z<sub>a</sub>&gt; of the 4 qubits — one per action.</p>
+        <div id="obs-labels" class="hint"></div>
+        <div id="qgauges" data-tip="Each gauge is a live Pauli-Z expectation value ⟨Z⟩ of one qubit, between −1 and +1. The highlighted first four feed the output head that scores the actions."></div>
+        <h2>Q-values</h2>
+        <div id="qbars" data-tip="Q-values: the agent's estimate of future reward for each action (steer right, straight, steer left, brake). The tallest bar wins and steers the car — 10 times per second."></div>
+        <div id="qaction" class="qaction">—</div>
+        <h2>The circuit</h2>
+        <div id="circuit-diagram" class="circuit-scroll" data-tip="The actual gate sequence being executed: encoding rotations write the sensors onto the qubits (re-uploaded every layer), trainable rotations are the learned weights, CZ gates entangle neighbours. Dimmed gates cannot influence any action."></div>
+        <div id="circuit-legend"></div>
+        <div id="light-cone" hidden></div>
+      </div>
+
+      <div class="panel" id="panel-training">
+        <h2>Train an agent</h2>
+        <form id="train-form">
+          <label>
+            <span>Agent</span>
+            <select id="train-agent">
+              <option value="quantum">Quantum</option>
+              <option value="mlp">MLP</option>
+              <option value="both">Both</option>
+            </select>
+          </label>
+          <label>
+            <span>Episodes</span>
+            <input id="train-episodes" type="number" min="10" max="5000" step="10" value="400">
+          </label>
+          <label class="check">
+            <input id="train-warm" type="checkbox">
+            <span>Warm start (early checkpoint of the bundled driver's run)</span>
+          </label>
+          <div class="btn-row">
+            <button type="button" id="train-start" class="accent-btn">Start training</button>
+            <button type="button" id="train-stop">Stop</button>
+          </div>
+        </form>
+        <h2>Learning curves</h2>
+        <canvas id="training-chart" width="340" height="200" data-tip="Learning curve: mean return per episode. Rising = the agent is figuring the track out; the epsilon schedule trades exploration for exploitation."></canvas>
+        <h2>Lap times</h2>
+        <canvas id="lap-chart" width="340" height="160" data-tip="Completed training lap times by episode — watch them drop as the policy improves."></canvas>
+        <div id="train-stats"></div>
+      </div>
+
+      <div class="panel" id="panel-hardware">
+        <h2>Quantum hardware</h2>
+        <p class="hint">Run the trained circuit on an IBM Quantum backend.
+        <em>Simulated device</em> is a local noisy simulation of a real device
+        — results in seconds. <em>Real IBM Quantum</em> submits jobs to an
+        actual quantum computer: expect a queue and several minutes.</p>
+        <form id="hw-form">
+          <label>
+            <span>Backend</span>
+            <select id="hw-backend">
+              <option value="fake">Simulated device (fake)</option>
+              <option value="real">Real IBM Quantum</option>
+            </select>
+          </label>
+          <label>
+            <span>Shots</span>
+            <input id="hw-shots" type="number" min="128" max="8192" step="128" value="1024">
+          </label>
+          <label>
+            <span>Iterations (sprint)</span>
+            <input id="hw-iterations" type="number" min="1" max="100" step="1" value="10">
+          </label>
+          <div class="btn-row hw-btn-row">
+            <button type="button" id="hw-lap" class="accent-btn">Run hardware lap</button>
+            <button type="button" id="hw-sprint" class="accent-btn">SPSA training sprint</button>
+            <button type="button" id="hw-abort" disabled>Abort</button>
+          </div>
+        </form>
+        <h2>Status</h2>
+        <div class="hw-status-row">
+          <span id="hw-phase" class="pill pill-idle">idle</span>
+          <span id="hw-backend-name" class="hw-backend-name"></span>
+        </div>
+        <div id="hw-message" class="hint"></div>
+        <div id="hw-counters"></div>
+        <div id="hw-eval"></div>
+        <div id="hw-replay-caption" class="hint" hidden>
+          Replay: the <em>hardware lap</em> ghost drives the decisions made on
+          the quantum backend, next to a simulator car running the same
+          weights for comparison.
+        </div>
+        <h2>Sprint loss</h2>
+        <canvas id="hw-loss-chart" width="340" height="160"></canvas>
+      </div>
+
+      <div class="panel" id="panel-studio"></div>
+
+      <div class="panel" id="panel-board">
+        <h2>Leaderboard — <span id="board-track">…</span></h2>
+        <p class="hint">Clean race laps under a name (enter it next to Start)
+        make the board. The AI drivers' best laps are shown for comparison —
+        they race, but they don't rank.</p>
+        <ol id="board-entries" class="board-list"></ol>
+        <p class="hint" id="board-empty">No named laps yet — be the first.</p>
+        <h2>Reference drivers</h2>
+        <div id="board-references"></div>
+      </div>
+
+      <div class="panel" id="panel-explain"></div>
+    </aside>
+  </main>
+
+  <footer id="bottombar">
+    <div id="lapboard" aria-label="Lap board"></div>
+    <div id="evo-caption" class="caption" hidden>
+      Same circuit, four training stages racing — the legend shows episodes trained.
+    </div>
+    <div id="attract-caption" class="caption" hidden></div>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

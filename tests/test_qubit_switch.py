@@ -8,12 +8,12 @@ import threading
 import numpy as np
 import pytest
 
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.config import load_config
-from traqmania.server import protocol as P
-from traqmania.server import session as session_mod
-from traqmania.server.runtime import WEIGHTS_DIR
-from traqmania.server.session import DemoSession, quantum_weights_path
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.config import load_config
+from racetraq.server import protocol as P
+from racetraq.server import session as session_mod
+from racetraq.server.runtime import WEIGHTS_DIR
+from racetraq.server.session import DemoSession, quantum_weights_path
 
 
 def make_session(tmp_path):

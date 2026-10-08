@@ -5,13 +5,13 @@ weights are not bundled (they are trained later)."""
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.env.racing_env import RacingEnv
-from traqmania.env.track import Track
-from traqmania.server import protocol as P
-from traqmania.server import session as session_mod
-from traqmania.server.runtime import WEIGHTS_DIR
-from traqmania.server.session import DemoSession, quantum_weights_path
+from racetraq.config import load_config
+from racetraq.env.racing_env import RacingEnv
+from racetraq.env.track import Track
+from racetraq.server import protocol as P
+from racetraq.server import session as session_mod
+from racetraq.server.runtime import WEIGHTS_DIR
+from racetraq.server.session import DemoSession, quantum_weights_path
 
 # (profile, n_qubits, ray_angles_deg): n_qubits - 1 rays evenly spaced over
 # [-60, +60] degrees plus normalized speed = n_qubits features, one per qubit.
@@ -155,7 +155,7 @@ def test_training_start_logs_light_cone_blind_spots(profile, n_layers, blind, tm
                               batch_size=8)
     session = DemoSession(config, ghosts_dir=tmp_path)
     session.drain_outbox()
-    with caplog.at_level("WARNING", logger="traqmania.server.session"):
+    with caplog.at_level("WARNING", logger="racetraq.server.session"):
         session.handle_message(P.Train(action="start", agent="quantum", episodes=100_000))
     job = session.jobs["quantum"]
     session.handle_message(P.Train(action="stop", agent="quantum"))
@@ -163,7 +163,7 @@ def test_training_start_logs_light_cone_blind_spots(profile, n_layers, blind, tm
     session.shutdown()
     assert not job.thread.is_alive(), "training thread did not stop"
 
-    lines = [r.getMessage() for r in caplog.records if r.name == "traqmania.server.session"]
+    lines = [r.getMessage() for r in caplog.records if r.name == "racetraq.server.session"]
     if blind:
         assert "n_layers = 4 is too shallow for 8 qubits" in lines[0]
         assert any("Brake (Z_3) cannot see: speed" in line for line in lines)
