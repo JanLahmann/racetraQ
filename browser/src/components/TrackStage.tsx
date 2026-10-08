@@ -4,7 +4,7 @@
  * the same car messages the demo server broadcasts, at its 20 Hz rate.
  */
 import { useEffect, useRef } from 'react';
-import { RaceRenderer, type RenderCar, type TrackPayload } from '@demo/race.js';
+import { RaceRenderer, type CameraView, type RenderCar, type TrackPayload } from '@demo/race.js';
 import type { Track } from '../sim/track';
 import type { World } from '../sim/world';
 
@@ -16,6 +16,8 @@ interface Props {
   paused: boolean;
   speed: number;
   showRays: boolean;
+  /** 'top' or a view that follows the human car (race mode) */
+  camera: CameraView;
   children?: React.ReactNode;
 }
 
@@ -67,7 +69,7 @@ export function stateMessage(world: World): { cars: RenderCar[] } {
   return { cars };
 }
 
-export function TrackStage({ world, track, mode, paused, speed, showRays, children }: Props) {
+export function TrackStage({ world, track, mode, paused, speed, showRays, camera, children }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<RaceRenderer | null>(null);
   const live = useRef({ paused, speed });
@@ -75,6 +77,7 @@ export function TrackStage({ world, track, mode, paused, speed, showRays, childr
 
   useEffect(() => {
     const renderer = new RaceRenderer(canvasRef.current!);
+    renderer.minimapCorner = 'top-right'; // the touch pedals use the bottom edge
     renderer.start();
     rendererRef.current = renderer;
     return () => {
@@ -93,6 +96,10 @@ export function TrackStage({ world, track, mode, paused, speed, showRays, childr
   useEffect(() => {
     rendererRef.current!.showRays = showRays;
   }, [showRays]);
+
+  useEffect(() => {
+    rendererRef.current!.setCamera(camera);
+  }, [camera]);
 
   useEffect(() => {
     const renderer = rendererRef.current!;

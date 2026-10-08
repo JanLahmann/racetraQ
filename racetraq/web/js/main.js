@@ -59,7 +59,9 @@ const studioPanel = initStudioPanel({
   },
   onPhase: (phase) => {
     attract.setBusy(phase === "training");
-    setInputActive(state.mode === "race" || (state.mode === "studio" && phase === "race"));
+    const driving = state.mode === "race" || (state.mode === "studio" && phase === "race");
+    setInputActive(driving);
+    $("#race-camera").hidden = !driving;
     renderEpisodeOverlay();
   },
 });
@@ -102,6 +104,7 @@ function applyMode(mode) {
     btn.classList.toggle("active", btn.dataset.mode === mode);
   }
   $("#race-controls").hidden = mode !== "race";
+  $("#race-camera").hidden = !humanDriving();
   $("#driver-picker").hidden = mode !== "attract";
   setInputActive(mode === "race" || (mode === "studio" && studioPanel.phase === "race"));
   attract.setMode(mode);
@@ -531,6 +534,40 @@ $("#race-start").addEventListener("click", () => {
 $("#race-reset").addEventListener("click", () => {
   state.bestLaps.clear();
   net.raceCmd("reset", $("#race-opponent").value);
+});
+
+// Camera for the human driver: button or C cycles top / chase / cockpit; the
+// choice is remembered in this browser.
+const CAMERA_LABELS = { top: "Top", chase: "Chase", cockpit: "Cockpit" };
+function setCamera(view) {
+  renderer.setCamera(view);
+  $("#race-camera").textContent = `📷 ${CAMERA_LABELS[renderer.camera]}`;
+  try {
+    localStorage.setItem("racetraq-camera", renderer.camera);
+  } catch {
+    // storage blocked: the choice just isn't remembered
+  }
+}
+/** A visitor drives: Race mode, or racing their own model in the studio. */
+function humanDriving() {
+  return state.mode === "race" || (state.mode === "studio" && studioPanel.phase === "race");
+}
+function cycleCamera() {
+  setCamera(renderer.cycleCamera());
+}
+try {
+  setCamera(localStorage.getItem("racetraq-camera") || "top");
+} catch {
+  setCamera("top");
+}
+$("#race-camera").addEventListener("click", (ev) => {
+  cycleCamera();
+  ev.currentTarget.blur(); // keep Space/Enter for the race, not this button
+});
+window.addEventListener("keydown", (ev) => {
+  if (ev.code !== "KeyC" || ev.repeat || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (ev.target.closest && ev.target.closest("input, select, textarea")) return;
+  if (humanDriving()) cycleCamera();
 });
 
 $("#train-start").addEventListener("click", () => {

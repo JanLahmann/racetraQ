@@ -24,7 +24,8 @@ model and no hardware path.
   decision's angles (QAMPoser's circuit editor, read-only), ⟨Z⟩ of every qubit
   and the Q-values. Pause, step one decision at a time, or open the exact circuit
   of a decision in IBM Quantum Composer.
-- **Race** — you (arrow keys / WASD / on-screen pedals) against the quantum car.
+- **Race** — you (arrow keys / WASD / on-screen pedals) against the quantum car;
+  **C** or the 📷 button switches between top-down, chase and cockpit cameras.
 - **Learning** — the evolution mode: four snapshots of one training run.
 
 ## How it relates to the Python project

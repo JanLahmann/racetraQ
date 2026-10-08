@@ -288,7 +288,9 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
   start continues from a snapshot of the bundled driver's own training
   run that does not lap yet).
 - **Race**: arrow keys / WASD or a gamepad (analog steering, trigger
-  throttle/brake) — race the quantum agent.
+  throttle/brake) — race the quantum agent. **C** (or the 📷 button) switches
+  the camera: top-down, chase (turns with your car, heading up) or cockpit
+  (closer); the rotating views add a minimap.
 - **Studio**: build and train your own quantum driver — pick the track, 4–10
   qubits, the sensors (lidar + speed, or lidar + corner speed) and 4, 6 or 8
   actions, optionally warm-start, and train it live for at most 5 minutes

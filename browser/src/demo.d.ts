@@ -26,10 +26,16 @@ declare module '@demo/race.js' {
   }
   export const KIND_COLORS: Record<string, string>;
   export const STAGE_COLORS: string[];
+  export type CameraView = 'top' | 'chase' | 'cockpit';
+  export const CAMERA_VIEWS: CameraView[];
   export class RaceRenderer {
     constructor(canvas: HTMLCanvasElement);
     running: boolean;
     showRays: boolean;
+    camera: CameraView;
+    minimapCorner: string;
+    setCamera(view: CameraView): void;
+    cycleCamera(): CameraView;
     setTrack(payload: TrackPayload): void;
     pushState(msg: { cars: RenderCar[] }): void;
     setMode(mode: string): void;

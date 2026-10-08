@@ -113,6 +113,11 @@ a physicist asks.
 
 A narrative that works cold, in order. Controls for the race segment:
 **arrow keys or WASD** (up/W throttle, down/S brake, left/right steer).
+Visitors who mix up left and right on the top-down view: press **C** (or
+the 📷 button in the corner of the track) for the chase camera, which turns
+with their car so its nose always points up the screen; **C** again gives
+the closer cockpit view, a third time back to top-down. The rotating views
+show a minimap, and the browser remembers the choice.
 
 1. **Attract — "this driver is a quantum circuit"** (~1 min).
    The screen already shows it: a car lapping, four wobbling gauges, a
