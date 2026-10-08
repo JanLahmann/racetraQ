@@ -37,6 +37,19 @@ const EDGE_COLORS = {
   "kerb-white": "#dfe3ea",
 };
 
+// Camera views for a human driver. "top" is the whole track, fixed; the others
+// follow the human car with its heading pointing up the screen, so left and
+// right on the keys are left and right on the screen. `span` is how many world
+// units fit across the shorter side of the canvas, `anchorY` where the car sits
+// (fraction of the height from the top; lower means more track ahead).
+export const CAMERA_VIEWS = ["top", "chase", "cockpit"];
+const FOLLOW_VIEWS = {
+  chase: { span: 72, anchorY: 0.66 },
+  cockpit: { span: 34, anchorY: 0.8 },
+};
+const CAMERA_TURN_RATE = 7; // 1/s, heading smoothing of the follow camera
+const MINIMAP_FRACTION = 0.24; // minimap size relative to the canvas
+
 // Ray fan: n rays evenly spaced over [-60°, +60°], matching how the config
 // profiles lay out [observation].ray_angles_deg for any qubit count.
 function rayAngle(i, n) {
@@ -146,6 +159,10 @@ export class RaceRenderer {
     this.trails = new Map(); // car id -> {car, pts: [[x,y,v]|null, ...]}
     this._stageColors = new Map(); // evolution label -> palette colour
     this._speedPalettes = new Map(); // car color -> per-bucket trail colors
+    this.camera = "top"; // one of CAMERA_VIEWS; follow views need a human car
+    this._cam = null; // smoothed follow camera {x, y, theta, t}
+    this.minimapCorner = "bottom-left"; // "top"|"bottom" + "-" + "left"|"right"
+    this._view = { m: null, s: 1 }; // world -> canvas matrix of the last frame
 
     const ro = new ResizeObserver(() => this._resize());
     ro.observe(canvas.parentElement || canvas);
@@ -197,6 +214,21 @@ export class RaceRenderer {
   stageNumber(label) {
     this.stageColor(label); // ensure the label is registered
     return [...this._stageColors.keys()].indexOf(label) + 1;
+  }
+
+  /** Pick a camera view (one of CAMERA_VIEWS). The follow views apply only
+   *  while a human car is on the track; otherwise the track stays top-down. */
+  setCamera(view) {
+    if (!CAMERA_VIEWS.includes(view)) return;
+    this.camera = view;
+    this._cam = null;
+  }
+
+  /** Switch to the next camera view and return it. */
+  cycleCamera() {
+    const i = CAMERA_VIEWS.indexOf(this.camera);
+    this.setCamera(CAMERA_VIEWS[(i + 1) % CAMERA_VIEWS.length]);
+    return this.camera;
   }
 
   addEffect(kind, carId) {
@@ -301,6 +333,8 @@ export class RaceRenderer {
     ctx.setTransform(s, 0, 0, -s, ox, oy);
   }
 
+  /** The top-down track, drawn once into the offscreen layer (the follow
+   *  views draw the track live and use this layer for their minimap). */
   _prerenderTrack() {
     const ctx = this.trackLayer.getContext("2d");
     const t = this.track;
@@ -308,7 +342,14 @@ export class RaceRenderer {
     ctx.clearRect(0, 0, this.trackLayer.width, this.trackLayer.height);
     if (!t || !t.centerline.length) return;
     this._applyWorld(ctx);
+    this._drawTrack(ctx);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
 
+  /** Track surface, kerbs, centerline and checkpoints, in world coordinates
+   *  under whatever transform ctx already has. */
+  _drawTrack(ctx) {
+    const t = this.track;
     const surface = themeColor(SURFACE_COLORS, t.theme && t.theme.surface, "#2a2e37");
     const edge = themeColor(EDGE_COLORS, t.theme && t.theme.edge, "#dfe3ea");
 
@@ -368,8 +409,6 @@ export class RaceRenderer {
       }
       ctx.stroke();
     });
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   /** Interpolated car list at render time (lerp between the last two states). */
@@ -403,13 +442,22 @@ export class RaceRenderer {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = "#101218";
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.drawImage(this.trackLayer, 0, 0);
+    const cars = this.track ? this._carsNow() : [];
+    const followed = this._followedCar(cars);
+    if (!followed) {
+      this._cam = null;
+      ctx.drawImage(this.trackLayer, 0, 0);
+    }
     if (!this.track) return;
-
-    const cars = this._carsNow();
     const byId = new Map(cars.map((c) => [c.id, c]));
 
-    this._applyWorld(ctx);
+    if (followed) {
+      this._applyFollow(ctx, followed);
+      this._drawTrack(ctx);
+    } else {
+      this._applyWorld(ctx);
+    }
+    this._view = { m: ctx.getTransform(), s: followed ? this._followScale() : this.transform.s };
     this._drawTrails(ctx);
     for (const car of cars) {
       if (this.showRays && car.kind === "quantum" && Array.isArray(car.rays)) {
@@ -420,6 +468,73 @@ export class RaceRenderer {
     this._drawEffects(ctx, byId);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     this._drawLabels(ctx, cars);
+    if (followed) this._drawMinimap(ctx, cars);
+  }
+
+  /** The human car the follow camera tracks, or null for the top-down view. */
+  _followedCar(cars) {
+    if (!FOLLOW_VIEWS[this.camera]) return null;
+    return cars.find((c) => c.kind === "human" && !c.ghost) || null;
+  }
+
+  _followScale() {
+    return Math.min(this.canvas.width, this.canvas.height) / FOLLOW_VIEWS[this.camera].span;
+  }
+
+  /** World -> canvas transform of the follow views: the car at the anchor,
+   *  its (smoothed) heading pointing up the screen. */
+  _applyFollow(ctx, car) {
+    const now = performance.now();
+    const cam = this._cam;
+    if (!cam || Math.hypot(car.x - cam.x, car.y - cam.y) > TRAIL_BREAK_DIST) {
+      this._cam = { x: car.x, y: car.y, theta: car.theta, t: now }; // first frame or respawn
+    } else {
+      const dt = Math.min((now - cam.t) / 1000, 0.1);
+      cam.theta = lerpAngle(cam.theta, car.theta, 1 - Math.exp(-CAMERA_TURN_RATE * dt));
+      cam.x = car.x;
+      cam.y = car.y;
+      cam.t = now;
+    }
+    const s = this._followScale();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.translate(this.canvas.width / 2, this.canvas.height * FOLLOW_VIEWS[this.camera].anchorY);
+    ctx.scale(s, -s); // world y up -> screen y down
+    ctx.rotate(Math.PI / 2 - this._cam.theta);
+    ctx.translate(-this._cam.x, -this._cam.y);
+  }
+
+  /** Canvas position of a world point under the last frame's view. */
+  _toScreen(x, y) {
+    const m = this._view.m;
+    return { x: m.a * x + m.c * y + m.e, y: m.b * x + m.d * y + m.f };
+  }
+
+  /** Top-down inset of the whole track (the prerendered layer, scaled down)
+   *  with a dot per car, in the `minimapCorner` of the follow views. */
+  _drawMinimap(ctx, cars) {
+    const dpr = window.devicePixelRatio || 1;
+    const k = MINIMAP_FRACTION;
+    const w = this.canvas.width * k;
+    const h = this.canvas.height * k;
+    const margin = 12 * dpr;
+    const x0 = this.minimapCorner.endsWith("right") ? this.canvas.width - w - margin : margin;
+    const y0 = this.minimapCorner.startsWith("top") ? margin : this.canvas.height - h - margin;
+    ctx.beginPath();
+    ctx.roundRect(x0, y0, w, h, 8 * dpr);
+    ctx.fillStyle = "rgba(16,18,24,0.82)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(230,233,239,0.35)";
+    ctx.lineWidth = dpr;
+    ctx.stroke();
+    ctx.drawImage(this.trackLayer, x0, y0, w, h);
+    const { s, ox, oy } = this.transform;
+    for (const car of cars) {
+      ctx.beginPath();
+      ctx.arc(x0 + k * (s * car.x + ox), y0 + k * (-s * car.y + oy),
+              (car.kind === "human" ? 4 : 3) * dpr, 0, 2 * Math.PI);
+      ctx.fillStyle = car.ghost ? "rgba(255,255,255,0.45)" : this._carColor(car);
+      ctx.fill();
+    }
   }
 
   /** Per-bucket trail colors for one car color: dark (slow) -> bright (fast). */
@@ -483,7 +598,7 @@ export class RaceRenderer {
    *  Car descriptions live in the corner legend, not on the moving car; in
    *  evolution mode each car carries its race number in its stage colour. */
   _drawLabels(ctx, cars) {
-    const { s, ox, oy } = this.transform;
+    const s = this._view.s;
     const dpr = window.devicePixelRatio || 1;
     if (this.mode === "evolution") {
       ctx.font = `700 ${12 * dpr}px system-ui, sans-serif`;
@@ -491,9 +606,9 @@ export class RaceRenderer {
       ctx.textBaseline = "bottom";
       for (const car of cars) {
         if (!car.label || car.ghost) continue;
+        const p = this._toScreen(car.x, car.y);
         ctx.fillStyle = this.stageColor(car.label);
-        ctx.fillText(String(this.stageNumber(car.label)),
-                     s * car.x + ox, -s * car.y + oy - s * 1.6);
+        ctx.fillText(String(this.stageNumber(car.label)), p.x, p.y - s * 1.6);
       }
       ctx.textBaseline = "alphabetic";
     }
@@ -503,8 +618,9 @@ export class RaceRenderer {
       const w = 34 * dpr;
       const h = 5 * dpr;
       const r = h / 2;
-      const sx = s * car.x + ox - w / 2;
-      const sy = -s * car.y + oy + s * 1.9;
+      const p = this._toScreen(car.x, car.y);
+      const sx = p.x - w / 2;
+      const sy = p.y + s * 1.9;
       const frac = Math.min(Math.max(car.v / V_MAX, 0), 1);
       // speedometer gauge: bordered rounded track + fill (red = braking)
       ctx.beginPath();

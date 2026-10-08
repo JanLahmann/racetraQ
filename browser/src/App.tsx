@@ -9,6 +9,7 @@ import { CircuitView } from './components/CircuitView';
 import { QuantumDriver } from './sim/agents';
 import { TouchControls, keysToControls } from './components/TouchControls';
 import { TrackStage } from './components/TrackStage';
+import { CAMERA_VIEWS, type CameraView } from '@demo/race.js';
 
 const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: 'watch', label: 'Watch', hint: 'a quantum driver races; see every decision' },
@@ -46,6 +47,19 @@ function evalLine(d: DriverInfo | undefined): string | null {
   return `Tested on ${e.episodes} fresh episodes: lapped in ${laps}/${e.episodes}, mean lap ${fmtLap(e.mean_lap)}.`;
 }
 
+const CAMERA_LABELS: Record<CameraView, string> = { top: 'Top', chase: 'Chase', cockpit: 'Cockpit' };
+const CAMERA_KEY = 'racetraq-camera';
+
+/** The camera view this browser used last (top-down when unknown). */
+function loadCamera(): CameraView {
+  try {
+    const saved = localStorage.getItem(CAMERA_KEY) as CameraView | null;
+    return saved && CAMERA_VIEWS.includes(saved) ? saved : 'top';
+  } catch {
+    return 'top';
+  }
+}
+
 export function App() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,11 +75,22 @@ export function App() {
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [showRays, setShowRays] = useState(true);
+  const [camera, setCamera] = useState<CameraView>(loadCamera);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [wideCircuit, setWideCircuit] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
   const [, setTick] = useState(0);
   const keys = useRef({ left: false, right: false, gas: false, brake: false });
+
+  const cycleCamera = () => {
+    const next = CAMERA_VIEWS[(CAMERA_VIEWS.indexOf(camera) + 1) % CAMERA_VIEWS.length];
+    setCamera(next);
+    try {
+      localStorage.setItem(CAMERA_KEY, next);
+    } catch {
+      // storage blocked: the choice just isn't remembered
+    }
+  };
 
   useEffect(() => {
     loadManifest().then(setManifest, (e) => setError(String(e)));
@@ -124,6 +149,10 @@ export function App() {
         e.preventDefault();
         return;
       }
+      if (e.code === 'KeyC' && setup.mode === 'race' && !e.repeat && !e.metaKey && !e.ctrlKey) {
+        cycleCamera();
+        return;
+      }
       if (e.code === 'KeyP' || (e.code === 'Space' && setup.mode !== 'race')) {
         setPaused((p) => !p);
         e.preventDefault();
@@ -144,7 +173,7 @@ export function App() {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [race, setup.mode]);
+  }, [race, setup.mode, camera]);
 
   const choices = useMemo(() => (manifest ? driverChoices(manifest, setup.track) : []), [manifest, setup.track]);
   const update = (patch: Partial<RaceSetup>) => setSetup((s) => ({ ...s, ...patch }));
@@ -244,6 +273,7 @@ export function App() {
               paused={paused}
               speed={setup.mode === 'race' ? 1 : speed}
               showRays={showRays}
+              camera={setup.mode === 'race' ? camera : 'top'}
             >
               <div className="hud">
                 {focus && (
@@ -358,6 +388,19 @@ export function App() {
               <button type="button" className="chip" onClick={() => setRestartKey((k) => k + 1)}>
                 ↺ Restart
               </button>
+              {setup.mode === 'race' && (
+                <button
+                  type="button"
+                  className="chip"
+                  title="Camera (C): top-down, chase (turns with your car) or cockpit (closer, more road ahead)"
+                  onClick={(e) => {
+                    cycleCamera();
+                    e.currentTarget.blur();
+                  }}
+                >
+                  📷 {CAMERA_LABELS[camera]}
+                </button>
+              )}
               <label className="toggle">
                 <input type="checkbox" checked={showRays} onChange={(e) => setShowRays(e.target.checked)} />
                 lidar
@@ -373,8 +416,8 @@ export function App() {
             </div>
             {setup.mode === 'race' && (
               <p className="hint">
-                Drive with the arrow keys or WASD (Space brakes) — or the on-screen pedals. The quantum car
-                decides 10 times a second.
+                Drive with the arrow keys or WASD (Space brakes) — or the on-screen pedals. C switches the
+                camera: chase and cockpit turn with your car. The quantum car decides 10 times a second.
               </p>
             )}
             {setup.mode === 'evolution' && (
