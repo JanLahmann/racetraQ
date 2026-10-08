@@ -457,9 +457,11 @@ returns_tail: [float]}` (last ≤ 100 episode returns), plus *omitted-if-null*
 `best_lap_s: float` and `lap_times: [[episode, lap_s], ...]` (last ≤ 50).
 
 **`event`** — `{kind, car_id?, lap_time?, agent?}` with `kind` ∈
-`lap | crash | clean_lap | training_done | new_best_lap` (optional fields
+`lap | crash | clean_lap | timeout | training_done | new_best_lap` (optional fields
 *omitted-if-null*; `new_best_lap` carries `agent` during training and
-`car_id` for ghost records).
+`car_id` for ghost records). `timeout`: an agent car went `[reward] max_decisions`
+decisions (60 s) without finishing a lap — the training env's episode cap — and
+was respawned at the start line.
 
 **`hardware_status`** — progress of a hardware lap/sprint:
 

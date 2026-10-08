@@ -17,7 +17,7 @@ const TRAIL_MAX = 300; // points kept per car
 const TRAIL_BREAK_DIST = 8; // world units; larger jumps break the polyline
 const TRAIL_ALPHA = { train: 0.4, evolution: 0.26, attract: 0.22, race: 0.2 };
 
-const V_MAX = 22.0; // [car].v_max — speed normalization for trails and bars
+const V_MAX = 25.0; // [physics].v_max — speed normalization for the speed bars
 // Trail speed shading: below SPEED_COLD renders darkest, above SPEED_HOT
 // brightest; the useful racing range on the bundled tracks sits in between.
 const SPEED_COLD = 5.0;
@@ -255,7 +255,10 @@ export class RaceRenderer {
     const dpr = window.devicePixelRatio || 1;
     const w = Math.max(1, Math.floor(host.clientWidth * dpr));
     const h = Math.max(1, Math.floor(host.clientHeight * dpr));
-    if (w === this.canvas.width && h === this.canvas.height) return;
+    // the offscreen layer belongs to this renderer, the canvas may not (a
+    // second renderer on the same canvas still needs its layer sized)
+    if (w === this.canvas.width && h === this.canvas.height &&
+        w === this.trackLayer.width && h === this.trackLayer.height) return;
     this.canvas.width = w;
     this.canvas.height = h;
     this.trackLayer.width = w;

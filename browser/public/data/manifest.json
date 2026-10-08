@@ -1,0 +1,1105 @@
+{
+ "version": 1,
+ "physics": {
+  "dt": 0.016666667,
+  "substeps_per_decision": 6,
+  "accel": 11.0,
+  "brake": 16.0,
+  "drag": 0.35,
+  "v_max": 25.0,
+  "v_turn": 9.0,
+  "k_steer": 2.6
+ },
+ "resample_spacing": 1.5,
+ "max_decisions": 600,
+ "action_set": [
+  [
+   -1,
+   1,
+   0
+  ],
+  [
+   0,
+   1,
+   0
+  ],
+  [
+   1,
+   1,
+   0
+  ],
+  [
+   0,
+   0,
+   1
+  ],
+  [
+   -1,
+   0,
+   1
+  ],
+  [
+   1,
+   0,
+   1
+  ],
+  [
+   -0.5,
+   1,
+   0
+  ],
+  [
+   0.5,
+   1,
+   0
+  ]
+ ],
+ "action_labels": [
+  "Right",
+  "Straight",
+  "Left",
+  "Brake",
+  "Brake right",
+  "Brake left",
+  "Half right",
+  "Half left"
+ ],
+ "tracks": [
+  {
+   "id": "oval",
+   "name": "Oval"
+  },
+  {
+   "id": "chicane",
+   "name": "Chicane"
+  },
+  {
+   "id": "gp",
+   "name": "Grand Prix"
+  },
+  {
+   "id": "combo",
+   "name": "Combo"
+  }
+ ],
+ "drivers": [
+  {
+   "id": "mlp_chicane",
+   "agent": "mlp",
+   "track": "chicane",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 76,
+   "n_actions": 4,
+   "hidden": 8,
+   "provenance": "best snapshot of seed 2, chosen from the 8-seed study study_chicane variant mlp_trunc (mlp on chicane, 800 episodes, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.8 s, mean 13.3 s; the recipe across its 8 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.96, 1.00] of the study's eval episodes, final params in 0.92 [0.81, 0.97], stability 0.97 [0.94, 0.99]; 8/8 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 13.31,
+    "best_lap": 12.8
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "mlp_combo",
+   "agent": "mlp",
+   "track": "combo",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 2500,
+   "n_params": 76,
+   "n_actions": 4,
+   "hidden": 8,
+   "provenance": "best snapshot of seed 2, chosen from the 10-seed study combo variant mlp_trunc (mlp on combo, 2500 episodes, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 35.5 s, mean 36.9 s; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 0.82 [0.63, 0.94] of the study's eval episodes, final params in 0.02 [0.00, 0.08], stability 0.08 [0.03, 0.14]; 9/10 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 36.863,
+    "best_lap": 35.5
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "mlp_gp",
+   "agent": "mlp",
+   "track": "gp",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 3000,
+   "n_params": 76,
+   "n_actions": 4,
+   "hidden": 8,
+   "provenance": "best snapshot of seed 6, chosen from the 10-seed study study_gp1 variant mlp_trunc (mlp on gp, 3000 episodes, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 21.4 s, mean 22.5 s; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 0.74 [0.37, 0.97] of the study's eval episodes, final params in 0.01 [0.00, 0.38], stability 0.14 [0.05, 0.21]; 7/10 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 22.485,
+    "best_lap": 21.4
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "mlp_oval",
+   "agent": "mlp",
+   "track": "oval",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 76,
+   "n_actions": 4,
+   "hidden": 8,
+   "provenance": "best snapshot of seed 6, chosen from the 8-seed study study_oval variant mlp_trunc (mlp on oval, 800 episodes, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.0 s, mean 12.6 s; the recipe across its 8 seeds (IQM [95% CI]): best snapshot laps in 1.00 [1.00, 1.00] of the study's eval episodes, final params in 1.00 [0.98, 1.00], stability 0.94 [0.87, 0.99]; 8/8 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 12.552,
+    "best_lap": 12.0
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "mlp_pro",
+   "agent": "mlp",
+   "track": "multi",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 5000,
+   "n_params": 2436,
+   "n_actions": 4,
+   "hidden": 128,
+   "provenance": "best snapshot of seed 1, chosen from the 3-seed study pro variant pro (mlp on multi, 5000 episodes, training.bootstrap_truncation=true, circuit.n_qubits=14, observation.ray_angles_deg=[-60.0,-45.0,-30.0,-15.0,0.0,15.0,30.0,45.0,60.0], observation.features=[\"rays\",\"speed\",\"curvature_ahead\",\"lateral_offset\",\"heading_error\",\"corner_speed_ratio\"], mlp.hidden=128, training.epsilon_decay_episodes=2500, training.gamma=0.99); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; fresh greedy eval of 36 episodes per track (env seed 31000): oval laps in 36/36 episodes, best 12.1 s, mean 12.7 s; chicane laps in 36/36 episodes, best 12.4 s, mean 13.1 s; gp laps in 36/36 episodes, best 16.7 s, mean 17.8 s; combo laps in 36/36 episodes, best 19.1 s, mean 20.3 s; the recipe across its 3 seeds (IQM [95% CI]): best snapshot laps in 0.81 [0.75, 1.00] of the study's eval episodes, final params in 0.97 [0.83, 1.00], stability 0.68 [0.67, 0.72]; 3/3 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 144,
+    "lapped_fraction": 1.0,
+    "mean_lap": 15.208,
+    "best_lap": 12.1
+   },
+   "features": [
+    "rays",
+    "speed",
+    "curvature_ahead",
+    "lateral_offset",
+    "heading_error",
+    "corner_speed_ratio"
+   ],
+   "n_rays": 9
+  },
+  {
+   "id": "quantum_chicane",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 7, chosen from the 10-seed study robust_chicane variant gap8an (quantum on chicane, 800 episodes, training.bootstrap_truncation=true, training.action_gap=0.8, training.act_noise={attenuation=0.95,shots=1024}); seeds ranked by the study's 36-episode reliability eval, the top 4 re-evaluated on fresh episodes and chosen by the simulated-device laps, then that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.0 s, mean 12.6 s; simulated device (fake_miami (4-qubit patch: physical qubits 4, 5, 14, 15), 1024 shots, rescale off, resilience 0): laps in 8/8 episodes; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.87, 1.00] of the study's eval episodes, final params in 0.63 [0.39, 0.88], stability 0.63 [0.49, 0.73]; 9/10 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 12.639,
+    "best_lap": 12.0
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_chicane_q10",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 188,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 10,
+    "n_layers": 6,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 2, chosen from the 6-seed study q10_chicane variant L6 (quantum on chicane, 800 episodes, profile q10, training.bootstrap_truncation=true, circuit.n_layers=6); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.1 s, mean 12.6 s; the recipe across its 6 seeds (IQM [95% CI]): best snapshot laps in 0.99 [0.76, 1.00] of the study's eval episodes, final params in 0.55 [0.12, 0.93], stability 0.45 [0.32, 0.66]; 6/6 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 12.623,
+    "best_lap": 12.1
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 9
+  },
+  {
+   "id": "quantum_chicane_q6",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 3, chosen from the 8-seed study q6_chicane variant quantum (quantum on chicane, 800 episodes, profile q6, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.4 s, mean 12.9 s; the recipe across its 8 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.98, 1.00] of the study's eval episodes, final params in 0.78 [0.40, 1.00], stability 0.68 [0.45, 0.83]; 8/8 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 12.938,
+    "best_lap": 12.4
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_chicane_q8",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 128,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 8,
+    "n_layers": 5,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 3, chosen from the 6-seed study q8_chicane variant L5 (quantum on chicane, 800 episodes, profile q8, training.bootstrap_truncation=true, circuit.n_layers=5); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.1 s, mean 12.6 s; the recipe across its 6 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.93, 1.00] of the study's eval episodes, final params in 0.37 [0.07, 0.80], stability 0.47 [0.31, 0.65]; 6/6 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 12.642,
+    "best_lap": 12.1
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 7
+  },
+  {
+   "id": "quantum_chicane_stage1",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "stage",
+   "stage": 1,
+   "episodes": 50,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 50 of the training run that produced quantum_chicane.npz (seed 7, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_chicane_stage2",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "stage",
+   "stage": 2,
+   "episodes": 300,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 300 of the training run that produced quantum_chicane.npz (seed 7, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_chicane_stage3",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "stage",
+   "stage": 3,
+   "episodes": 500,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 500 of the training run that produced quantum_chicane.npz (seed 7, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_chicane_stage4",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "stage",
+   "stage": 4,
+   "episodes": 700,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 700 of the training run that produced quantum_chicane.npz (seed 7, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_chicane.npz",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_chicane_warmstart",
+   "agent": "quantum",
+   "track": "chicane",
+   "kind": "warmstart",
+   "stage": null,
+   "episodes": 450,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "warm-start checkpoint: snapshot at episode 450 of the training run that produced quantum_chicane.npz (seed 7, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 500 (the first snapshot that laps in at least half of an eval's episodes); NOT strictly pre-first-lap: no earlier snapshot lapped, but an exploring training car had completed the run's first clean lap in episode 450",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_combo",
+   "agent": "quantum",
+   "track": "combo",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 2500,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 3, chosen from the 10-seed study combo variant quantum (quantum on combo, 2500 episodes, training.bootstrap_truncation=true, training.epsilon_end=0.30); seeds ranked by the study's 36-episode reliability eval, the top 4 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 34.6 s, mean 37.1 s; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 0.79 [0.40, 0.97] of the study's eval episodes, final params in 0.03 [0.00, 0.22], stability 0.15 [0.03, 0.27]; 7/10 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 37.107,
+    "best_lap": 34.6
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_combo_stage1",
+   "agent": "quantum",
+   "track": "combo",
+   "kind": "stage",
+   "stage": 1,
+   "episodes": 1550,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 1550 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_combo_stage2",
+   "agent": "quantum",
+   "track": "combo",
+   "kind": "stage",
+   "stage": 2,
+   "episodes": 1600,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 1600 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_combo_stage3",
+   "agent": "quantum",
+   "track": "combo",
+   "kind": "stage",
+   "stage": 3,
+   "episodes": 1650,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 1650 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_combo_stage4",
+   "agent": "quantum",
+   "track": "combo",
+   "kind": "stage",
+   "stage": 4,
+   "episodes": 1700,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 1700 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_combo.npz",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_combo_warmstart",
+   "agent": "quantum",
+   "track": "combo",
+   "kind": "warmstart",
+   "stage": null,
+   "episodes": 1050,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "warm-start checkpoint: snapshot at episode 1050 of the training run that produced quantum_combo.npz (seed 3, 2500 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 1100 (the first snapshot that laps in at least half of an eval's episodes); NOT the run's first lap: the snapshot(s) at episode(s) 600, 850, 950 lapped in a few eval episodes and lost it again",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_gp",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 3000,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 7, chosen from the 10-seed study study_gp1 variant eps30_trunc (quantum on gp, 3000 episodes, training.epsilon_end=0.30, training.bootstrap_truncation=true); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 26.7 s, mean 27.9 s; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 0.96 [0.82, 1.00] of the study's eval episodes, final params in 0.02 [0.00, 0.08], stability 0.17 [0.12, 0.22]; 10/10 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 27.937,
+    "best_lap": 26.7
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_gp_q10",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 3000,
+   "n_params": 128,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 10,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "campaign-D recipe transplant (3000 episodes, epsilon_decay 2000, gamma 0.99, seed 42); 36-episode reliability eval: laps in 25/36 episodes, best 20.0 s, mean 22.3 s (bundled 4q gp: 29/36, best 20.4 s, mean 23.9 s)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed",
+    "curvature_ahead",
+    "lateral_offset",
+    "heading_error",
+    "corner_speed_ratio"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_gp_stage1",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "stage",
+   "stage": 1,
+   "episodes": 1200,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 1200 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_gp_stage2",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "stage",
+   "stage": 2,
+   "episodes": 1350,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 1350 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_gp_stage3",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "stage",
+   "stage": 3,
+   "episodes": 2200,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 2200 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_gp_stage4",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "stage",
+   "stage": 4,
+   "episodes": 2700,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 2700 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_gp.npz",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_gp_warmstart",
+   "agent": "quantum",
+   "track": "gp",
+   "kind": "warmstart",
+   "stage": null,
+   "episodes": 1000,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "warm-start checkpoint: snapshot at episode 1000 of the training run that produced quantum_gp.npz (seed 7, 3000 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 1050 (the first snapshot that laps in at least half of an eval's episodes); no earlier snapshot lapped: a pre-first-lap checkpoint",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 0, chosen from the 10-seed study robust_oval variant gap8an (quantum on oval, 800 episodes, training.bootstrap_truncation=true, training.action_gap=0.8, training.act_noise={attenuation=0.95,shots=1024}); seeds ranked by the study's 36-episode reliability eval, the top 4 re-evaluated on fresh episodes and chosen by the simulated-device laps, then that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.1 s, mean 12.7 s; simulated device (fake_miami (4-qubit patch: physical qubits 4, 5, 14, 15), 1024 shots, rescale off, resilience 0): laps in 8/8 episodes; the recipe across its 10 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.94, 1.00] of the study's eval episodes, final params in 0.80 [0.47, 0.99], stability 0.75 [0.52, 0.92]; 10/10 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 12.651,
+    "best_lap": 12.1
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval_q10",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 188,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 10,
+    "n_layers": 6,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 2, chosen from the 6-seed study q10_oval variant L6 (quantum on oval, 800 episodes, profile q10, training.bootstrap_truncation=true, circuit.n_layers=6); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.8 s, mean 13.3 s; the recipe across its 6 seeds (IQM [95% CI]): best snapshot laps in 0.95 [0.77, 1.00] of the study's eval episodes, final params in 0.68 [0.19, 1.00], stability 0.51 [0.26, 0.63]; 6/6 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 13.298,
+    "best_lap": 12.8
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 9
+  },
+  {
+   "id": "quantum_oval_q6",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 2, chosen from the 8-seed study robust_q6_oval variant gap8an (quantum on oval, 800 episodes, profile q6, training.bootstrap_truncation=true, training.action_gap=0.8, training.act_noise={attenuation=0.95,shots=1024}); seeds ranked by the study's 36-episode reliability eval, the top 4 re-evaluated on fresh episodes and chosen by the simulated-device laps, then that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.5 s, mean 13.1 s; simulated device (fake_miami (6-qubit patch: physical qubits 3, 4, 5, 13, 14, 15), 1024 shots, rescale off, resilience 0): laps in 8/8 episodes; the recipe across its 8 seeds (IQM [95% CI]): best snapshot laps in 1.00 [0.99, 1.00] of the study's eval episodes, final params in 0.89 [0.55, 1.00], stability 0.86 [0.79, 0.93]; 8/8 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 13.063,
+    "best_lap": 12.5
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_oval_q8",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 800,
+   "n_params": 128,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 8,
+    "n_layers": 5,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 3, chosen from the 6-seed study q8_oval variant L5 (quantum on oval, 800 episodes, profile q8, training.bootstrap_truncation=true, circuit.n_layers=5); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 12.8 s, mean 13.4 s; the recipe across its 6 seeds (IQM [95% CI]): best snapshot laps in 0.99 [0.90, 1.00] of the study's eval episodes, final params in 0.88 [0.62, 0.99], stability 0.53 [0.45, 0.65]; 6/6 seeds lap in at least half",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 13.352,
+    "best_lap": 12.8
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 7
+  },
+  {
+   "id": "quantum_oval_stage1",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 1,
+   "episodes": 150,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 150 of the training run that produced quantum_oval.npz (seed 0, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval_stage1_q6",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 1,
+   "episodes": 50,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 50 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_oval_stage2",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 2,
+   "episodes": 350,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 350 of the training run that produced quantum_oval.npz (seed 0, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval_stage2_q6",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 2,
+   "episodes": 200,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 200 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_oval_stage3",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 3,
+   "episodes": 400,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 400 of the training run that produced quantum_oval.npz (seed 0, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval_stage3_q6",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 3,
+   "episodes": 300,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 300 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver)",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_oval_stage4",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 4,
+   "episodes": 750,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 750 of the training run that produced quantum_oval.npz (seed 0, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_oval.npz",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval_stage4_q6",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "stage",
+   "stage": 4,
+   "episodes": 550,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "snapshot at episode 550 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); the run's best snapshot, a copy of quantum_oval_q6.npz",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_oval_warmstart",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "warmstart",
+   "stage": null,
+   "episodes": 250,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "warm-start checkpoint: snapshot at episode 250 of the training run that produced quantum_oval.npz (seed 0, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 300 (the first snapshot that laps in at least half of an eval's episodes); NOT the run's first lap: the snapshot(s) at episode(s) 150 lapped in a few eval episodes and lost it again",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  },
+  {
+   "id": "quantum_oval_warmstart_q6",
+   "agent": "quantum",
+   "track": "oval",
+   "kind": "warmstart",
+   "stage": null,
+   "episodes": 250,
+   "n_params": 80,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 6,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "warm-start checkpoint: snapshot at episode 250 of the training run that produced quantum_oval_q6.npz (seed 2, 800 episodes; replayed by tools/make_stages.py, best snapshot identical to the driver); it laps in neither eval, and it is the last such snapshot before the run's breakthrough at episode 300 (the first snapshot that laps in at least half of an eval's episodes); no earlier snapshot lapped: a pre-first-lap checkpoint",
+   "fresh_eval": null,
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 5
+  },
+  {
+   "id": "quantum_universal",
+   "agent": "quantum",
+   "track": "multi",
+   "kind": "driver",
+   "stage": null,
+   "episodes": 3000,
+   "n_params": 56,
+   "n_actions": 4,
+   "circuit": {
+    "n_qubits": 4,
+    "n_layers": 4,
+    "n_actions": 4
+   },
+   "provenance": "best snapshot of seed 3, chosen from the 5-seed study universal variant quantum (quantum on multi, 3000 episodes, training.bootstrap_truncation=true, training.epsilon_end=0.30, training.epsilon_decay_episodes=2000, training.gamma=0.99); seeds ranked by the study's 36-episode reliability eval, the top 1 re-evaluated on fresh episodes and chosen by that result; fresh greedy eval of 36 episodes per track (env seed 31000): oval laps in 36/36 episodes, best 26.0 s, mean 27.7 s; chicane laps in 36/36 episodes, best 26.4 s, mean 27.4 s; gp laps in 35/36 episodes, best 33.8 s, mean 35.3 s; combo laps in 36/36 episodes, best 37.1 s, mean 38.5 s; the recipe across its 5 seeds (IQM [95% CI]): best snapshot laps in 0.89 [0.68, 1.00] of the study's eval episodes, final params in 0.47 [0.25, 0.76], stability 0.35 [0.28, 0.48]; 5/5 seeds lap in at least half; seed 3 instead of the top-ranked seed 0: seed 0 laps the four bundled tracks but brakes to a stop on generated and drawn tracks (the demo's random/draw modes), seed 3 drives them (20/20 generated tracks probed in the October 2026 audit)",
+   "fresh_eval": {
+    "episodes": 144,
+    "lapped_fraction": 0.9931,
+    "mean_lap": 30.657,
+    "best_lap": 26.0
+   },
+   "features": [
+    "rays",
+    "speed"
+   ],
+   "n_rays": 3
+  }
+ ],
+ "ghosts": [
+  {
+   "track": "oval",
+   "lap_time": 13.966666946,
+   "kind": "quantum",
+   "driver": "quantum_oval (greedy lap from a standing start)"
+  },
+  {
+   "track": "chicane",
+   "lap_time": 13.966666946,
+   "kind": "quantum",
+   "driver": "quantum_chicane (greedy lap from a standing start)"
+  },
+  {
+   "track": "gp",
+   "lap_time": 27.933333892,
+   "kind": "quantum",
+   "driver": "quantum_gp (greedy lap from a standing start)"
+  },
+  {
+   "track": "combo",
+   "lap_time": 37.950000759,
+   "kind": "quantum",
+   "driver": "quantum_combo (greedy lap from a standing start)"
+  }
+ ]
+}
