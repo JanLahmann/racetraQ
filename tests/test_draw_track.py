@@ -5,10 +5,10 @@ session handler that installs the drawn track with random-track fallbacks."""
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.env.trackgen import DRAWN_HALF_WIDTH, track_from_drawing
-from traqmania.server import protocol as P
-from traqmania.server.session import DemoSession
+from racetraq.config import load_config
+from racetraq.env.trackgen import DRAWN_HALF_WIDTH, track_from_drawing
+from racetraq.server import protocol as P
+from racetraq.server.session import DemoSession
 
 
 def stroke_circle(n=120, r=40.0, gap=4, noise=0.8, seed=3):

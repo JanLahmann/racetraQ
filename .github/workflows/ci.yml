@@ -76,7 +76,7 @@ jobs:
             notebooks/07_light_cones_and_classical_surrogates.ipynb
       - name: Execute notebook 05 (hardware cells no-op)
         env:
-          TRAQMANIA_SKIP_HW: "1"
+          RACETRAQ_SKIP_HW: "1"
         run: |
           jupyter nbconvert --to notebook --execute --output-dir /tmp/nb-out \
             --ExecutePreprocessor.timeout=900 \

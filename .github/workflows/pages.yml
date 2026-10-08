@@ -1,12 +1,12 @@
 name: Browser edition (GitHub Pages)
 
-# Builds browser/ and publishes it at https://janlahmann.github.io/traQmania/
+# Builds browser/ and publishes it at https://racetraq.org/
 on:
   push:
     branches: [main]
     paths:
       - "browser/**"
-      - "traqmania/web/js/race.js" # imported unchanged by the browser edition
+      - "racetraq/web/js/race.js" # imported unchanged by the browser edition
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 

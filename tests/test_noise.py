@@ -15,23 +15,23 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania.agents.classical import MLPQFunction
-from traqmania.agents.quantum import noise
-from traqmania.agents.quantum.noise import (
+from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.quantum import noise
+from racetraq.agents.quantum.noise import (
     ExpectationNoise,
     NoisyQFunction,
     ReadoutCorrection,
     fit_attenuation,
 )
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.agents.training import DQNTrainer
-from traqmania.config import load_config
-from traqmania.env.racing_env import RacingEnv
-from traqmania.env.track import Track
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.agents.training import DQNTrainer
+from racetraq.config import load_config
+from racetraq.env.racing_env import RacingEnv
+from racetraq.env.track import Track
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TOOL_PATH = REPO_ROOT / "tools" / "hw_reliability.py"
-OVAL_WEIGHTS = REPO_ROOT / "traqmania" / "weights" / "quantum_oval.npz"
+OVAL_WEIGHTS = REPO_ROOT / "racetraq" / "weights" / "quantum_oval.npz"
 
 TRAINING_CFG = {
     "episodes": 24,
@@ -366,7 +366,7 @@ def test_noisy_q_values_of_the_quantum_qfunction(config):
 
 
 def test_importing_the_noise_module_does_not_import_qiskit():
-    check = ("import traqmania.agents.quantum.noise, sys; "
+    check = ("import racetraq.agents.quantum.noise, sys; "
              "assert not [m for m in sys.modules if m.split('.')[0].startswith('qiskit')]")
     result = subprocess.run([sys.executable, "-c", check], cwd=REPO_ROOT,
                             capture_output=True, text=True)
@@ -378,7 +378,7 @@ def test_importing_the_noise_module_does_not_import_qiskit():
 
 @pytest.fixture(scope="module")
 def tool():
-    spec = importlib.util.spec_from_file_location("traqmania_hw_reliability", TOOL_PATH)
+    spec = importlib.util.spec_from_file_location("racetraq_hw_reliability", TOOL_PATH)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

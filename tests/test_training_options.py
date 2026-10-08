@@ -13,14 +13,14 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania.agents.classical import MLPQFunction
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.agents.training import Adam, DQNTrainer
-from traqmania.agents.training.dqn import OPTION_KEYS
-from traqmania.config import apply_overrides, load_config, parse_override, resolve_training_cfg
-from traqmania.env.multi_track import MultiTrackEnv
-from traqmania.env.racing_env import RacingEnv
-from traqmania.env.track import Track
+from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.agents.training import Adam, DQNTrainer
+from racetraq.agents.training.dqn import OPTION_KEYS
+from racetraq.config import apply_overrides, load_config, parse_override, resolve_training_cfg
+from racetraq.env.multi_track import MultiTrackEnv
+from racetraq.env.racing_env import RacingEnv
+from racetraq.env.track import Track
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STEER_NEG, STRAIGHT, STEER_POS, BRAKE = 0, 1, 2, 3
@@ -682,7 +682,7 @@ FAST = ["reward.max_decisions=25", "training.eval_episodes=5", "training.eval_ev
 
 
 def test_train_headless_records_overrides_evals_and_final_params(tmp_path):
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     history_path = tmp_path / "history.json"
     summary = train("quantum", "oval", episodes=16, seed=1, profile=None,
@@ -712,7 +712,7 @@ def test_train_headless_records_overrides_evals_and_final_params(tmp_path):
 
 
 def test_train_headless_takes_act_noise_and_action_gap(tmp_path, capsys):
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     robust = ["training.act_noise={ attenuation = 0.95, shots = 256 }",
               "training.action_gap=0.5"]
@@ -752,7 +752,7 @@ def test_train_headless_takes_act_noise_and_action_gap(tmp_path, capsys):
 
 
 def test_save_final_writes_the_final_params_not_the_best_snapshot(tmp_path, monkeypatch):
-    from traqmania import train_headless
+    from racetraq import train_headless
 
     trainers: list[DQNTrainer] = []
 
@@ -778,7 +778,7 @@ def test_save_final_writes_the_final_params_not_the_best_snapshot(tmp_path, monk
 
 
 def test_train_headless_preset_precedence(tmp_path, monkeypatch, config):
-    from traqmania import train_headless
+    from racetraq import train_headless
 
     preset = config["training_presets"]["gp"]
 
@@ -808,7 +808,7 @@ def test_train_headless_preset_precedence(tmp_path, monkeypatch, config):
 
 
 def test_train_headless_rejects_unknown_training_overrides(tmp_path):
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     for typo in ("training.target_updates=soft", "training.huber_dleta=5"):
         with pytest.raises(ValueError, match=r"unknown \[training\] override.*" + typo[:16]):
@@ -818,7 +818,7 @@ def test_train_headless_rejects_unknown_training_overrides(tmp_path):
 
 
 def test_train_headless_warns_about_light_cone_blind_spots(tmp_path, capsys):
-    from traqmania.train_headless import train
+    from racetraq.train_headless import train
 
     # 8 qubits at 4 blocks (set explicitly: the shipped q8 profile has 5 since
     # October 2026): every action is blind to one feature

@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from traqmania.agents.quantum import adjoint
-from traqmania.agents.quantum.fastsim import FastStatevectorSim
-from traqmania.agents.quantum.qdqn import QuantumQFunction
+from racetraq.agents.quantum import adjoint
+from racetraq.agents.quantum.fastsim import FastStatevectorSim
+from racetraq.agents.quantum.qdqn import QuantumQFunction
 
 CFG = {"n_qubits": 4, "n_layers": 4, "seed": 7}
 EPS = 1e-6

@@ -1,4 +1,4 @@
-from traqmania.config import load_config
+from racetraq.config import load_config
 
 
 def test_default_config_loads():

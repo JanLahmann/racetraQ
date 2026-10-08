@@ -1,8 +1,8 @@
-"""End-to-end WebSocket drive of the traQmania demo server.
+"""End-to-end WebSocket drive of the racetraQ demo server.
 
 Run manually against a live server::
 
-    .venv/bin/python -m traqmania --port 8123 &
+    .venv/bin/python -m racetraq --port 8123 &
     .venv/bin/python tests/e2e_ws_drive.py --port 8123
 
 or let the script manage its own server process::
@@ -41,7 +41,7 @@ import pytest
 
 DEFAULT_PORT = 8123
 BROADCAST_HZ = 20.0  # matches [server].broadcast_hz in default.toml
-GHOSTS_DIR = Path(__file__).resolve().parent.parent / "traqmania" / "data" / "ghosts"
+GHOSTS_DIR = Path(__file__).resolve().parent.parent / "racetraq" / "data" / "ghosts"
 
 
 @pytest.mark.skip(reason="e2e: needs a live server; run `python tests/e2e_ws_drive.py`")
@@ -515,7 +515,7 @@ async def verify_attract_ghost(c: Client) -> None:
         except AssertionError:
             print("  (attract did not record a ghost in time; injecting a synthetic one)")
             _inject_ghost_file(track)
-    check(ghost_file.is_file(), "ghost file traqmania/data/ghosts/oval.json exists")
+    check(ghost_file.is_file(), "ghost file racetraq/data/ghosts/oval.json exists")
     # force a reload from disk so the persisted record (not just memory) is verified
     await c.send(type="set_track", track="oval")
     await c.wait_for(lambda m: m["type"] == "track" and m["track"]["name"] == "oval",
@@ -635,7 +635,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--port", type=int, default=DEFAULT_PORT,
                         help=f"server port (default {DEFAULT_PORT})")
     parser.add_argument("--spawn", action="store_true",
-                        help="start `python -m traqmania` on a free port for the test run")
+                        help="start `python -m racetraq` on a free port for the test run")
     args = parser.parse_args(argv)
 
     proc = None
@@ -644,7 +644,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.spawn:
         ghosts_snapshot = _snapshot_ghosts()  # restored afterwards: keep the repo clean
         port = _free_port()
-        proc = subprocess.Popen([sys.executable, "-m", "traqmania", "--port", str(port)])
+        proc = subprocess.Popen([sys.executable, "-m", "racetraq", "--port", str(port)])
     try:
         if args.spawn:
             _wait_health(port)

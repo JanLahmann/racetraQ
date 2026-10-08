@@ -1,7 +1,7 @@
 /**
  * The live race: agent cars, an optional human car and an optional ghost on
  * one track, advanced in 60 Hz physics substeps the way the demo server's
- * session does (traqmania/server/session.py): agents decide every
+ * session does (racetraq/server/session.py): agents decide every
  * substeps_per_decision substeps (the first decision before the first
  * substep), every car is projected after every substep, a lap is one track
  * length of net progress, an agent that leaves the track respawns at once,

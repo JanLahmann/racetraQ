@@ -6,7 +6,7 @@ rounded-rectangle base, a gp-style out-and-back finger on the right whose
 180-degree cap is the hard turn (radius ~9.5, gp's is ~9), and a chicane
 S-flick on the top straight (like the bundled chicane track's).  The two
 closing straight lengths are solved so the loop closes exactly.  Run from
-the repo root to (re)generate traqmania/env/tracks/combo.json.
+the repo root to (re)generate racetraq/env/tracks/combo.json.
 """
 
 from __future__ import annotations
@@ -16,11 +16,11 @@ from pathlib import Path
 
 import numpy as np
 
-from traqmania.env.track import Track
+from racetraq.env.track import Track
 
 HALF_WIDTH = 6.0  # gp-like
 STEP = 1.0  # sampling step along the path, world units
-OUT = Path(__file__).resolve().parent.parent / "traqmania" / "env" / "tracks" / "combo.json"
+OUT = Path(__file__).resolve().parent.parent / "racetraq" / "env" / "tracks" / "combo.json"
 
 # (kind, *args): ("s", length) straight, ("a", radius, degrees) arc where
 # positive degrees turn left (CCW) and negative turn right. "BOTTOM"/"LEFT"

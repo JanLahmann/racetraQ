@@ -16,25 +16,25 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 QISKIT_FREE_MODULES = [
-    "traqmania.config",
-    "traqmania.agents.base",
-    "traqmania.agents.classical.mlp",
-    "traqmania.agents.training.dqn",
-    "traqmania.agents.quantum",  # package only; circuit/qnn are lazy submodules
-    "traqmania.agents.quantum.fastsim",
-    "traqmania.agents.quantum.adjoint",
-    "traqmania.agents.quantum.qdqn",
-    "traqmania.agents.quantum.lightcone",  # qiskit only inside pruned_circuit
-    "traqmania.agents.quantum.noise",  # device calibration imports hardware lazily
-    "traqmania.agents.quantum.surrogate",  # numpy + lightcone; fastsim/env inside functions
-    "traqmania.agents.training.spsa",
-    "traqmania.hardware",  # qiskit/qiskit-ibm-runtime imports live inside functions
+    "racetraq.config",
+    "racetraq.agents.base",
+    "racetraq.agents.classical.mlp",
+    "racetraq.agents.training.dqn",
+    "racetraq.agents.quantum",  # package only; circuit/qnn are lazy submodules
+    "racetraq.agents.quantum.fastsim",
+    "racetraq.agents.quantum.adjoint",
+    "racetraq.agents.quantum.qdqn",
+    "racetraq.agents.quantum.lightcone",  # qiskit only inside pruned_circuit
+    "racetraq.agents.quantum.noise",  # device calibration imports hardware lazily
+    "racetraq.agents.quantum.surrogate",  # numpy + lightcone; fastsim/env inside functions
+    "racetraq.agents.training.spsa",
+    "racetraq.hardware",  # qiskit/qiskit-ibm-runtime imports live inside functions
 ]
 
 # Environment modules may not exist yet in every worktree; skip them if absent.
 ENV_MODULES = [
-    "traqmania.env",
-    "traqmania.env.racing_env",
+    "racetraq.env",
+    "racetraq.env.racing_env",
 ]
 
 _CHECK = (

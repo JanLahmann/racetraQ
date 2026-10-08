@@ -37,12 +37,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from traqmania.agents.quantum import lightcone, surrogate
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.config import load_config
+from racetraq.agents.quantum import lightcone, surrogate
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.config import load_config
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-WEIGHTS = REPO_ROOT / "traqmania" / "weights" / "quantum_oval.npz"
+WEIGHTS = REPO_ROOT / "racetraq" / "weights" / "quantum_oval.npz"
 
 
 def _generic(n: int, layers: int, seed: int = 0) -> QuantumQFunction:
@@ -372,10 +372,10 @@ def test_compare_metrics_on_a_hand_made_case():
 
 def test_package_exports_the_module_lazily_and_qiskit_free():
     check = (
-        "import sys, traqmania.agents.quantum as q; "
-        "assert 'traqmania.agents.quantum.surrogate' not in sys.modules; "
+        "import sys, racetraq.agents.quantum as q; "
+        "assert 'racetraq.agents.quantum.surrogate' not in sys.modules; "
         "q.surrogate.FourierSurrogate; "
-        "import traqmania.agents.quantum.surrogate as s; "
+        "import racetraq.agents.quantum.surrogate as s; "
         "s.collect_observations; s.drive_laps; "
         "assert 'qiskit' not in sys.modules"
     )
@@ -471,8 +471,8 @@ def test_surrogate_drives_the_oval_like_the_quantum_driver(oval, fitted):
 
 
 def test_drive_laps_follows_the_records_protocol(oval):
-    """Same seed, same episodes: the numbers of ``traqmania.records``."""
-    from traqmania import records
+    """Same seed, same episodes: the numbers of ``racetraq.records``."""
+    from racetraq import records
 
     qfunc, config, _ = oval
     driver = next(d for d in records.discover_drivers() if d.id == "quantum_oval")

@@ -10,9 +10,9 @@ import math
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.env.racing_env import RacingEnv
-from traqmania.env.track import Track
+from racetraq.config import load_config
+from racetraq.env.racing_env import RacingEnv
+from racetraq.env.track import Track
 
 ENGINEERED = ["curvature_ahead", "lateral_offset", "heading_error", "corner_speed_ratio"]
 

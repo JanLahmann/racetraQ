@@ -1,6 +1,6 @@
 /**
  * The [observation] feature pipeline — a port of CarObserver in
- * traqmania/env/racing_env.py. Every scalar is normalized to [0, 1].
+ * racetraq/env/racing_env.py. Every scalar is normalized to [0, 1].
  */
 import type { PhysicsConfig, CarState } from './car';
 import { Track, pyMod } from './track';

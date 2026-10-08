@@ -8,7 +8,7 @@ and the numpy reference values its parity tests check the port against:
 - ``browser/public/data/manifest.json`` — physics, tracks, drivers (with the
   honest provenance and fresh-eval numbers of every bundled driver), ghosts
 - ``browser/public/data/tracks/<id>.json`` — the raw track JSON (the browser
-  resamples it exactly like :class:`~traqmania.env.track.Track`)
+  resamples it exactly like :class:`~racetraq.env.track.Track`)
 - ``browser/public/data/drivers/<id>.json`` — flat params, circuit shape or
   hidden width, the observation the driver was trained with, action count
 - ``browser/public/data/ghosts/<track>.json`` — a ghost lap per track: the
@@ -38,17 +38,17 @@ from pathlib import Path
 
 import numpy as np
 
-from traqmania.agents.base import action_labels, action_set
-from traqmania.agents.classical import MLPQFunction
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.config import load_config
-from traqmania.env.car import CarPhysics
-from traqmania.env.racing_env import CarObserver
-from traqmania.env.track import TRACKS_DIR, Track
-from traqmania.server import runtime
+from racetraq.agents.base import action_labels, action_set
+from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.config import load_config
+from racetraq.env.car import CarPhysics
+from racetraq.env.racing_env import CarObserver
+from racetraq.env.track import TRACKS_DIR, Track
+from racetraq.server import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
-WEIGHTS_DIR = ROOT / "traqmania" / "weights"
+WEIGHTS_DIR = ROOT / "racetraq" / "weights"
 TRACKS = ("oval", "chicane", "gp", "combo")
 TRACK_NAMES = {"oval": "Oval", "chicane": "Chicane", "gp": "Grand Prix", "combo": "Combo"}
 # multi-track drivers race on every track

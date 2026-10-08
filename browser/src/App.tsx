@@ -77,7 +77,7 @@ export function App() {
     buildRace(manifest, setup).then(
       (built) => {
         if (stale) return;
-        if (import.meta.env.DEV) (window as unknown as { __traqmania: BuiltRace }).__traqmania = built;
+        if (import.meta.env.DEV) (window as unknown as { __racetraq: BuiltRace }).__racetraq = built;
         setRace(built);
         setFocusId(built.focusId);
         setPaused(false);
@@ -172,12 +172,12 @@ export function App() {
   if (error) {
     return (
       <div className="fatal">
-        <h1>traQmania</h1>
+        <h1>racetraQ</h1>
         <p>Could not load the race data: {error}</p>
       </div>
     );
   }
-  if (!manifest) return <div className="loading">Loading traQmania…</div>;
+  if (!manifest) return <div className="loading">Loading racetraQ…</div>;
 
   const world = race?.world;
   const focus = world?.cars.find((c) => c.id === focusId);
@@ -197,7 +197,7 @@ export function App() {
       <header>
         <div className="brand">
           <span className="logo">
-            tra<span className="q">Q</span>mania
+            racetra<span className="q">Q</span>
           </span>
           <span className="edition">browser edition</span>
         </div>
@@ -407,8 +407,8 @@ export function App() {
 
       <footer>
         Inference only: the drivers were trained offline with{' '}
-        <a href="https://github.com/JanLahmann/traQmania" target="_blank" rel="noopener" {...outbound('https://github.com/JanLahmann/traQmania')}>
-          traQmania
+        <a href="https://github.com/JanLahmann/racetraQ" target="_blank" rel="noopener" {...outbound('https://github.com/JanLahmann/racetraQ')}>
+          racetraQ
         </a>{' '}
         (Python, Qiskit). Every circuit is simulated in this browser by{' '}
         <a href="https://qamposer.org" target="_blank" rel="noopener" {...outbound('https://qamposer.org')}>

@@ -16,13 +16,13 @@ import numpy as np
 import pytest
 
 STUDY_PATH = Path(__file__).resolve().parent.parent / "tools" / "study.py"
-_spec = importlib.util.spec_from_file_location("traqmania_study_tool", STUDY_PATH)
+_spec = importlib.util.spec_from_file_location("racetraq_study_tool", STUDY_PATH)
 study = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(study)
 
 
 def test_tool_imports_only_numpy_and_stdlib_at_module_level():
-    # traqmania is loaded inside the cell worker only
+    # racetraq is loaded inside the cell worker only
     tree = ast.parse(STUDY_PATH.read_text(encoding="utf-8"))
     roots = set()
     for node in tree.body:
@@ -284,8 +284,8 @@ def test_weights_config_follows_the_weights_sidecar(tmp_path):
 
 
 def test_greedy_eval_matches_records_on_distinct_episodes():
-    from traqmania import records
-    from traqmania.train_headless import WEIGHTS_DIR, build_qfunc
+    from racetraq import records
+    from racetraq.train_headless import WEIGHTS_DIR, build_qfunc
 
     weights = WEIGHTS_DIR / "quantum_oval.npz"
     spec = {"profile": None, "actions": None, "overrides": ["reward.max_decisions=200"],
@@ -310,7 +310,7 @@ def test_greedy_eval_matches_records_on_distinct_episodes():
 
 
 def test_cell_evaluates_best_snapshot_and_final_params_separately(tmp_path, monkeypatch):
-    import traqmania.train_headless as train_headless
+    import racetraq.train_headless as train_headless
 
     def fake_train(agent, track, episodes, seed, profile, out_dir, history_path, **kwargs):
         # "best snapshot" = the bundled lapping driver, "final params" = all zeros

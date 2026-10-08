@@ -1,4 +1,4 @@
-# The science behind traQmania
+# The science behind racetraQ
 
 What the quantum agent actually is, how it is trained, what runs on real
 hardware, and — importantly — what this demo does and does not show. The
@@ -24,7 +24,7 @@ code; this page is the condensed reference.
 ## The circuit
 
 A data re-uploading variational quantum circuit (VQC) acting as the Q-function
-of a DQN agent. Canonical definition: `traqmania/agents/quantum/circuit.py`
+of a DQN agent. Canonical definition: `racetraq/agents/quantum/circuit.py`
 (single source of truth for the numpy fast path, the Qiskit/`EstimatorQNN`
 path, and the hardware path).
 
@@ -56,7 +56,7 @@ through the gates (Heisenberg picture) and it only meets the gates inside its
 backward *light cone*; everything outside commutes with it and cancels. With
 a nearest-neighbour CZ ring the cone widens by one qubit per block in each
 direction, which gives three exact, purely structural facts
-(`traqmania/agents/quantum/lightcone.py`; `tests/test_lightcone.py` checks
+(`racetraq/agents/quantum/lightcone.py`; `tests/test_lightcone.py` checks
 them against fastsim values and adjoint gradients):
 
 - **The last CZ ring never matters.** It is diagonal and so is Z_a: they
@@ -79,7 +79,7 @@ on qubits 0–3:
 | Features hidden from each action | 0 | 0 | 1 | 3 |
 | Blocks needed for full visibility | 3 | 4 | 5 | 6 |
 
-(`python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4`
+(`python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4`
 prints the full map.) "Dead" is structural: the gate commutes with every
 back-propagated readout, so its angle has exactly zero gradient for every
 input and can never train. At 4 qubits the dead parameters are the four
@@ -469,7 +469,7 @@ to the weights.
 
 ## Hardware
 
-(`traqmania/hardware.py`, via `qiskit-ibm-runtime`. Everything below also
+(`racetraq/hardware.py`, via `qiskit-ibm-runtime`. Everything below also
 runs without an account on a *fake backend*: the calibration snapshot of a
 real IBM device — coupling map, gate and readout errors, T1/T2 — simulated
 locally with Aer.)
@@ -863,10 +863,10 @@ comparable lap times" — is withdrawn. It rested on one to three seeds.
 
 ### The bundled drivers
 
-One seed each (`traqmania/weights/<name>.meta.json`, block `selection`).
+One seed each (`racetraq/weights/<name>.meta.json`, block `selection`).
 "Fresh" is the 72-episode evaluation that chose among the shortlisted
 seeds; "re-check" is 36 episodes on an env seed no selection used
-(`python -m traqmania.records --episodes 36 --seed 47000`, run on
+(`python -m racetraq.records --episodes 36 --seed 47000`, run on
 2026-10-02). Lapped episodes, then mean lap:
 
 | Driver | Qubits × blocks | Seeds in its study | Fresh (72 episodes) | Re-check (36 episodes) |
@@ -905,7 +905,7 @@ drivers come from studies without that recipe.
 
 The files are reproducible. Bundling copies a study cell's weights byte
 for byte, training is deterministic per seed, and the shipped config now
-resolves to the studied recipe: `python -m traqmania.train_headless --agent
+resolves to the studied recipe: `python -m racetraq.train_headless --agent
 quantum --track oval --seed 0 --episodes 800`, run in this tree on
 2026-10-02, reproduced `quantum_oval.npz` bit for bit (the sha256 its
 sidecar records) on the machine the studies ran on.
@@ -1173,7 +1173,7 @@ from actions. **None of them was re-measured, and none is quoted here.**
 and is worth knowing:
 
 - **The feature registry** (`[observation] features`;
-  `traqmania/env/racing_env.py`). Any qubit count can trade lidar rays for
+  `racetraq/env/racing_env.py`). Any qubit count can trade lidar rays for
   engineered scalars, one feature per qubit, all normalized to [0, 1]:
   `rays`, `speed`, `curvature_ahead` (max centerline |κ| over a lookahead
   window; a suffix sets the horizon, e.g. `"curvature_ahead:30"`),
@@ -1189,7 +1189,7 @@ and is worth knowing:
 - **Scaled action sets** (`[circuit] n_actions`, `train_headless
   --actions`). The readout takes Q_a = ⟨Z_a⟩ from the first *k* qubits: 6
   actions add trail braking (full steer + brake), 8 add half-steer
-  (`traqmania/agents/base.py`; prefix-compatible, so the 4-action default
+  (`racetraq/agents/base.py`; prefix-compatible, so the 4-action default
   is unchanged). In July no scaled-action run on gp converged to reliable
   greedy lapping; no weights with more than 4 actions are bundled.
 - **A pace objective** (`[reward] time_penalty`, `train_headless --pace

@@ -1,6 +1,6 @@
 /**
  * The race canvas. The simulation runs here in fixed 60 Hz substeps; the
- * drawing is the server demo's own renderer (traqmania/web/js/race.js), fed
+ * drawing is the server demo's own renderer (racetraq/web/js/race.js), fed
  * the same car messages the demo server broadcasts, at its 20 Hz rate.
  */
 import { useEffect, useRef } from 'react';

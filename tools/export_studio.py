@@ -1,4 +1,4 @@
-"""Build the training studio's comparison data, traqmania/data/studio_stats.json.
+"""Build the training studio's comparison data, racetraq/data/studio_stats.json.
 
 For every (track, qubits) the studio offers, picks the multi-seed study runs
 closest to a studio run (cold start, lidar sensors, 4 actions, the profile's
@@ -30,7 +30,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 STUDIES = ROOT / "data" / "studies"
 CALIBRATION = STUDIES / "studio_calibration.json"
-OUT = ROOT / "traqmania" / "data" / "studio_stats.json"
+OUT = ROOT / "racetraq" / "data" / "studio_stats.json"
 
 # (track, qubits) -> (study, variant): the closest study runs to a studio run.
 # oval/chicane 4q and oval 6q use the live recipe (action gap + acting noise,
@@ -86,9 +86,9 @@ def cell_stats(study: str, variant: str) -> dict:
 def calibrate(seconds: float) -> dict:
     """Live training speed per circuit size on the oval, through the demo
     server's own training path (DemoSession + train start)."""
-    from traqmania.config import load_config
-    from traqmania.server import protocol
-    from traqmania.server.session import DemoSession
+    from racetraq.config import load_config
+    from racetraq.server import protocol
+    from racetraq.server.session import DemoSession
 
     speed = {}
     for n in (4, 6, 8, 10):

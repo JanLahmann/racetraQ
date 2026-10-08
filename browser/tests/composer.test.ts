@@ -25,7 +25,7 @@ describe('composer handoff', () => {
     const reordered = driver.expectations(obs, [...laidOut]);
     const original = driver.expectations(obs, gates);
     reordered.forEach((z, i) => expect(z).toBeCloseTo(original[i], 12));
-    if (process.env.TRAQMANIA_QASM_OUT) writeFileSync(process.env.TRAQMANIA_QASM_OUT, qasm);
+    if (process.env.RACETRAQ_QASM_OUT) writeFileSync(process.env.RACETRAQ_QASM_OUT, qasm);
   });
 
   it('packs the circuit into the ?initial= payload', () => {

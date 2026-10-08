@@ -6,14 +6,14 @@ import json
 
 import numpy as np
 
-from traqmania.agents.base import ACTIONS
-from traqmania.config import load_config
-from traqmania.env.racing_env import CarObserver, RacingEnv
-from traqmania.env.track import Track
-from traqmania.records import discover_drivers, evaluate, load_records, save_record
-from traqmania.server import protocol as P
-from traqmania.server.runtime import WEIGHTS_DIR, weights_observation
-from traqmania.server.session import DemoSession
+from racetraq.agents.base import ACTIONS
+from racetraq.config import load_config
+from racetraq.env.racing_env import CarObserver, RacingEnv
+from racetraq.env.track import Track
+from racetraq.records import discover_drivers, evaluate, load_records, save_record
+from racetraq.server import protocol as P
+from racetraq.server.runtime import WEIGHTS_DIR, weights_observation
+from racetraq.server.session import DemoSession
 
 
 def _feat_config():

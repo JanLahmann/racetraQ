@@ -6,10 +6,10 @@ import pytest
 
 fastapi_testclient = pytest.importorskip("fastapi.testclient")
 
-from traqmania.config import load_config  # noqa: E402
-from traqmania.server import protocol as P  # noqa: E402
-from traqmania.server.app import create_app  # noqa: E402
-from traqmania.server.ws import DriverLock  # noqa: E402
+from racetraq.config import load_config  # noqa: E402
+from racetraq.server import protocol as P  # noqa: E402
+from racetraq.server.app import create_app  # noqa: E402
+from racetraq.server.ws import DriverLock  # noqa: E402
 
 # ------------------------------------------------------------------ unit: lock
 

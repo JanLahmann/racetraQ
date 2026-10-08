@@ -1,6 +1,6 @@
 """Bundle a driver from a multi-seed study: rank the seeds, re-evaluate, write it.
 
-A bundled driver is ``traqmania/weights/<name>.npz`` plus a ``.meta.json``
+A bundled driver is ``racetraq/weights/<name>.npz`` plus a ``.meta.json``
 sidecar.  Picking it by hand from one run reports that run's lucky numbers;
 this tool picks it from a ``tools/study.py`` study by a fixed rule and writes
 down what the choice was made from::
@@ -40,7 +40,7 @@ separately; the choice is by the number of tracks lapped in at least
     python tools/bundle_driver.py --study DIR --list
 
 Only numpy and the standard library are imported at module level (plus the
-sibling ``tools/study.py``, which follows the same rule); ``traqmania`` and,
+sibling ``tools/study.py``, which follows the same rule); ``racetraq`` and,
 for the device path, qiskit are loaded lazily.
 """
 
@@ -64,7 +64,7 @@ import numpy as np
 
 TOOLS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TOOLS_DIR.parent
-DEFAULT_OUT_DIR = REPO_ROOT / "traqmania" / "weights"
+DEFAULT_OUT_DIR = REPO_ROOT / "racetraq" / "weights"
 
 TOP = 3  # candidates re-evaluated on fresh episodes
 EVAL_EPISODES = 72  # fresh distinct greedy episodes per candidate (and per track)
@@ -77,7 +77,7 @@ RESCALE_CHOICES = ("off", "global", "readout")
 
 def _load_tool(name: str):
     """A sibling ``tools/<name>.py`` as a module (``tools`` is not a package)."""
-    spec = importlib.util.spec_from_file_location(f"traqmania_tool_{name}",
+    spec = importlib.util.spec_from_file_location(f"racetraq_tool_{name}",
                                                   TOOLS_DIR / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -213,8 +213,8 @@ def eval_tracks(track: str) -> list[str]:
     """Tracks a fresh eval runs on, one after the other: the four of the
     mixture for ``multi``, else the cell's own track."""
     if track == "multi":
-        study._find_traqmania()
-        from traqmania.train_headless import MULTI_TRACK_NAMES
+        study._find_racetraq()
+        from racetraq.train_headless import MULTI_TRACK_NAMES
 
         return list(MULTI_TRACK_NAMES)
     return [track]
@@ -226,8 +226,8 @@ def evaluate(spec: dict, weights: Path, episodes: int, eval_seed: int,
     episodes per track, under the config the weights drive with: the cell's
     profile and overrides, then the observation / circuit shape / action count
     of the weights' sidecar (``study.weights_config``)."""
-    study._find_traqmania()
-    from traqmania.train_headless import build_qfunc
+    study._find_racetraq()
+    from racetraq.train_headless import build_qfunc
 
     config = study.weights_config(spec, weights)
     max_steps = int(config["reward"]["max_decisions"]) + 1
@@ -307,8 +307,8 @@ def device_eval(spec: dict, weights: Path, args: argparse.Namespace,
     ``backends`` caches the fake backend per qubit count across candidates.
     """
     hw = hw_tool()
-    study._find_traqmania()
-    from traqmania import hardware
+    study._find_racetraq()
+    from racetraq import hardware
 
     config = study.weights_config(spec, weights)
     params = np.load(weights)["params"]

@@ -1,8 +1,8 @@
-# traQmania — browser edition
+# racetraQ — browser edition
 
-**Live: https://janlahmann.github.io/traQmania/**
+**Live: https://racetraq.org/**
 
-The trained traQmania drivers racing entirely in the browser: no Python, no
+The trained racetraQ drivers racing entirely in the browser: no Python, no
 server, no account. A static site you can host anywhere (GitHub Pages,
 qamposer.org, a Raspberry Pi at a workshop) or open from a USB stick through
 any local web server.
@@ -29,11 +29,11 @@ model and no hardware path.
 
 ## How it relates to the Python project
 
-| | server demo (`traqmania/`) | browser edition (`browser/`) |
+| | server demo (`racetraq/`) | browser edition (`browser/`) |
 |---|---|---|
 | track geometry, car physics, observation | numpy | TypeScript port (`src/sim/`) |
 | quantum circuit | numpy fastsim / Aer / IBM runtime | QAMPoser `simulateStatevector` |
-| drawing | `traqmania/web/js/race.js` | the same file, imported unchanged |
+| drawing | `racetraq/web/js/race.js` | the same file, imported unchanged |
 | training, hardware, random/drawn tracks | yes | no |
 
 The port is checked against numpy, not just eyeballed: `tests/parity.test.ts`
@@ -78,8 +78,8 @@ every push to `main` that touches `browser/` (or `race.js`). The build uses
 relative paths, so `dist/` also works from any other web server.
 
 The page loads the Fun with Quantum family's cookie-free
-[Umami](https://umami.is) tracker, restricted to `janlahmann.github.io` by
+[Umami](https://umami.is) tracker, restricted to `racetraq.org` by
 `data-domains` (local dev, previews and self-hosted copies send nothing).
-Events follow the family taxonomy (`traQmania: <what happened>`); the list is
+Events follow the family taxonomy (`racetraQ: <what happened>`); the list is
 in `src/analytics.ts`.
 

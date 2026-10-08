@@ -13,19 +13,19 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import traqmania
-from traqmania.agents.quantum import make_qfunction
-from traqmania.agents.quantum.circuit import circuit_spec
-from traqmania.agents.quantum.fastsim import FastStatevectorSim
-from traqmania.agents.quantum.qdqn import QuantumQFunction
-from traqmania.config import load_config
+import racetraq
+from racetraq.agents.quantum import make_qfunction
+from racetraq.agents.quantum.circuit import circuit_spec
+from racetraq.agents.quantum.fastsim import FastStatevectorSim
+from racetraq.agents.quantum.qdqn import QuantumQFunction
+from racetraq.config import load_config
 
 N_LAYERS = 4
 CFG4 = {"n_qubits": 4, "n_layers": N_LAYERS, "seed": 7}
 CFG6 = {"n_qubits": 6, "n_layers": N_LAYERS, "seed": 7}
 EPS = 1e-6
 
-OVAL_WEIGHTS = Path(traqmania.__file__).resolve().parent / "weights" / "quantum_oval.npz"
+OVAL_WEIGHTS = Path(racetraq.__file__).resolve().parent / "weights" / "quantum_oval.npz"
 
 # ------------------------------------------------------- parameter counts / spec
 
@@ -173,7 +173,7 @@ def test_bundled_oval_weights_regression_at_default_config():
 
 def test_fake_backend_selection_is_qubit_aware():
     pytest.importorskip("qiskit_ibm_runtime")
-    from traqmania import hardware
+    from racetraq import hardware
 
     backend = hardware.get_backend(use_fake=True, min_qubits=6)
     assert backend.num_qubits >= 6
@@ -185,7 +185,7 @@ def test_fake_backend_selection_is_qubit_aware():
 
 def test_hardware_qfunction_runs_at_6_qubits():
     pytest.importorskip("qiskit_ibm_runtime")
-    from traqmania import hardware
+    from racetraq import hardware
 
     backend = hardware.get_backend(use_fake=True, min_qubits=6)
     hw = hardware.HardwareQFunction(CFG6, backend, shots=256)

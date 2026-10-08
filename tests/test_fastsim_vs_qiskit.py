@@ -10,9 +10,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from traqmania.agents.base import QFunction
-from traqmania.agents.quantum import QuantumQFunction, make_qfunction
-from traqmania.agents.quantum.fastsim import FastStatevectorSim
+from racetraq.agents.base import QFunction
+from racetraq.agents.quantum import QuantumQFunction, make_qfunction
+from racetraq.agents.quantum.fastsim import FastStatevectorSim
 
 N_QUBITS = 4
 N_LAYERS = 4

@@ -17,12 +17,12 @@ import pytest
 
 pytest.importorskip("qiskit_ibm_runtime")
 
-from traqmania import hardware  # noqa: E402
-from traqmania.agents.quantum import lightcone  # noqa: E402
-from traqmania.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
-from traqmania.config import load_config  # noqa: E402
-from traqmania.server import protocol as P  # noqa: E402
-from traqmania.server.session import DemoSession  # noqa: E402
+from racetraq import hardware  # noqa: E402
+from racetraq.agents.quantum import lightcone  # noqa: E402
+from racetraq.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
+from racetraq.config import load_config  # noqa: E402
+from racetraq.server import protocol as P  # noqa: E402
+from racetraq.server.session import DemoSession  # noqa: E402
 
 DEADLINE_S = 180.0
 
@@ -262,8 +262,8 @@ def test_hardware_lap_runs_the_drivers_own_depth(tmp_path, monkeypatch):
     its depth (the welcome's circuit_spec shows it) and the lap's circuit is
     the pruned 6-block one — 20 CZ on the Nighthawk patch, not the 12 of the
     profile's 4 blocks."""
-    import traqmania.server.runtime as runtime_mod
-    import traqmania.server.session as session_mod
+    import racetraq.server.runtime as runtime_mod
+    import racetraq.server.session as session_mod
 
     weights = tmp_path / "weights"
     weights.mkdir()

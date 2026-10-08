@@ -3,7 +3,7 @@ sessions (attract/race/train), the universal->gp weight fallback labeling,
 ghost-persistence skipping, and graceful evolution/hardware rejections.
 
 Session tests need the procedural generator and skip cleanly until
-``traqmania.env.trackgen`` lands (the protocol tests always run).
+``racetraq.env.trackgen`` lands (the protocol tests always run).
 """
 
 import re
@@ -11,9 +11,9 @@ import re
 import numpy as np
 import pytest
 
-from traqmania.config import load_config
-from traqmania.server import protocol as P
-from traqmania.server.session import DemoSession, random_track_weights
+from racetraq.config import load_config
+from racetraq.server import protocol as P
+from racetraq.server.session import DemoSession, random_track_weights
 
 
 def make_config(**sections):
@@ -91,7 +91,7 @@ def test_set_track_seed_rejects_garbage(data):
 
 
 def test_random_track_length_presets(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     medium = set_random_track(session, seed=7)
     assert medium["name"] == "random #7"
@@ -107,7 +107,7 @@ def test_random_track_length_presets(tmp_path):
 
 
 def test_random_track_attract_drives_with_honest_fallback(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     payload = set_random_track(session, seed=7)
     assert payload["name"] == "random #7"
@@ -147,7 +147,7 @@ def test_random_track_fallback_driver_keeps_driving(tmp_path, seed):
     """What the random-track button promises: a car that drives.  2 s of motion
     (the test above) is not that — a driver can roll off the line and then
     brake to a stop for good; 40 s in, it must still be moving."""
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     set_random_track(session, seed=seed)
     speeds = []
@@ -159,7 +159,7 @@ def test_random_track_fallback_driver_keeps_driving(tmp_path, seed):
 
 
 def test_random_track_weights_prefer_universal(tmp_path, monkeypatch):
-    import traqmania.server.session as session_mod
+    import racetraq.server.session as session_mod
 
     monkeypatch.setattr(session_mod, "WEIGHTS_DIR", tmp_path)
     # no universal weights bundled -> the gp specialist, labelled honestly
@@ -181,7 +181,7 @@ def test_random_track_weights_prefer_universal(tmp_path, monkeypatch):
 
 
 def test_random_track_reproducible_by_seed(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     first = set_random_track(session, seed=123)
     session.handle_message(P.SetTrack(track="oval"))
@@ -194,7 +194,7 @@ def test_random_track_reproducible_by_seed(tmp_path):
 
 
 def test_random_track_without_seed_rolls_fresh(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     session.handle_message(P.SetTrack(track="random"))
     msgs = session.drain_outbox()
@@ -205,7 +205,7 @@ def test_random_track_without_seed_rolls_fresh(tmp_path):
 
 
 def test_human_race_on_random_track(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     set_random_track(session, seed=21)
     # the UI restarts races naming the current track ("random #21"): kept as-is
@@ -230,7 +230,7 @@ def fake_lap_traj(car, n_points=40):
 
 
 def test_no_ghost_persisted_on_random_track(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     set_random_track(session, seed=11)
     for _ in range(120):
@@ -255,7 +255,7 @@ def test_no_ghost_persisted_on_random_track(tmp_path):
 
 
 def test_train_starts_on_random_track(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     config = make_config(
         reward={"max_decisions": 50},
         training={"n_parallel_envs": 4, "replay_size": 2000, "batch_size": 16},
@@ -276,7 +276,7 @@ def test_train_starts_on_random_track(tmp_path):
 
 
 def test_evolution_and_hardware_rejected_on_random_track(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     set_random_track(session, seed=3)
     for mode in ("evolution", "hardware"):
@@ -297,7 +297,7 @@ def test_evolution_and_hardware_rejected_on_random_track(tmp_path):
 
 
 def test_set_track_back_to_oval_restores_normal(tmp_path):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session = make_session(tmp_path)
     set_random_track(session, seed=9)
     session.handle_message(P.SetTrack(track="oval"))

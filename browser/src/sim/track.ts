@@ -1,5 +1,5 @@
 /**
- * Track geometry — a line-by-line port of traqmania/env/track.py.
+ * Track geometry — a line-by-line port of racetraq/env/track.py.
  *
  * The raw centerline is resampled to ~uniform arc-length spacing; tangents,
  * left normals, unsigned curvature and the two boundary polylines are

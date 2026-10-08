@@ -3,9 +3,9 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "traqmania"
+name = "racetraq"
 version = "0.1.0"
-description = "traQmania — a quantum reinforcement learning racing demo (Trackmania-style, Qiskit-powered)"
+description = "racetraQ — a quantum reinforcement learning racing demo (Qiskit-powered)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Jan Lahmann" }]
@@ -28,13 +28,13 @@ notebooks = ["jupyter", "matplotlib", "pylatexenc"]
 dev = ["pytest>=8", "ruff>=0.16,<0.17", "httpx>=0.27", "pytest-asyncio>=0.24"]
 
 [project.scripts]
-traqmania = "traqmania.__main__:main"
+racetraq = "racetraq.__main__:main"
 
 [tool.setuptools.packages.find]
-include = ["traqmania*"]
+include = ["racetraq*"]
 
 [tool.setuptools.package-data]
-traqmania = [
+racetraq = [
     "config/*.toml", "env/tracks/*.json", "weights/*.npz", "weights/*.json",
     "data/ghosts/*.json", "data/*.json",
     "web/*.html", "web/css/*.css", "web/js/*.js",

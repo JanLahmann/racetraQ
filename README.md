@@ -1,9 +1,9 @@
-# traQmania 🏎️
+# racetraQ 🏎️
 
-**A quantum reinforcement learning demo, Trackmania-style.** Watch a variational
+**A quantum reinforcement learning racing demo.** Watch a variational
 quantum circuit learn to race — then grab the keyboard and try to beat it.
 
-![traQmania demo: attract mode, live quantum training, and race mode](docs/traqmania-hero.gif)
+![racetraQ demo: attract mode, live quantum training, and race mode](docs/racetraq-hero.gif)
 
 - Quantum Deep Q-Learning (4 qubits / 56 trainable parameters by default; a
   trained 6-qubit / 80-parameter variant ships behind `--profile q6`) built on
@@ -43,7 +43,7 @@ quantum circuit learn to race — then grab the keyboard and try to beat it.
 Or with Docker (multi-arch, works on a Pi):
 
 ```sh
-docker run --rm -p 8000:8000 ghcr.io/janlahmann/traqmania
+docker run --rm -p 8000:8000 ghcr.io/janlahmann/racetraq
 ```
 
 Beyond the UI, from a source checkout:
@@ -51,10 +51,10 @@ Beyond the UI, from a source checkout:
 ```sh
 # Train a driver (recipe: [training], the track's preset, then the agent's
 # preset for that track). Without --out the bundled weights are overwritten.
-python -m traqmania.train_headless --agent quantum --track gp --seed 0 --out runs/gp
+python -m racetraq.train_headless --agent quantum --track gp --seed 0 --out runs/gp
 # Any config value can be overridden; --save-final keeps the end-of-training
 # parameters next to the best snapshot, --preset none skips the presets.
-python -m traqmania.train_headless --agent quantum --track gp --out runs/gp-huber \
+python -m racetraq.train_headless --agent quantum --track gp --out runs/gp-huber \
     --set training.loss=huber --set training.target_update=soft --save-final
 
 # One run is an anecdote: a (variant x seed) study with interval statistics.
@@ -69,26 +69,26 @@ python tools/bundle_driver.py --study runs/study-gp --variant base --name quantu
 python tools/export_study.py runs/study-gp --name my_gp_study --out runs/summaries
 
 # What can each action's readout see at this size and depth?
-python -m traqmania.agents.quantum.lightcone --qubits 10 --layers 4
+python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4
 
 # A lap on a simulated IBM device (pip install -e ".[hardware]").
-python -m traqmania.hardware lap --track oval --profile q6 --fake
-python -m traqmania.hardware lap --track chicane --fake-name fake_fez --resilience 1
-python -m traqmania.hardware lap --track oval --profile q6 --fake --no-prune
+python -m racetraq.hardware lap --track oval --profile q6 --fake
+python -m racetraq.hardware lap --track chicane --fake-name fake_fez --resilience 1
+python -m racetraq.hardware lap --track oval --profile q6 --fake --no-prune
 # The same lap with a per-readout rescale (one extra calibration job), and a
 # guarded SPSA sprint on the output head.
-python -m traqmania.hardware lap --track oval --profile q6 --fake --rescale readout
-python -m traqmania.hardware sprint --track oval --fake --iterations 10
+python -m racetraq.hardware lap --track oval --profile q6 --fake --rescale readout
+python -m racetraq.hardware sprint --track oval --fake --iterations 10
 
 # On oval and chicane the quantum recipe trains for device noise (wider
 # action gaps, acting under emulated noise). Count laps under noise:
 # emulated, and on the simulated device.
-python -m traqmania.train_headless --agent quantum --track oval --seed 0 --episodes 800 --out runs/oval
+python -m racetraq.train_headless --agent quantum --track oval --seed 0 --episodes 800 --out runs/oval
 python tools/hw_reliability.py --weights runs/oval/quantum_oval.npz --track oval \
     --shots 1024 --rescale off --resilience 0 --device-episodes 12
 
 # Every bundled driver on every track, 36 fresh episodes per cell.
-python -m traqmania.records --episodes 36 --seed 47000 --out runs/records.json
+python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
 ```
 
 ## Notebooks
@@ -99,13 +99,13 @@ images with Qiskit preinstalled):
 
 | Notebook | What it covers | Launch |
 |---|---|---|
-| [01 — The racing environment](notebooks/01_the_racing_env.ipynb) | tracks, car physics (why you must brake for hairpins), lidar, reward, a scripted lap | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/01_the_racing_env.ipynb) |
-| [02 — Q-learning from scratch](notebooks/02_q_learning_from_scratch.ipynb) | MDPs, double DQN in pure numpy, a 76-parameter MLP learns to lap in seconds | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/02_q_learning_from_scratch.ipynb) |
-| [03 — Quantum circuits as Q-functions](notebooks/03_quantum_circuits_as_q_functions.ipynb) | the data re-uploading VQC, expressivity, fastsim ≡ `EstimatorQNN`, light cones and dead parameters, adjoint vs param-shift | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/03_quantum_circuits_as_q_functions.ipynb) |
-| [04 — Training the quantum driver](notebooks/04_training_the_quantum_driver.ipynb) | one live quantum-vs-classical training run, then the same recipes over 8–10 seeds with interval statistics, the stabilisation study on gp, and how a run becomes the bundled driver | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/04_training_the_quantum_driver.ipynb) |
-| [05 — Real quantum hardware](notebooks/05_real_quantum_hardware.ipynb) | the simulated Nighthawk device, transpilation, device noise and mitigation, noise-aware training, the guarded SPSA sprint, and laps on simulated IBM Quantum devices | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/05_real_quantum_hardware.ipynb) |
-| [06 — More qubits or better features?](notebooks/06_scaling_and_features.ipynb) | what a wider circuit changes (observation, parameters, light cone), oval and chicane at 4, 6 and 8 qubits against matched MLPs over many seeds, 8 qubits at 4 against 5 blocks, gp at 10 qubits, and what the July feature experiments did and did not show | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/06_scaling_and_features.ipynb) |
-| [07 — Light cones and classical surrogates](notebooks/07_light_cones_and_classical_surrogates.ipynb) | what each action's readout can see (blind spots, dead parameters, the pruned hardware circuit), the trained driver as an exact Fourier series (and how little of the allowed spectrum it uses), classical RFF/kernel surrogates fitted from samples that drive its laps, with controls — and what that does and does not mean | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/traQmania&branch=main&path=notebooks/07_light_cones_and_classical_surrogates.ipynb) |
+| [01 — The racing environment](notebooks/01_the_racing_env.ipynb) | tracks, car physics (why you must brake for hairpins), lidar, reward, a scripted lap | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/01_the_racing_env.ipynb) |
+| [02 — Q-learning from scratch](notebooks/02_q_learning_from_scratch.ipynb) | MDPs, double DQN in pure numpy, a 76-parameter MLP learns to lap in seconds | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/02_q_learning_from_scratch.ipynb) |
+| [03 — Quantum circuits as Q-functions](notebooks/03_quantum_circuits_as_q_functions.ipynb) | the data re-uploading VQC, expressivity, fastsim ≡ `EstimatorQNN`, light cones and dead parameters, adjoint vs param-shift | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/03_quantum_circuits_as_q_functions.ipynb) |
+| [04 — Training the quantum driver](notebooks/04_training_the_quantum_driver.ipynb) | one live quantum-vs-classical training run, then the same recipes over 8–10 seeds with interval statistics, the stabilisation study on gp, and how a run becomes the bundled driver | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/04_training_the_quantum_driver.ipynb) |
+| [05 — Real quantum hardware](notebooks/05_real_quantum_hardware.ipynb) | the simulated Nighthawk device, transpilation, device noise and mitigation, noise-aware training, the guarded SPSA sprint, and laps on simulated IBM Quantum devices | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/05_real_quantum_hardware.ipynb) |
+| [06 — More qubits or better features?](notebooks/06_scaling_and_features.ipynb) | what a wider circuit changes (observation, parameters, light cone), oval and chicane at 4, 6 and 8 qubits against matched MLPs over many seeds, 8 qubits at 4 against 5 blocks, gp at 10 qubits, and what the July feature experiments did and did not show | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/06_scaling_and_features.ipynb) |
+| [07 — Light cones and classical surrogates](notebooks/07_light_cones_and_classical_surrogates.ipynb) | what each action's readout can see (blind spots, dead parameters, the pruned hardware circuit), the trained driver as an exact Fourier series (and how little of the allowed spectrum it uses), classical RFF/kernel surrogates fitted from samples that drive its laps, with controls — and what that does and does not mean | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/07_light_cones_and_classical_surrogates.ipynb) |
 
 ## Measured results (October 2026, multi-seed)
 
@@ -152,8 +152,8 @@ seed each, picked from those studies by a fixed rule
 ranks before pace in that choice (the bundled combo MLP is a 36.9 s seed
 that lapped every time, not the 25.6 s seed that missed one episode in
 72). The rule, the spread over seeds and the fresh evaluation
-are recorded in each `traqmania/weights/<name>.meta.json`;
-`python -m traqmania.records` evaluates every bundled driver on every
+are recorded in each `racetraq/weights/<name>.meta.json`;
+`python -m racetraq.records` evaluates every bundled driver on every
 track.
 
 **Training stability.** A 29-variant study on gp (6–10 seeds each) found no
@@ -189,7 +189,7 @@ Why don't more qubits buy faster laps? Part of the answer was inside the
 circuit. With 4 re-uploading blocks and a nearest-neighbour CZ ring, each
 action's readout only sees inputs within 3 qubits of its own, so at 8
 qubits every action is blind to one input (Brake cannot see speed) and at
-10 qubits to three; `python -m traqmania.agents.quantum.lightcone` prints
+10 qubits to three; `python -m racetraq.agents.quantum.lightcone` prints
 the map. Giving the 8-qubit circuit a fifth block made its end-of-training
 parameters lap more often on the oval (0.88 [0.62, 0.99] of the test
 episodes against 0.36 [0.05, 0.60] — the one supported difference of ten
@@ -321,7 +321,7 @@ side panel shows every decision — sensors, the live circuit, ⟨Z⟩ of each q
 the Q-values — with a one-click handoff of any decision's circuit to IBM Quantum
 Composer. Inference only (watch, race, learning snapshots; no training, noise
 or hardware), checked action for action against the Python implementation.
-Live at **https://janlahmann.github.io/traQmania/** — see
+Live at **https://racetraq.org/** — see
 [browser/README.md](browser/README.md).
 
 ## Documentation

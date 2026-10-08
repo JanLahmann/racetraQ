@@ -2,9 +2,9 @@
 
 import pytest
 
-from traqmania.config import load_config
-from traqmania.server import protocol as P
-from traqmania.server.session import DemoSession
+from racetraq.config import load_config
+from racetraq.server import protocol as P
+from racetraq.server.session import DemoSession
 
 
 @pytest.fixture()
@@ -86,7 +86,7 @@ def test_hero_driver_laps_without_weights(session):
 def test_pro_driver_laps(session):
     # the biggest classical agent: same DQN recipe, more parameters,
     # rich observation; bundled as mlp_pro.npz
-    from traqmania.server.session import WEIGHTS_DIR
+    from racetraq.server.session import WEIGHTS_DIR
 
     if not (WEIGHTS_DIR / "mlp_pro.npz").is_file():
         pytest.skip("no bundled pro weights")
@@ -103,7 +103,7 @@ def test_pro_driver_laps(session):
 
 
 def test_hero_driver_on_generated_track(session):
-    pytest.importorskip("traqmania.env.trackgen")
+    pytest.importorskip("racetraq.env.trackgen")
     session.handle_message(P.SetDriver(driver="hero"))
     session.handle_message(P.SetTrack(track="random", seed=99))
     msgs = session.drain_outbox()

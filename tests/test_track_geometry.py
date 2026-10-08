@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from traqmania.env.track import Track
+from racetraq.env.track import Track
 
 TRACK_NAMES = ["oval", "chicane", "gp", "combo"]
 

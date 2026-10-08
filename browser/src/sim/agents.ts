@@ -1,14 +1,14 @@
 /**
- * The two Q-function families of traQmania, inference only.
+ * The two Q-function families of racetraQ, inference only.
  *
  * QuantumDriver runs the canonical data re-uploading circuit
- * (traqmania/agents/quantum/circuit.py) on QAMPoser's in-browser state-vector
+ * (racetraq/agents/quantum/circuit.py) on QAMPoser's in-browser state-vector
  * simulator: per block l, RY(lam[l,i] * s_i) encodes feature i on qubit i,
  * RY(theta[l,i,0]) RZ(theta[l,i,1]) is the trainable layer, then a CZ ring.
  * Readout: Q_a = w[a] * <Z_a> + b[a] on the first n_actions qubits.
  *
  * MlpDriver is the classical baseline: tanh hidden layer, linear output
- * (traqmania/agents/classical/mlp.py).
+ * (racetraq/agents/classical/mlp.py).
  */
 import { expectationZ, simulateStatevector, type SimulationGate } from '@qamposer/react';
 import type { ObservationConfig } from './observer';

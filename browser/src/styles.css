@@ -1,4 +1,4 @@
-/* traQmania browser edition — the dark exhibit look of the server demo. */
+/* racetraQ browser edition — the dark exhibit look of the server demo. */
 :root {
   --bg: #0f1117;
   --bg-panel: #161a22;
@@ -439,7 +439,7 @@ main {
   border-radius: 8px;
   overflow: hidden;
 }
-/* traQmania reads <Z> directly; the classical register row adds nothing */
+/* racetraQ reads <Z> directly; the classical register row adds nothing */
 .circuit-view .circuit-editor__lane--classical,
 .circuit-view .circuit-editor__lane-label--classical {
   display: none;

@@ -20,13 +20,13 @@ import pytest
 
 qiskit_ibm_runtime = pytest.importorskip("qiskit_ibm_runtime")
 
-from traqmania import hardware  # noqa: E402
-from traqmania.agents.quantum import lightcone  # noqa: E402
-from traqmania.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
-from traqmania.agents.training import spsa  # noqa: E402
-from traqmania.config import load_config  # noqa: E402
-from traqmania.env.racing_env import RacingEnv  # noqa: E402
-from traqmania.env.track import Track  # noqa: E402
+from racetraq import hardware  # noqa: E402
+from racetraq.agents.quantum import lightcone  # noqa: E402
+from racetraq.agents.quantum.qdqn import QuantumQFunction  # noqa: E402
+from racetraq.agents.training import spsa  # noqa: E402
+from racetraq.config import load_config  # noqa: E402
+from racetraq.env.racing_env import RacingEnv  # noqa: E402
+from racetraq.env.track import Track  # noqa: E402
 
 CIRCUIT_CFG = {"n_qubits": 4, "n_layers": 4, "seed": 7}
 OVAL_WEIGHTS = hardware.WEIGHTS_DIR / "quantum_oval.npz"
