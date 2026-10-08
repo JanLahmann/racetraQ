@@ -3,7 +3,7 @@
 **A quantum reinforcement learning racing demo.** Watch a variational
 quantum circuit learn to race — then grab the keyboard and try to beat it.
 
-![racetraQ demo: attract mode, live quantum training, and race mode](docs/racetraq-hero.gif)
+![racetraQ demo: the 4-qubit quantum driver laps the gp track, with its live qubit readout, Q-values and circuit](docs/racetraq-hero.gif)
 
 - Quantum Deep Q-Learning (4 qubits / 56 trainable parameters by default; a
   trained 6-qubit / 80-parameter variant ships behind `--profile q6`) built on
@@ -277,9 +277,8 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
 - **Surprise tracks**: pick 🎲 random in the track menu for a procedurally
   generated track with real hairpins and chicanes — fresh every roll, or type a
   seed to reload a favourite, with short/medium/long size presets. The car
-  defaults to the universal driver, which currently does not lap generated
-  tracks (see above) — pick **gp** in the driver menu, which lapped all ten
-  we tested.
+  defaults to the universal driver, which lapped every generated track we
+  tested (see above), as does the **gp** specialist in the driver menu.
 - **Draw your own**: hit ✏️ and sketch a loop right on the race view — the
   server smooths it into a drivable track and the agent takes it on (same
   driver default, same advice: pick **gp**). Impossible drawings (open

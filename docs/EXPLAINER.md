@@ -138,8 +138,8 @@ the first clean lap land within minutes on the oval (on a Raspberry Pi, tick
 *warm start*). **Evolution** races four snapshots of one training run against
 each other. **Race** it yourself with the arrow keys — most first-timers
 lose. **Hardware** runs a lap on the simulated device. Roll a random track or
-draw your own, and pick the *gp* driver, which laps tracks it has never seen;
-the default *universal* driver currently stops on them, a known open item.
+draw your own: the default *universal* driver and the *gp* driver both lap
+tracks they have never seen.
 
 The seven notebooks launch in a browser with nothing installed and build the
 whole stack from scratch: environment, classical driver, quantum circuit and

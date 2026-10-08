@@ -215,11 +215,10 @@ A narrative that works cold, in order. Controls for the race segment:
   specialist on the oval to show zero-shot transfer, or pick *universal* (one
   circuit trained on all four tracks at once).
 - **Surprise tracks (🎲 random):** every roll is a fresh procedurally
-  generated circuit with hairpins and chicanes. **Set the Driver dropdown
-  to *gp* first.** By default the universal weights drive it, and the
-  universal driver bundled since October 2026 laps the four bundled tracks
-  but none of the ten generated tracks we tested (0 of 120 episodes); the
-  gp specialist lapped all ten (120 of 120), at 30–40 s a lap. Type a seed
+  generated circuit with hairpins and chicanes. By default the universal
+  weights drive it; the universal driver bundled since October 2026 (seed 3)
+  lapped all ten generated tracks we tested (120 of 120 episodes), and so did
+  the gp specialist, at 30–40 s a lap. Type a seed
   (shown in the track label) to reload a favourite; the size dropdown gives
   short/medium/long layouts. Long tracks are for driving and watching, not
   training.
