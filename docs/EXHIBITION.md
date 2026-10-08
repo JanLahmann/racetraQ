@@ -253,6 +253,25 @@ A narrative that works cold, in order. Controls for the race segment:
   times get worse again after a good lap: that is real. This kind of
   training is not stable on the hard tracks, which is why the saved driver
   is the best snapshot along the way, not the last one.
+- **Studio:** the hands-on station. A visitor types a name, picks track,
+  qubits, sensors and action set, and presses Start; training runs at most
+  5 minutes (`[studio] time_limit_s`) and usually ends sooner on the easy
+  tracks — once the best test laps all 12 test drives and six more tests
+  bring no improvement. While it runs, the exhibit does not idle back to
+  Watch. Measured on an M1 Max laptop: 4 qubits on the oval lap within
+  ~20–30 s and finish in about 2 minutes; 6 qubits ~25–45 s to a first lap; 8
+  qubits ~2 minutes; 10 qubits ~9 minutes — so 10 qubits will not lap in
+  one turn (the setup screen says so), and the hard tracks (gp, combo) need
+  a few minutes and may not lap at all. On a Raspberry Pi training is
+  slower (not measured for the studio): try a run before the visitors come,
+  and raise `time_limit_s` or steer them to 4 qubits. The result screen compares
+  the run with the study runs of the same track and size ("your first lap
+  came sooner than 9 of 10 study runs"); choices no study covers (corner
+  sensors, 6/8 actions, warm start) are labelled experiments. Then "Race
+  your model" — a visitor racing the circuit they just trained is the best
+  moment of the booth. The studio board (one per track) ranks named runs
+  that lapped: share of test drives lapped first, then mean lap time.
+  Clear it by deleting `traqmania/data/leaderboard/studio_<track>.json`.
 - **Evolution:** all cars run the identical architecture; only the training
   amount differs. Labels show "ep N" for mid-training checkpoints and "best"
   for the shipped driver. Tracks without stage snapshots show just two cars:

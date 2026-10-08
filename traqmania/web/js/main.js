@@ -11,6 +11,7 @@ import { initDraw } from "./draw.js";
 import { initExplain } from "./explain.js";
 import { initHardwarePanel } from "./hardware-panel.js";
 import { initTooltips } from "./tooltip.js";
+import { initStudioPanel } from "./studio-panel.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -43,6 +44,25 @@ const attract = new AttractManager({
 });
 
 initExplain($("#panel-explain"));
+const studioPanel = initStudioPanel({
+  root: $("#panel-studio"),
+  send: net.studioCmd,
+  setName: (name) => {
+    net.setName(name);
+    $("#race-name").value = name;
+  },
+  onStart: () => {
+    chart.reset();
+    lapChart.reset();
+    episodeByAgent.clear();
+    renderEpisodeOverlay();
+  },
+  onPhase: (phase) => {
+    attract.setBusy(phase === "training");
+    setInputActive(state.mode === "race" || (state.mode === "studio" && phase === "race"));
+    renderEpisodeOverlay();
+  },
+});
 const hardwarePanel = initHardwarePanel();
 initInput(() => attract.notifyActivity(), {
   onGamepadChange: (connected) => {
@@ -83,7 +103,7 @@ function applyMode(mode) {
   }
   $("#race-controls").hidden = mode !== "race";
   $("#driver-picker").hidden = mode !== "attract";
-  setInputActive(mode === "race");
+  setInputActive(mode === "race" || (mode === "studio" && studioPanel.phase === "race"));
   attract.setMode(mode);
   renderer.setMode(mode);
   $("#evo-caption").hidden = mode !== "evolution";
@@ -91,6 +111,7 @@ function applyMode(mode) {
   evoLegendKey = "";
   renderEpisodeOverlay();
   if (mode === "train") selectTab("training");
+  else if (mode === "studio") selectTab("studio");
   else if (mode === "hardware") selectTab("hardware");
   else if (mode === "attract" || mode === "evolution") selectTab("quantum");
 }
@@ -106,6 +127,7 @@ function selectTab(name) {
 
 function applyTrack(payload) {
   state.trackName = payload.name;
+  studioPanel.setTrack(payload.name);
   state.bestLaps.clear();
   renderer.setTrack(payload);
   const sel = $("#track-select");
@@ -278,7 +300,9 @@ const episodeByAgent = new Map(); // agent -> latest episode
 
 function renderEpisodeOverlay() {
   const el = $("#episode-overlay");
-  if (state.mode !== "train" || episodeByAgent.size === 0) {
+  const training = state.mode === "train" ||
+    (state.mode === "studio" && studioPanel.phase === "training");
+  if (!training || episodeByAgent.size === 0) {
     el.hidden = true;
     return;
   }
@@ -404,6 +428,8 @@ net.on("quantum", (msg) => quantumPanel.update(msg));
 
 net.on("hardware_status", (msg) => hardwarePanel.handleStatus(msg));
 
+net.on("studio", (msg) => studioPanel.handleStatus(msg));
+
 net.on("telemetry", (msg) => {
   chart.addPoint(msg.agent, msg.episode, msg.mean_return, msg.epsilon);
   if (msg.lap_times !== undefined || msg.best_lap_s != null) {
@@ -462,6 +488,7 @@ const MODE_FOR_BUTTON = {
   evolution: "evolution",
   race: "race",
   hardware: "hardware",
+  studio: "studio",
 };
 
 for (const btn of document.querySelectorAll(".mode-btn")) {

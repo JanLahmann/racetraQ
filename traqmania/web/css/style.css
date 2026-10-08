@@ -1088,3 +1088,115 @@ body.kiosk .caption {
     overflow: auto;
   }
 }
+
+/* -- training studio ------------------------------------------------------- */
+
+#panel-studio h3 {
+  font-size: 13px;
+  margin: 12px 0 6px;
+}
+#panel-studio .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#panel-studio .chip {
+  border-radius: 999px;
+  padding: 3px 12px;
+  min-width: 40px;
+}
+#panel-studio .chip.active {
+  border-color: var(--quantum);
+  background: rgba(122, 92, 255, 0.22);
+  color: var(--text);
+}
+#panel-studio .studio-step .hint {
+  margin: 4px 0 0;
+}
+.studio-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+.studio-name span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.studio-name input {
+  flex: 1;
+}
+.studio-summary {
+  margin: 14px 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-inset);
+  font-size: 13px;
+}
+.studio-timer {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.studio-timer-fill {
+  height: 100%;
+  background: var(--quantum);
+  transition: width 0.4s linear;
+}
+.studio-big {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 6px 0;
+  font-variant-numeric: tabular-nums;
+}
+.studio-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.studio-facts dt {
+  color: var(--muted);
+}
+.studio-facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.studio-rank {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f5d76e;
+}
+.studio-board {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.studio-board th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 2px 6px 2px 0;
+}
+.studio-board td {
+  padding: 2px 6px 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+.studio-name input {
+  font: inherit;
+  background: var(--bg-inset);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+#panel-studio label.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+}

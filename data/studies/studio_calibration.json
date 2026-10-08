@@ -1,0 +1,27 @@
+{
+ "machine": "Apple M1 Max",
+ "date": "2026-10-08",
+ "track": "oval",
+ "speed": {
+  "4": {
+   "s_per_episode": 0.0948,
+   "episodes": 633,
+   "seconds": 60
+  },
+  "6": {
+   "s_per_episode": 0.176,
+   "episodes": 341,
+   "seconds": 60
+  },
+  "8": {
+   "s_per_episode": 0.4444,
+   "episodes": 135,
+   "seconds": 60
+  },
+  "10": {
+   "s_per_episode": 1.8182,
+   "episodes": 33,
+   "seconds": 60
+  }
+ }
+}

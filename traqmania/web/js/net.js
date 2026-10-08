@@ -126,3 +126,7 @@ export function hardwareCmd(action, opts = {}) {
   if (opts.shots !== undefined) msg.shots = opts.shots;
   return send("hardware", msg);
 }
+
+/** Training studio (#29): action start | stop | race | watch | result | setup;
+ *  start carries {track, qubits, sensors, actions, warm}. */
+export const studioCmd = (action, opts = {}) => send("studio", { action, ...opts });

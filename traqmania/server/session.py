@@ -58,6 +58,7 @@ from traqmania.server.runtime import (
     weights_circuit,
     weights_observation,
 )
+from traqmania.server.studio import StudioController
 
 _log = logging.getLogger(__name__)
 
@@ -179,6 +180,7 @@ class TrainingJob:
     lap_times: list = field(default_factory=list)  # [episode, lap_s] pairs, last <= 50
     best_lap_s: float | None = None
     best_announced: float | None = None  # last best_lap_s emitted as new_best_lap
+    first_lap_episode: int | None = None  # 1-based episode of the first completed lap
 
 
 @dataclass
@@ -249,6 +251,9 @@ class _TrainingLapMonitor:
             times = np.asarray(info["last_lap_time"])[lap_done]
             job = self.job
             with job.lock:
+                if job.first_lap_episode is None:
+                    # a completed lap is clean: leaving the track ends the episode
+                    job.first_lap_episode = self.episodes_done + 1
                 for lap_s in times:
                     if math.isnan(lap_s):
                         continue
@@ -299,6 +304,7 @@ class DemoSession:
         self._board = load_leaderboard(self.track_name, self._leaderboard_dir)
         self.cars: list[_Car] = []
         self.jobs: dict[str, TrainingJob] = {}
+        self.studio = StudioController(self)
         self._enter_attract()
 
     def _apply_config(self, config: dict) -> None:
@@ -502,6 +508,12 @@ class DemoSession:
             self._handle_qubits(msg)
         elif isinstance(msg, protocol.SetDriver):
             self._handle_driver(msg)
+        elif isinstance(msg, protocol.Studio):
+            if self.mode != "studio":
+                self._leave_studio()
+                self.stop_training()
+                self._abandon_hardware()
+            self.studio.handle(msg)
         elif isinstance(msg, protocol.HardwareMsg):
             self._handle_hardware(msg)
         else:
@@ -627,12 +639,16 @@ class DemoSession:
         if reason is not None:  # reject the switch; stay in the previous mode
             self._error(f"cannot switch to '{mode}' mode: {reason}")
             return
+        if mode != "studio":
+            self._leave_studio()
         if mode != "train":
             self.stop_training()
         if mode != "hardware":
             self._abandon_hardware()
         self.mode = mode
-        if mode == "attract":
+        if mode == "studio":
+            self.studio.enter()
+        elif mode == "attract":
             self._enter_attract()
         elif mode == "race":
             self._enter_race("quantum")
@@ -778,11 +794,25 @@ class DemoSession:
         if self._hardware_alive():
             self._error("cannot change qubit count while a hardware job is running")
             return
+        self._leave_studio()
         try:
-            config = load_config() if msg.n == 4 else load_config(f"q{msg.n}")
+            self._apply_profile(msg.n, broadcast=False)
         except FileNotFoundError:
             self._error(f"unknown qubit count {msg.n} (no packaged q{msg.n} profile)")
             return
+        self._abandon_hardware()
+        if self.driver not in self.available_drivers():
+            self.driver = "auto"  # picked training isn't bundled at this size
+        self.mode = "attract"
+        self._enter_attract()  # graceful car-less fallback when q{n} is untrained
+        self._outbox.append(self.welcome_payload())
+
+    def _apply_profile(self, n: int, broadcast: bool = True) -> None:
+        """Take ``[circuit]`` and ``[observation]`` from the packaged q{n}
+        profile (the plain default config at n=4), every other section as the
+        server was started, and rebuild the config-derived state in place.
+        Raises FileNotFoundError for a size without a packaged profile."""
+        config = load_config() if n == 4 else load_config(f"q{n}")
         for section, value in self._startup_config.items():
             if section not in ("circuit", "observation"):  # the size switch itself
                 config[section] = copy.deepcopy(value)
@@ -792,12 +822,13 @@ class DemoSession:
             self._ghost = load_ghost(self.track_name, self._ghosts_dir)
         self._agent_cache.clear()  # cached qfuncs were built for the old circuit
         self._last_quantum_emit.clear()
-        self._abandon_hardware()
-        if self.driver not in self.available_drivers():
-            self.driver = "auto"  # picked training isn't bundled at this size
-        self.mode = "attract"
-        self._enter_attract()  # graceful car-less fallback when q{n} is untrained
-        self._outbox.append(self.welcome_payload())
+        if broadcast:
+            self._outbox.append(self.welcome_payload())
+
+    def _leave_studio(self) -> None:
+        """Any other mode or setting takes over: wind the studio down."""
+        if self.mode == "studio" or self.studio.config_changed:
+            self.studio.leave()
 
     def _enter_attract(self) -> None:
         # the reference drivers bring no quantum circuit: profile settings
@@ -901,6 +932,7 @@ class DemoSession:
             if reason is not None:  # reject; stay in the previous mode
                 self._error(f"cannot start race: {reason}")
                 return
+            self._leave_studio()
             self.stop_training()
             self.mode = "race"
             self._enter_race(msg.opponent)
@@ -919,6 +951,7 @@ class DemoSession:
         if self._training_alive():
             self._error("training is already running")
             return
+        self._leave_studio()
         if msg.track is not None and not self._set_track(msg.track):
             return
         self.mode = "train"
@@ -1288,6 +1321,8 @@ class DemoSession:
             self._tick_hardware()
         if self.mode == "train":
             self._tick_train()
+        elif self.mode == "studio":
+            self.studio.tick()
         elif self.mode == "hardware" and self._hw_replay is None:
             pass  # idle car waits at the start line until a replay begins
         else:
@@ -1541,7 +1576,7 @@ class DemoSession:
     # ------------------------------------------------------------ broadcasting
 
     def _emit_state(self) -> None:
-        if self.mode == "train":
+        if self.mode == "train" or (self.mode == "studio" and self.jobs):
             cars = self._train_car_payloads()
         else:
             cars = [self._car_payload(car) for car in self.cars]

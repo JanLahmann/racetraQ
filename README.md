@@ -290,6 +290,15 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
   run that does not lap yet).
 - **Race**: arrow keys / WASD or a gamepad (analog steering, trigger
   throttle/brake) — race the quantum agent.
+- **Studio**: build and train your own quantum driver — pick the track, 4–10
+  qubits, the sensors (lidar + speed, or lidar + corner speed) and 4, 6 or 8
+  actions, optionally warm-start, and train it live for at most 5 minutes
+  (sooner once it passes every test drive and stops improving). The result
+  shows when it first lapped and how its best test compares with the study
+  runs of the same track and size; then race it or watch it drive, and named
+  runs that lap enter a per-track booth board. Estimates on the setup screen
+  come from the studies and the measured training speed: up to 8 qubits a
+  first lap fits in the 5 minutes on a laptop, 10 qubits (~9 min) does not.
 - **Evolution**: training snapshots of the same quantum agent race each other
   (three mid-training checkpoints plus the shipped best driver) — watch the
   policy improve across checkpoints.

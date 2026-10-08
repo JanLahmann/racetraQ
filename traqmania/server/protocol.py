@@ -11,15 +11,18 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, ClassVar
 
-MODES = ("attract", "train", "race", "evolution", "hardware")
+MODES = ("attract", "train", "race", "evolution", "hardware", "studio")
 TRACK_LENGTHS = ("short", "medium", "long")  # generated-track size presets
 TRAIN_AGENTS = ("quantum", "mlp", "both")
 OPPONENTS = ("quantum", "mlp")
 TRAIN_ACTIONS = ("start", "stop")
 RACE_ACTIONS = ("start", "reset")
 CAR_KINDS = ("human", "quantum", "mlp", "hero", "pro")  # +expert reference drivers
-EVENT_KINDS = ("lap", "crash", "clean_lap", "training_done", "new_best_lap")
+EVENT_KINDS = ("lap", "crash", "clean_lap", "timeout", "training_done", "new_best_lap")
 HARDWARE_ACTIONS = ("lap", "sprint", "abort")
+STUDIO_ACTIONS = ("start", "stop", "race", "watch", "result", "setup")
+STUDIO_SENSORS = ("lidar", "corner")
+STUDIO_PHASES = ("setup", "training", "done", "race", "watch")
 HARDWARE_BACKENDS = ("fake", "real")
 HARDWARE_PHASES = ("idle", "connecting", "transpiling", "running", "replay", "done", "error")
 HARDWARE_EXECUTION_MODES = ("session", "batch", "job")
@@ -149,6 +152,25 @@ class HardwareMsg:
     TYPE: ClassVar[str] = "hardware"
 
 
+@dataclass(frozen=True)
+class Studio:
+    """Training studio (#29). ``start`` trains a fresh quantum driver with the
+    visitor's choices (``track`` defaults to the current one; ``qubits`` 4-10,
+    ``sensors`` lidar | corner, ``actions`` 4/6/8 <= qubits, ``warm``); ``stop``
+    ends the run early (the best snapshot so far becomes the model); ``race``
+    / ``watch`` put the trained model on the track (against you / alone);
+    ``result`` takes it off again (back to its result); ``setup`` returns to
+    the setup screen."""
+
+    action: str
+    track: str | None = None
+    qubits: int = 4
+    sensors: str = "lidar"
+    actions: int = 4
+    warm: bool = False
+    TYPE: ClassVar[str] = "studio"
+
+
 # ------------------------------------------------------------- server -> client
 
 
@@ -252,6 +274,27 @@ class HardwareStatus:
 
 
 @dataclass(frozen=True)
+class StudioStatus:
+    """Training-studio state (see :class:`Studio`): ``phase`` (setup | training
+    | done | race | watch), the run's ``spec`` (choices, parameter count),
+    ``live`` training progress, the ``result`` (episodes, first lap, best test,
+    study comparison), the booth ``board`` of the track and — on phase changes
+    — the setup ``catalog`` (options, study numbers, time estimates)."""
+
+    phase: str
+    time_limit_s: float
+    spec: dict | None = None
+    elapsed_s: float | None = None
+    live: dict | None = None
+    result: dict | None = None
+    rank: int | None = None
+    name: str | None = None
+    board: dict | None = None
+    catalog: dict | None = None
+    TYPE: ClassVar[str] = "studio"
+
+
+@dataclass(frozen=True)
 class Leaderboard:
     """Per-track leaderboard: ``entries`` are ranked named human laps
     (``{name, lap_s, date}``, fastest first); ``references`` are the AI
@@ -298,6 +341,7 @@ _OMIT_IF_NONE: dict[str, set[str]] = {
     Train.TYPE: {"track", "episodes"},
     Race.TYPE: {"track"},
     HardwareMsg.TYPE: {"iterations", "shots", "max_decisions"},
+    Studio.TYPE: {"track"},
     Event.TYPE: {"car_id", "lap_time", "agent"},
     Telemetry.TYPE: {"best_lap_s", "lap_times"},
     HardwareStatus.TYPE: {"backend_name", "message", "decision", "seconds_per_decision",
@@ -494,6 +538,19 @@ def _parse_hardware(d: dict) -> HardwareMsg:
     )
 
 
+def _parse_studio(d: dict) -> Studio:
+    _check_extra(d, {"action", "track", "qubits", "sensors", "actions", "warm"})
+    return Studio(
+        action=_enum(_req(d, "action"), "action", STUDIO_ACTIONS),
+        track=_str(d["track"], "track") if d.get("track") is not None else None,
+        qubits=_int(d["qubits"], "qubits", 1, 16) if d.get("qubits") is not None else 4,
+        sensors=_enum(d["sensors"], "sensors", STUDIO_SENSORS)
+        if d.get("sensors") is not None else "lidar",
+        actions=_int(d["actions"], "actions", 1, 16) if d.get("actions") is not None else 4,
+        warm=_bool(d["warm"], "warm") if d.get("warm") is not None else False,
+    )
+
+
 _CLIENT_PARSERS = {
     Hello.TYPE: _parse_hello,
     Input.TYPE: _parse_input,
@@ -506,13 +563,14 @@ _CLIENT_PARSERS = {
     Qubits.TYPE: _parse_qubits,
     SetDriver.TYPE: _parse_set_driver,
     HardwareMsg.TYPE: _parse_hardware,
+    Studio.TYPE: _parse_studio,
 }
 
 
 def parse_client(
     data: Any,
 ) -> (Hello | Input | SetMode | SetTrack | SetName | DrawTrack | Train | Race
-      | Qubits | SetDriver | HardwareMsg):
+      | Qubits | SetDriver | HardwareMsg | Studio):
     """Strictly parse a client -> server dict; raises ProtocolError on anything off."""
     if not isinstance(data, dict):
         raise ProtocolError("message must be a JSON object")
@@ -668,6 +726,24 @@ def _parse_hardware_status(d: dict) -> HardwareStatus:
     )
 
 
+def _parse_studio_status(d: dict) -> StudioStatus:
+    for key in ("spec", "live", "result", "board", "catalog"):
+        if d.get(key) is not None and not isinstance(d[key], dict):
+            raise ProtocolError(f"'{key}' must be an object")
+    return StudioStatus(
+        phase=_enum(_req(d, "phase"), "phase", STUDIO_PHASES),
+        time_limit_s=_float(_req(d, "time_limit_s"), "time_limit_s"),
+        spec=d.get("spec"),
+        elapsed_s=_opt_float(d, "elapsed_s"),
+        live=d.get("live"),
+        result=d.get("result"),
+        rank=_opt_int(d, "rank", 1),
+        name=_str(d["name"], "name") if d.get("name") is not None else None,
+        board=d.get("board"),
+        catalog=d.get("catalog"),
+    )
+
+
 _SERVER_PARSERS = {
     Welcome.TYPE: _parse_welcome,
     TrackMsg.TYPE: _parse_track_msg,
@@ -679,13 +755,14 @@ _SERVER_PARSERS = {
     Control.TYPE: _parse_control,
     Leaderboard.TYPE: _parse_leaderboard,
     Error.TYPE: _parse_error,
+    StudioStatus.TYPE: _parse_studio_status,
 }
 
 
 def parse_server(
     data: Any,
 ) -> (Welcome | TrackMsg | State | Quantum | Telemetry | Event | HardwareStatus
-      | Control | Leaderboard | Error):
+      | Control | Leaderboard | Error | StudioStatus):
     """Parse a server -> client dict (used by tests and client tooling)."""
     if not isinstance(data, dict):
         raise ProtocolError("message must be a JSON object")

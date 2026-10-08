@@ -147,6 +147,10 @@ const sections = ({
         their own.</li>
         <li><strong>Train</strong> — start a fresh (or warm-started) training
         run and watch the learning curve grow in the Training tab.</li>
+        <li><strong>Studio</strong> — build your own quantum driver: pick the
+        track, the number of qubits, its sensors and actions, train it live (at
+        most 5 minutes), see how it compares with our studies, then race
+        it.</li>
         <li><strong>Race</strong> — drive yourself with the arrow keys or WASD
         (↑/W throttle, ↓/S brake, ←/→ steer) against the quantum or classical
         agent. A game controller works too: plug one in and the left stick
