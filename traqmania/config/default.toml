@@ -218,6 +218,12 @@ telemetry_hz = 10
 driver_idle_s = 90.0
 driver_turn_s = 120.0
 
+[studio]
+# Training studio (#29): one visitor's live training run stops after this
+# many seconds (or at the recipe's episode budget, or on "stop"); the best
+# snapshot so far becomes their model.
+time_limit_s = 300
+
 [ui]
 attract_idle_seconds = 45
 kiosk = false

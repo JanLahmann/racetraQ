@@ -71,6 +71,13 @@ export class AttractManager {
     }
   }
 
+  /** While busy (a studio training run) the exhibit never idles back to
+   *  attract mode — watching training IS the interaction. */
+  setBusy(busy) {
+    this.busy = Boolean(busy);
+    this._armIdle();
+  }
+
   setIdleSeconds(s) {
     this.idleSeconds = s;
     this._armIdle();
@@ -111,7 +118,7 @@ export class AttractManager {
   _armIdle() {
     if (this.idleId) clearTimeout(this.idleId);
     this.idleId = null;
-    if (this.mode === "attract" || !this.idleSeconds) return;
+    if (this.mode === "attract" || !this.idleSeconds || this.busy) return;
     this.idleId = setTimeout(() => {
       if (this.mode !== "attract" && this.onIdle) this.onIdle();
     }, this.idleSeconds * 1000);

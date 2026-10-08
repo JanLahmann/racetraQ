@@ -15,6 +15,7 @@
       <button data-mode="train" class="mode-btn" data-tip="Train a fresh (or warm-started) agent live with double DQN and watch the learning curve grow.">Train</button>
       <button data-mode="evolution" class="mode-btn" data-tip="Four snapshots of the same circuit at increasing training ages race each other — see what training buys.">Evolution</button>
       <button data-mode="race" class="mode-btn" data-tip="Grab the wheel yourself (arrow keys / WASD / gamepad) and race the AI. Named clean laps enter the leaderboard.">Race</button>
+      <button data-mode="studio" class="mode-btn" data-tip="Training studio: pick track, qubits, sensors and actions, train your own quantum driver live (5 minutes max), compare it with our studies, then race it.">Studio</button>
       <button data-mode="hardware" class="mode-btn" data-tip="Run the trained circuit on an IBM Quantum backend — a local noisy simulation, or the real machine (queue times apply).">Hardware</button>
     </nav>
 
@@ -88,6 +89,7 @@
       <nav class="tabs" id="sidebar-tabs" aria-label="Panels">
         <button data-tab="quantum" class="tab-btn active">Quantum</button>
         <button data-tab="training" class="tab-btn">Training</button>
+        <button data-tab="studio" class="tab-btn">Studio</button>
         <button data-tab="board" class="tab-btn">🏆</button>
         <button data-tab="hardware" class="tab-btn">Hardware</button>
         <button data-tab="explain" class="tab-btn">Explain</button>
@@ -182,6 +184,8 @@
         <h2>Sprint loss</h2>
         <canvas id="hw-loss-chart" width="340" height="160"></canvas>
       </div>
+
+      <div class="panel" id="panel-studio"></div>
 
       <div class="panel" id="panel-board">
         <h2>Leaderboard — <span id="board-track">…</span></h2>
