@@ -468,6 +468,46 @@ def test_multi_track_study_is_evaluated_per_track(tmp_path, scripted, capsys):
     assert not (tmp_path / "o2").exists()
 
 
+def test_unseen_tracks_rank_with_the_bundled_ones(tmp_path, scripted, monkeypatch, capsys):
+    """The universal lesson: the seed that is best on its four training tracks
+    but laps no generated track loses to one that laps both."""
+    root = tmp_path / "study_multi"
+    kw = {"variant": "u", "agent": "quantum", "track": "multi", "study_lapped": 36}
+    make_cell(root, seed=0, study_lap=13.0,
+              fresh={"oval": 1.0, "chicane": 1.0, "gp": 1.0, "combo": 1.0}, **kw)
+    make_cell(root, seed=1, study_lap=27.0,
+              fresh={"oval": 0.95, "chicane": 0.95, "gp": 0.95, "combo": 0.95}, **kw)
+    unseen_frac = {0: 0.0, 1: 1.0}
+    asked = []
+
+    def fake_unseen(spec, weights, args):
+        asked.append((spec["seed"], args.unseen, args.unseen_seed, args.unseen_difficulty))
+        n, frac = args.unseen_episodes, unseen_frac[spec["seed"]]
+        return {f"random #{s}": {"episodes": n, "lapped_episodes": round(frac * n),
+                                 "laps": round(frac * n), "mean_lap": 30.0 if frac else None,
+                                 "best_lap": 29.0 if frac else None}
+                for s in range(args.unseen_seed, args.unseen_seed + args.unseen)}
+
+    monkeypatch.setattr(bundle, "evaluate_unseen", fake_unseen)
+    assert run(root, "--top", "2", "--dry-run", variant="u", name="quantum_universal") == 0
+    assert "Chosen: seed 0" in capsys.readouterr().out  # training tracks alone pick seed 0
+    assert asked == []
+
+    out_dir = tmp_path / "out"
+    assert run(root, "--top", "2", "--unseen", "3", "--out-dir", str(out_dir),
+               variant="u", name="quantum_universal") == 0
+    out = capsys.readouterr().out
+    assert [a[0] for a in asked] == [0, 1] and asked[0][1:] == (3, 100, 0.65)
+    sel = sidecar(out_dir, "quantum_universal")["selection"]
+    assert sel["chosen_seed"] == 1
+    assert sel["unseen_eval"]["trackgen_seeds"] == [100, 102]
+    assert (sel["unseen_eval"]["lapped"], sel["unseen_eval"]["episodes"],
+            sel["unseen_eval"]["tracks_reliable"]) == (36, 36, 3)
+    assert [(c["seed"], c["unseen_lapped"]) for c in sel["candidates"]] == [(0, 0), (1, 36)]
+    assert "and 3 generated tracks (trackgen seeds 100-102, difficulty 0.65" in sel["rule"]
+    assert "| unseen lapped | unseen tracks reliable |" in out
+
+
 # ------------------------------------------------------ real rollouts, profiles
 
 

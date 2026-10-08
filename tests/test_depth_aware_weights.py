@@ -357,6 +357,44 @@ def test_train_headless_init_brings_its_depth_and_actions(tmp_path, capsys):
               init=str(tmp_path / "quantum_six.npz"), overrides=FAST)
 
 
+def test_widen_actions_keeps_the_greedy_driver():
+    """Widening 4 -> 6 / 8 actions leaves Q of the old actions untouched and
+    starts every new action below all of them, so greedy driving is unchanged."""
+    from racetraq.train_headless import widen_actions
+
+    qfunc = QuantumQFunction({"n_qubits": 8, "n_layers": 5, "n_actions": 4}, seed=3)
+    rng = np.random.default_rng(3)
+    params = qfunc.get_params() + rng.normal(0.0, 0.3, size=qfunc.n_params)
+    params[-8:-4] = rng.uniform(30.0, 60.0, size=4)  # trained-looking head
+    params[-4:] = rng.uniform(40.0, 90.0, size=4)
+    obs = rng.uniform(0.0, 1.0, size=(64, 8))
+    q4 = direct_q(params, 8, 5, obs, n_actions=4)
+    for n_to in (6, 8):
+        wide = widen_actions(params, 4, n_to)
+        assert wide.size == params.size + 2 * (n_to - 4)
+        q = direct_q(wide, 8, 5, obs, n_actions=n_to)
+        np.testing.assert_allclose(q[:, :4], q4)
+        assert (q[:, 4:].max(axis=1) < q[:, :4].min(axis=1)).all()
+        np.testing.assert_array_equal(q.argmax(axis=1), q4.argmax(axis=1))
+    with pytest.raises(ValueError, match="cannot narrow"):
+        widen_actions(params, 4, 2)
+
+
+def test_train_headless_init_widens_to_more_actions(tmp_path, capsys):
+    from racetraq.train_headless import train
+
+    out = tmp_path / "out"
+    write_driver(tmp_path, "quantum_oval_q8", 8, 5, n_actions=4, sidecar={
+        "circuit": {"n_qubits": 8, "n_layers": 5, "n_actions": 4}})
+    train("quantum", "oval", episodes=4, seed=1, profile="q8", out_dir=str(out),
+          init=str(tmp_path / "quantum_oval_q8.npz"), actions=8, overrides=FAST)
+    printed = capsys.readouterr().out
+    assert "widened the init weights from 4 to 8 actions" in printed
+    meta = json.loads((out / "quantum_oval_q8.meta.json").read_text(encoding="utf-8"))
+    assert meta["circuit"] == {"n_qubits": 8, "n_layers": 5, "n_actions": 8}
+    assert np.load(out / "quantum_oval_q8.npz")["params"].shape == (3 * 5 * 8 + 16,)
+
+
 def test_train_headless_init_at_the_config_shape_is_unchanged(tmp_path, capsys):
     """An init file of the configured shape (every bundled warm start): no
     announcement, no change to the resolved config."""
