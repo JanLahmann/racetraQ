@@ -35,6 +35,15 @@ separately; the choice is by the number of tracks lapped in at least
 ``--min-lapped`` of the episodes, then total episodes lapped, and
 ``--min-lapped`` must hold on every track.
 
+``--unseen N`` also drives every candidate on N generated tracks it was not
+trained on (``env/trackgen``, seeds ``--unseen-seed`` .. +N-1, difficulty
+``--unseen-difficulty``, ``--unseen-episodes`` each) and ranks by tracks
+lapped reliably over the bundled AND the generated tracks, then by lapped
+fraction on both: a driver meant for every track must not be picked on its
+training tracks alone (the October 2026 universal study's top seed lapped
+none of 120 generated-track episodes).  The ``--min-lapped`` gate stays on
+the bundled tracks; the generated-track result is recorded in the sidecar.
+
 ``--list`` prints every variant of a study with its seed-spread statistics::
 
     python tools/bundle_driver.py --study DIR --list
@@ -70,6 +79,9 @@ TOP = 3  # candidates re-evaluated on fresh episodes
 EVAL_EPISODES = 72  # fresh distinct greedy episodes per candidate (and per track)
 EVAL_SEED = 31_000  # fresh env seed: neither study.EVAL_SEED nor a trainer's seed + 10_000
 MIN_LAPPED = 0.9  # a bundled driver laps in at least this fraction of fresh episodes
+UNSEEN_SEED = 100  # first trackgen seed of --unseen (SCIENCE.md "Unseen tracks" used 100-109)
+UNSEEN_DIFFICULTY = 0.65  # the demo's random-track difficulty
+UNSEEN_EPISODES = 12
 SEED_SPAN = 4  # MultiTrackEnv seeds its per-track envs seed, seed + 1, ...: keep clear of all
 RANK_BY = ("fresh", "device")
 RESCALE_CHOICES = ("off", "global", "readout")
@@ -243,6 +255,30 @@ def evaluate(spec: dict, weights: Path, episodes: int, eval_seed: int,
     return out
 
 
+def evaluate_unseen(spec: dict, weights: Path, args: argparse.Namespace) -> dict[str, dict]:
+    """``{track name: study.greedy_eval result}`` on ``args.unseen`` generated
+    tracks, ``args.unseen_episodes`` distinct greedy episodes each, under the
+    config the weights drive with."""
+    study._find_racetraq()
+    from racetraq.env.racing_env import RacingEnv
+    from racetraq.env.trackgen import generate_track
+    from racetraq.train_headless import build_qfunc
+
+    config = study.weights_config(spec, weights)
+    max_steps = int(config["reward"]["max_decisions"]) + 1
+    spacing = config["track"]["resample_spacing"]
+    params = np.load(weights)["params"]
+    out = {}
+    for seed in range(int(args.unseen_seed), int(args.unseen_seed) + int(args.unseen)):
+        track = generate_track(seed, spacing, difficulty=float(args.unseen_difficulty))
+        env = RacingEnv(track, config, n_envs=int(args.unseen_episodes), seed=int(args.eval_seed))
+        qfunc = build_qfunc(spec["agent"], env.n_features, int(spec["seed"]), config,
+                            n_actions=env.n_actions)
+        qfunc.set_params(params)
+        out[f"random #{seed}"] = study.greedy_eval(qfunc, env, max_steps)
+    return out
+
+
 def summarize(per_track: dict[str, dict], reliable: float) -> dict:
     """Totals of a per-track eval, plus how many tracks lap ``reliable``-ly."""
     evals = list(per_track.values())
@@ -373,6 +409,10 @@ def choice_key(candidate: dict, rank_by: str) -> tuple:
     lap = fresh["mean_lap"]
     key = (-fresh["tracks_reliable"], -fresh["lapped"], math.inf if lap is None else lap,
            candidate["rank"])
+    unseen = candidate.get("unseen")
+    if unseen is not None:  # bundled and generated tracks count alike
+        key = (-(fresh["tracks_reliable"] + unseen["tracks_reliable"]),
+               -(fresh["lapped_fraction"] + unseen["lapped_fraction"]), *key[2:])
     if rank_by == "device":
         return (-candidate["device"]["lapped"], *key)
     return key
@@ -400,6 +440,11 @@ def check_eval_seed(eval_seed: int, cells: Sequence[dict]) -> None:
 def rule_text(args: argparse.Namespace, n_top: int, multi: bool, study_episodes: int) -> str:
     order = (f"tracks lapped in >= {args.min_lapped:.0%} of the episodes, then episodes lapped"
              if multi else "lapped fraction, then mean lap")
+    if getattr(args, "unseen", 0):
+        order = (f"tracks lapped in >= {args.min_lapped:.0%} of the episodes over the bundled "
+                 f"and {args.unseen} generated tracks (trackgen seeds {args.unseen_seed}-"
+                 f"{args.unseen_seed + args.unseen - 1}, difficulty {args.unseen_difficulty:g}, "
+                 f"{args.unseen_episodes} episodes each), then lapped fraction on both")
     if args.rank_by == "device":
         order = f"episodes lapped on the simulated device, then {order}"
     per_track = " per track" if multi else ""
@@ -609,6 +654,8 @@ def _candidate_table(top: Sequence[dict], chosen: dict, tracks: Sequence[str]) -
     header += ["fresh lapped", "fresh mean lap (s)", "fresh best lap (s)"]
     if multi:
         header.append("tracks reliable")
+    if "unseen" in chosen:
+        header += ["unseen lapped", "unseen tracks reliable"]
     if "device" in chosen:
         header.append("device lapped")
     header.append("")
@@ -625,6 +672,10 @@ def _candidate_table(top: Sequence[dict], chosen: dict, tracks: Sequence[str]) -
                 _text(fresh["best_lap"])]
         if multi:
             row.append(f"{fresh['tracks_reliable']}/{len(tracks)}")
+        if "unseen" in cand:
+            unseen = cand["unseen"]
+            row += [f"{unseen['lapped']}/{unseen['episodes']}",
+                    f"{unseen['tracks_reliable']}/{len(unseen.get('tracks', [0]))}"]
         if "device" in cand:
             row.append(f"{cand['device']['lapped']}/{cand['device']['episodes']}")
         row.append("CHOSEN" if cand is chosen else "")
@@ -666,6 +717,10 @@ def build_selection(directory: Path, manifest: dict, cells: Sequence[dict],
             entry["fresh_tracks"] = {name: t["lapped"]
                                      for name, t in cell["fresh"]["tracks"].items()}
             entry["fresh_tracks_reliable"] = cell["fresh"]["tracks_reliable"]
+        if "unseen" in cell:
+            entry["unseen_lapped"] = cell["unseen"]["lapped"]
+            entry["unseen_episodes"] = cell["unseen"]["episodes"]
+            entry["unseen_tracks_reliable"] = cell["unseen"]["tracks_reliable"]
         if "device" in cell:
             entry["device_lapped"] = cell["device"]["lapped"]
             entry["device_episodes"] = cell["device"]["episodes"]
@@ -698,6 +753,16 @@ def build_selection(directory: Path, manifest: dict, cells: Sequence[dict],
         selection["study_commits"] = commits
     if failed_seeds:
         selection["failed_seeds"] = failed_seeds
+    if "unseen" in chosen:
+        selection["unseen_eval"] = {
+            "trackgen_seeds": [int(args.unseen_seed), int(args.unseen_seed) + int(args.unseen) - 1],
+            "difficulty": float(args.unseen_difficulty),
+            "episodes_per_track": int(args.unseen_episodes),
+            "eval_seed": int(args.eval_seed),
+            **{key: chosen["unseen"][key] for key in
+               ("episodes", "lapped", "lapped_fraction", "mean_lap", "best_lap",
+                "tracks_reliable")},
+        }
     if "device" in chosen:
         selection["device_eval"] = chosen["device"]
     if args.note:
@@ -791,6 +856,12 @@ def cmd_bundle(args: argparse.Namespace) -> int:
         cell["fresh_tracks"] = evaluate(cell["spec"], cell["weights"], args.eval_episodes,
                                         args.eval_seed, tracks)
         cell["fresh"] = summarize(cell["fresh_tracks"], args.min_lapped)
+        if args.unseen > 0:
+            cell["unseen"] = summarize(evaluate_unseen(cell["spec"], cell["weights"], args),
+                                       args.min_lapped)
+            print(f"unseen: seed {cell['seed']}: {cell['unseen']['lapped']}/"
+                  f"{cell['unseen']['episodes']} lapped, {cell['unseen']['tracks_reliable']}/"
+                  f"{args.unseen} tracks reliable", file=sys.stderr, flush=True)
         if args.device_episodes > 0:
             cell["device"] = device_eval(cell["spec"], cell["weights"], args, tracks, backends)
             print(f"device: seed {cell['seed']}: {cell['device']['lapped']}/"
@@ -903,6 +974,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rank-by", default="fresh", choices=list(RANK_BY),
                         help="fresh (default): choose by the fresh eval; device: by the "
                              "simulated-device laps first (needs --device-episodes)")
+    parser.add_argument("--unseen", type=int, default=0,
+                        help="also drive each candidate on this many generated tracks and "
+                             "rank by bundled + generated tracks (default 0 = off)")
+    parser.add_argument("--unseen-seed", type=int, default=UNSEEN_SEED,
+                        help=f"first trackgen seed of --unseen (default {UNSEEN_SEED})")
+    parser.add_argument("--unseen-difficulty", type=float, default=UNSEEN_DIFFICULTY,
+                        help=f"trackgen difficulty of --unseen (default {UNSEEN_DIFFICULTY})")
+    parser.add_argument("--unseen-episodes", type=int, default=UNSEEN_EPISODES,
+                        help=f"episodes per generated track (default {UNSEEN_EPISODES})")
     parser.add_argument("--device-episodes", type=int, default=0,
                         help="quantum only: episodes per candidate on the local "
                              "simulated-device path (default 0 = skip)")

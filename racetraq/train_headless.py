@@ -158,16 +158,19 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
 
 
 def _adopt_init_circuit(config: dict, init: str | Path, explicit_layers: bool,
-                        explicit_actions: bool) -> None:
+                        explicit_actions: bool) -> int:
     """``--init`` on a quantum agent: the run continues at the circuit depth
     and action count of the init weights (``runtime.weights_circuit``: their
     sidecar's ``circuit`` block, else their parameter count), written into
     ``config["circuit"]`` — with one printed line when that changes anything.
 
-    A depth or action count the caller asked for EXPLICITLY (``--set
-    circuit.n_layers`` / ``circuit.n_actions``, ``--actions``) that
+    A depth the caller asked for EXPLICITLY (``--set circuit.n_layers``) that
     contradicts the weights raises ``ValueError``, as do weights of another
-    qubit count or of a parameter count that fits no depth.
+    qubit count or of a parameter count that fits no depth.  An explicit
+    action count (``--actions`` / ``circuit.n_actions``) LARGER than the
+    weights' widens them (:func:`widen_actions`: the action tables are
+    prefixes of each other); a smaller one raises.  Returns the init weights'
+    action count.
     """
     from racetraq.server.runtime import weights_circuit
 
@@ -186,17 +189,44 @@ def _adopt_init_circuit(config: dict, init: str | Path, explicit_layers: bool,
                          f"circuit.n_layers = {have['n_layers']} was requested — drop the "
                          "override (the run continues at the init weights' depth) or "
                          "start from weights of that depth")
-    if explicit_actions and shape["n_actions"] != have["n_actions"]:
+    if explicit_actions and shape["n_actions"] > have["n_actions"]:
         raise ValueError(f"--init weights '{name}' use {shape['n_actions']} actions, but "
                          f"{have['n_actions']} were requested (--actions / "
-                         "circuit.n_actions) — drop the override or start from weights "
-                         "with that action set")
-    changed = {key: shape[key] for key in have if shape[key] != have[key]}
+                         "circuit.n_actions) — an action set can be widened, not "
+                         "narrowed; drop the override or start from weights with at "
+                         "most that many actions")
+    keys = ("n_layers",) if explicit_actions else tuple(have)
+    changed = {key: shape[key] for key in keys if shape[key] != have[key]}
     if changed:
         circuit.update(changed)
         print(f"circuit shape from --init {name}: {shape['n_layers']} blocks, "
               f"{shape['n_actions']} actions (config: {have['n_layers']} blocks, "
               f"{have['n_actions']} actions)")
+    return int(shape["n_actions"])
+
+
+def widen_actions(params: np.ndarray, n_from: int, n_to: int) -> np.ndarray:
+    """Quantum weights for ``n_from`` actions -> the same driver with ``n_to``.
+
+    The parameter vector ends in the readout head (w, b), one entry per
+    action; the circuit parameters before it do not depend on the action
+    count.  The added actions read their own qubits (``Q_a = w_a <Z_a> +
+    b_a``) and get w = mean(w) and a PESSIMISTIC bias: below every old
+    action's lowest possible value, b = min_a(b_a - |w_a|) - |mean(w)|.  So
+    the widened driver starts out driving exactly like the old one (greedy
+    never picks a new action until training has raised its value) and
+    exploration has to earn each new action its place.
+    """
+    params = np.asarray(params, dtype=np.float64)
+    if n_to < n_from:
+        raise ValueError(f"cannot narrow {n_from} actions to {n_to}")
+    n_circuit = params.size - 2 * n_from
+    w, b = params[n_circuit:n_circuit + n_from], params[n_circuit + n_from:]
+    w_new = float(np.mean(w))
+    b_new = float(np.min(b - np.abs(w))) - abs(w_new)
+    extra = n_to - n_from
+    return np.concatenate([params[:n_circuit], w, np.full(extra, w_new),
+                           b, np.full(extra, b_new)])
 
 
 def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
@@ -270,8 +300,9 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     seed = int(training_cfg["seed"])
     episodes = int(episodes) if episodes is not None else int(training_cfg["episodes"])
     training_cfg["episodes"] = episodes  # the resolved table records the actual run
+    init_actions = None
     if init is not None and agent == "quantum":
-        _adopt_init_circuit(
+        init_actions = _adopt_init_circuit(
             config, init, explicit_layers="circuit.n_layers" in overrides,
             explicit_actions=actions is not None or "circuit.n_actions" in overrides)
 
@@ -308,7 +339,11 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
         raise ValueError(f"agent has {qfunc.n_actions} actions but the env's "
                          f"action table has {env.n_actions}")
     if init is not None:
-        qfunc.set_params(np.load(init)["params"])
+        params = np.load(init)["params"]
+        if init_actions is not None and init_actions < qfunc.n_actions:
+            params = widen_actions(params, init_actions, qfunc.n_actions)
+            print(f"widened the init weights from {init_actions} to {qfunc.n_actions} actions")
+        qfunc.set_params(params)
         print(f"warm-started from {init}")
     if agent == "quantum":
         # too few blocks for the ring: some actions decide without some features

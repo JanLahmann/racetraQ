@@ -198,6 +198,37 @@ def test_eval_snapshot_uses_lapped_and_mean_lap():
     assert set(best) >= {"params", "episode", "mean_lap", "laps", "best_lap"}
 
 
+@pytest.mark.parametrize("rank, expected", [("reliability", 0), ("pace", 1)])
+def test_pace_snapshot_rule_takes_the_fastest_reliable_eval(rank, expected):
+    """"pace": above the floor (here 9 of 12) the faster eval wins even with
+    one lapped episode fewer; below it, speed does not count."""
+    config = copy.deepcopy(load_config())
+    track = _track(config)
+    env = RacingEnv(track, config, n_envs=4, seed=0)
+    qfunc = MLPQFunction(n_features=4, n_actions=4, seed=0)
+    tcfg = dict(config["training"], eval_episodes=12, snapshot_rank=rank)
+    trainer = DQNTrainer(qfunc, env, tcfg, rng=np.random.default_rng(0),
+                         env_factory=lambda: RacingEnv(track, config, n_envs=12, seed=99))
+    rounds = iter([(12, [30.0] * 12, [1.0] * 12),   # perfect, slow
+                   (11, [25.0] * 11, [1.0] * 12),   # one miss, fast
+                   (8, [20.0] * 8, [1.0] * 12)])    # fastest, below the floor
+    trainer._greedy_eval_round = lambda env: next(rounds)
+    best = None
+    for episode in range(3):
+        best = trainer._eval_snapshot(best, episode=episode)
+    assert best["episode"] == expected
+
+
+def test_snapshot_rank_is_checked():
+    config = copy.deepcopy(load_config())
+    env = RacingEnv(_track(config), config, n_envs=2, seed=0)
+    qfunc = MLPQFunction(n_features=4, n_actions=4, seed=0)
+    with pytest.raises(ValueError, match="snapshot_rank"):
+        DQNTrainer(qfunc, env, dict(config["training"], snapshot_rank="fastest"))
+    with pytest.raises(ValueError, match="snapshot_floor"):
+        DQNTrainer(qfunc, env, dict(config["training"], snapshot_floor=0.0))
+
+
 # --------------------------------------------------------- session adoption
 
 

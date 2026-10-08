@@ -31,8 +31,9 @@ TARGET_UPDATES = ("hard", "soft")
 OPTION_KEYS = (
     "eval_every", "eval_episodes", "bootstrap_truncation", "loss", "huber_delta",
     "lr_groups", "lr_end", "target_update", "tau", "grad_clip", "reward_scale",
-    "act_noise", "action_gap",
+    "act_noise", "action_gap", "snapshot_rank", "snapshot_floor",
 )
+SNAPSHOT_RANKS = ("reliability", "pace")
 
 
 class Adam:
@@ -123,8 +124,9 @@ class DQNTrainer:
         ("hard" | "soft") with ``tau`` (0.005), ``grad_clip`` (0 = off) and
         ``reward_scale`` (1.0), ``act_noise`` (none: a ``{attenuation, shots,
         bias}`` table of expectation noise the rollouts and snapshot evals act
-        under) and ``action_gap`` (0.0: advantage-learning coefficient) — see
-        ``config/default.toml`` for what each does.
+        under), ``action_gap`` (0.0: advantage-learning coefficient) and
+        ``snapshot_rank`` ("reliability" | "pace") with ``snapshot_floor``
+        (0.75) — see ``config/default.toml`` for what each does.
         """
         self.qfunc = qfunc
         self.env = env
@@ -179,6 +181,20 @@ class DQNTrainer:
         self.reward_scale = float(training_cfg.get("reward_scale", 1.0))
         if self.reward_scale <= 0.0:
             raise ValueError(f"[training] reward_scale must be > 0, got {self.reward_scale}")
+        # Snapshot rule: "reliability" ranks evals by lapped episodes, then mean
+        # lap; "pace" (for lap-time fine-tunes) first asks for at least
+        # snapshot_floor of the eval episodes to lap, then ranks by mean lap.
+        self.snapshot_rank = str(training_cfg.get("snapshot_rank", "reliability"))
+        if self.snapshot_rank not in SNAPSHOT_RANKS:
+            raise ValueError(
+                f"[training] snapshot_rank must be one of {SNAPSHOT_RANKS}, "
+                f"got '{self.snapshot_rank}'"
+            )
+        self.snapshot_floor = float(training_cfg.get("snapshot_floor", 0.75))
+        if not 0.0 < self.snapshot_floor <= 1.0:
+            raise ValueError(
+                f"[training] snapshot_floor must be in (0, 1], got {self.snapshot_floor}"
+            )
 
         # Advantage learning: subtract action_gap * (V(s) - Q(s, a)) from the TD
         # target, which widens the gap between the best action and the rest
@@ -409,6 +425,11 @@ class DQNTrainer:
         Scores lexicographically (lapped_episodes, -mean_lap,
         mean_return): reliability first — the number of EPISODES that produced
         a lap — then average pace over every lap driven, then eval return.
+        With ``snapshot_rank = "pace"`` the score is (lapped at least
+        ``snapshot_floor`` of the episodes, -mean_lap, lapped_episodes,
+        mean_return): above the floor the faster snapshot wins even if it
+        lapped one episode fewer — a lap-time fine-tune would otherwise keep
+        its slow-but-perfect starting point.
         Mean lap over all laps (not the single best) keeps one lucky lap from
         crowning an unreliable snapshot; the return tie-breaker matters before
         the first lap, where (0, inf) would otherwise tie forever and pin the
@@ -420,7 +441,11 @@ class DQNTrainer:
         episodes_run = env.n_envs if hasattr(env, "n_envs") else max(1, len(episode_returns))
         mean_lap = float(np.mean(lap_times)) if lap_times else float("inf")
         mean_return = float(np.mean(episode_returns)) if episode_returns else float("-inf")
-        score = (lapped, -mean_lap, mean_return)
+        if self.snapshot_rank == "pace":
+            reliable = lapped >= self.snapshot_floor * episodes_run
+            score = (reliable, -mean_lap, lapped, mean_return)
+        else:
+            score = (lapped, -mean_lap, mean_return)
         self.last_eval = {
             "episode": episode,
             "lapped_episodes": lapped,
