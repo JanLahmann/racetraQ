@@ -106,7 +106,15 @@ export async function buildRace(manifest: Manifest, setup: RaceSetup): Promise<B
     world.holdUntil = Math.round(COUNTDOWN_S / manifest.physics.dt);
     for (const car of world.cars) world.respawn(car);
   }
-  if (setup.ghost && setup.mode !== 'evolution' && manifest.ghosts.some((g) => g.track === setup.track)) {
+  // the ghost is the track's 4-qubit driver's standing-start lap: in Watch it
+  // only adds something when a different driver races it
+  const ghostIsTheDriver = setup.mode === 'watch' && setup.driver === `quantum_${setup.track}`;
+  if (
+    setup.ghost &&
+    setup.mode !== 'evolution' &&
+    !ghostIsTheDriver &&
+    manifest.ghosts.some((g) => g.track === setup.track)
+  ) {
     world.setGhost(await loadGhost(setup.track), setup.mode === 'race' ? 'human' : 'quantum');
   }
   return { world, track, focusId };

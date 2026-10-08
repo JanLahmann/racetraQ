@@ -11,7 +11,9 @@ and the numpy reference values its parity tests check the port against:
   resamples it exactly like :class:`~traqmania.env.track.Track`)
 - ``browser/public/data/drivers/<id>.json`` — flat params, circuit shape or
   hidden width, the observation the driver was trained with, action count
-- ``browser/public/data/ghosts/<track>.json`` — the bundled ghost laps
+- ``browser/public/data/ghosts/<track>.json`` — a ghost lap per track: the
+  track's quantum driver's greedy lap from a standing start (reproducible from
+  the bundled weights; the server's recorded ghosts are local, not in git)
 - ``browser/tests/fixtures/parity.json`` — numpy results for track queries,
   physics substeps, observations, circuit expectations, Q-values and greedy
   closed-loop rollouts
@@ -19,8 +21,9 @@ and the numpy reference values its parity tests check the port against:
 Usage: python tools/export_browser.py [--out browser] [--check]
 
 ``--check`` exports to a temporary directory and fails when the data files
-differ from the committed ones (the parity fixture is compared with a float
-tolerance, since numpy's last bits vary across platforms).
+differ from the committed ones (the simulated files — parity fixture, ghost
+laps, manifest — are compared with a float tolerance, since numpy's last bits
+vary across platforms).
 """
 
 from __future__ import annotations
@@ -46,7 +49,6 @@ from traqmania.server import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
 WEIGHTS_DIR = ROOT / "traqmania" / "weights"
-GHOSTS_DIR = ROOT / "traqmania" / "data" / "ghosts"
 TRACKS = ("oval", "chicane", "gp", "combo")
 TRACK_NAMES = {"oval": "Oval", "chicane": "Chicane", "gp": "Grand Prix", "combo": "Combo"}
 # multi-track drivers race on every track
@@ -339,12 +341,17 @@ def export(out: Path) -> dict:
 
     ghosts = []
     for name in TRACKS:
-        path = GHOSTS_DIR / f"{name}.json"
-        if path.is_file():
-            ghost = json.loads(path.read_text(encoding="utf-8"))
-            _write_json(data / "ghosts" / f"{name}.json", ghost)
-            ghosts.append({"track": name, "lap_time": ghost.get("lap_time"),
-                           "kind": ghost.get("kind"), "driver": ghost.get("driver")})
+        stem = f"quantum_{name}"
+        _, qfunc, config = drivers[stem]
+        track = Track.load(name, base_config["track"]["resample_spacing"])
+        lap = rollout(track, config, qfunc, MAX_ROLLOUT_DECISIONS)
+        if lap["result"] != "lap":
+            continue
+        ghost = {"track": name, "lap_time": lap["lap_time"], "kind": "quantum",
+                 "driver": f"{stem} (greedy lap from a standing start)",
+                 "points": [state[:3] for state in lap["states"]]}
+        _write_json(data / "ghosts" / f"{name}.json", ghost)
+        ghosts.append({key: ghost[key] for key in ("track", "lap_time", "kind", "driver")})
 
     manifest = {
         "version": DATA_VERSION,
@@ -395,7 +402,9 @@ def check(out: Path) -> list[str]:
             if not a.is_file() or not b.is_file():
                 problems.append(f"{rel}: missing on one side")
                 continue
-            if rel.name == "parity.json":
+            # files computed by simulation (fixture, ghost laps, their lap times
+            # in the manifest) compare with a float tolerance
+            if rel.name in ("parity.json", "manifest.json") or rel.parent.name == "ghosts":
                 if not _close(json.loads(a.read_text()), json.loads(b.read_text())):
                     problems.append(f"{rel}: differs beyond tolerance")
             elif a.read_bytes() != b.read_bytes():

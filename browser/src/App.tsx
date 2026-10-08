@@ -362,7 +362,9 @@ export function App() {
                 <input type="checkbox" checked={showRays} onChange={(e) => setShowRays(e.target.checked)} />
                 lidar
               </label>
-              {setup.mode !== 'evolution' && manifest.ghosts.some((g) => g.track === setup.track) && (
+              {setup.mode !== 'evolution' &&
+                !(setup.mode === 'watch' && setup.driver === `quantum_${setup.track}`) &&
+                manifest.ghosts.some((g) => g.track === setup.track) && (
                 <label className="toggle">
                   <input type="checkbox" checked={setup.ghost} onChange={(e) => update({ ghost: e.target.checked })} />
                   ghost

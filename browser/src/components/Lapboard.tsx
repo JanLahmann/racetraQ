@@ -42,7 +42,7 @@ export function Lapboard({
           <tr className="ghost-row">
             <td>
               <span className="swatch ghost" />
-              Ghost · best recorded quantum lap
+              Ghost · 4-qubit driver's lap from a standing start
             </td>
             <td />
             <td />

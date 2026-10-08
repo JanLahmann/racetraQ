@@ -18,7 +18,8 @@ model and no hardware path.
 
 - **Watch** — one quantum driver (4, 6, 8 or 10 qubits where bundled, or the
   universal 4-qubit driver) against an optional classical rival (the 76-parameter
-  MLP or the 2,436-parameter "pro"), with the recorded ghost lap. The side panel
+  MLP or the 2,436-parameter "pro"), and a ghost: the track's 4-qubit driver's
+  lap from a standing start (in Race mode too, as a target). The side panel
   follows every decision: the sensor values, the live circuit with this
   decision's angles (QAMPoser's circuit editor, read-only), ⟨Z⟩ of every qubit
   and the Q-values. Pause, step one decision at a time, or open the exact circuit

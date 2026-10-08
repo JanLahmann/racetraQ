@@ -1079,21 +1079,27 @@
  "ghosts": [
   {
    "track": "oval",
-   "lap_time": 12.583333585000219,
+   "lap_time": 13.966666946,
    "kind": "quantum",
-   "driver": "oval-trained"
+   "driver": "quantum_oval (greedy lap from a standing start)"
   },
   {
    "track": "chicane",
-   "lap_time": 12.283333578999873,
+   "lap_time": 13.966666946,
    "kind": "quantum",
-   "driver": "chicane-trained"
+   "driver": "quantum_chicane (greedy lap from a standing start)"
   },
   {
    "track": "gp",
-   "lap_time": 27.850000556998566,
+   "lap_time": 27.933333892,
    "kind": "quantum",
-   "driver": "gp-trained"
+   "driver": "quantum_gp (greedy lap from a standing start)"
+  },
+  {
+   "track": "combo",
+   "lap_time": 37.950000759,
+   "kind": "quantum",
+   "driver": "quantum_combo (greedy lap from a standing start)"
   }
  ]
 }
