@@ -1,0 +1,654 @@
+/* traQmania browser edition — the dark exhibit look of the server demo. */
+:root {
+  --bg: #0f1117;
+  --bg-panel: #161a22;
+  --bg-inset: #11141b;
+  --border: #262b36;
+  --text: #e6e9ef;
+  --muted: #8a91a0;
+  --accent: #0f62fe;
+  --quantum: #7a5cff;
+  --mlp: #2fbf71;
+  --human: #ff9f1c;
+  --danger: #e5484d;
+  --header-h: 52px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+a {
+  color: #6ea6ff;
+}
+a:hover {
+  color: #9cc2ff;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------------- header */
+header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: var(--header-h);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+header::-webkit-scrollbar {
+  display: none;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: none;
+}
+.logo {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.logo .q {
+  color: var(--quantum);
+}
+.edition {
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+nav {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  flex: none;
+}
+nav button {
+  border: 0;
+  background: none;
+  padding: 5px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+  white-space: nowrap;
+}
+nav button:hover {
+  color: var(--text);
+}
+nav button.active {
+  background: #262b36;
+  color: var(--text);
+}
+.modes button.active {
+  background: var(--quantum);
+  color: white;
+}
+.about-button {
+  margin-left: auto;
+  flex: none;
+  border: 1px solid var(--border);
+  background: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.about-button:hover {
+  border-color: var(--quantum);
+}
+
+/* ------------------------------------------------------------------ main */
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  min-height: 0;
+}
+.left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+}
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 340px;
+  background: #101218;
+}
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.stage.loading,
+.loading {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.loading {
+  height: 100%;
+}
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  pointer-events: none;
+}
+.clock {
+  display: flex;
+  flex-direction: column;
+  background: rgba(16, 18, 24, 0.82);
+  border: 1px solid;
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.clock .who {
+  font-size: 11px;
+  color: var(--muted);
+}
+.clock .time {
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 700;
+}
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 120px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 4px 30px rgba(122, 92, 255, 0.8);
+  pointer-events: none;
+}
+.banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 18, 24, 0.88);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.banner.danger {
+  border-color: var(--danger);
+  color: #ffb4b6;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 12px 16px 4px;
+  border-top: 1px solid var(--border);
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.control-group.buttons {
+  gap: 6px;
+}
+.control-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  border-radius: 999px;
+  padding: 3px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip:hover:not(:disabled) {
+  border-color: #3a4152;
+}
+.chip.active {
+  border-color: var(--quantum);
+  background: rgba(122, 92, 255, 0.18);
+}
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.controls .hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 4px 0 8px;
+}
+
+.lapboard {
+  margin: 8px 16px 16px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lapboard th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 4px 14px 4px 0;
+}
+.lapboard td {
+  padding: 3px 14px 3px 0;
+  white-space: nowrap;
+}
+.lapboard tr.focus td:first-child {
+  font-weight: 700;
+}
+.lapboard .num {
+  font-variant-numeric: tabular-nums;
+}
+.lapboard .best {
+  color: #f5d76e;
+}
+.lapboard .ghost-row {
+  color: var(--muted);
+}
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 7px;
+  vertical-align: -1px;
+}
+.swatch.ghost {
+  border: 1px dashed white;
+  background: rgba(200, 200, 200, 0.35);
+}
+
+/* ----------------------------------------------------------------- panel */
+.panel {
+  border-left: 1px solid var(--border);
+  background: var(--bg-panel);
+  overflow-y: auto;
+  padding: 4px 16px 16px;
+  min-width: 0;
+}
+.panel h2 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 12px 0 4px;
+}
+.focus-name {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.brain section {
+  border-top: 1px solid var(--border);
+  padding: 10px 0 6px;
+}
+.brain h3 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+.brain h3 .sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+}
+.step {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--quantum);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+.brain ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.brain li {
+  display: grid;
+  grid-template-columns: 96px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 0;
+  font-size: 12px;
+}
+.brain .qubits li {
+  grid-template-columns: 28px 1fr 44px 92px;
+}
+.brain .qubits li.spectator {
+  color: var(--muted);
+}
+.brain .actions li {
+  grid-template-columns: 22px 78px 1fr 44px;
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+.brain .actions li.chosen {
+  background: rgba(255, 159, 28, 0.14);
+  font-weight: 700;
+}
+.brain .arrow {
+  text-align: center;
+}
+.brain .num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.brain .role {
+  color: var(--muted);
+  font-size: 11px;
+}
+.bar {
+  position: relative;
+  height: 8px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+}
+.bar-zero {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: #5b6276;
+}
+.circuit-view {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+/* traQmania reads <Z> directly; the classical register row adds nothing */
+.circuit-view .circuit-editor__lane--classical,
+.circuit-view .circuit-editor__lane-label--classical {
+  display: none;
+}
+.chip.expand {
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+.wide-circuit {
+  flex: none;
+  border-top: 1px solid var(--border);
+  padding: 8px 16px 0;
+}
+.wide-circuit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.composer {
+  border-top: 1px solid var(--border);
+}
+.link-button {
+  border: 1px solid var(--accent);
+  background: rgba(15, 98, 254, 0.12);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.link-button:hover {
+  background: rgba(15, 98, 254, 0.25);
+}
+
+footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------- touch */
+.touch-controls {
+  display: none;
+}
+@media (pointer: coarse) {
+  .touch-controls {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .touch-controls > div {
+    display: flex;
+    gap: 10px;
+  }
+  .touch-controls button {
+    pointer-events: auto;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    background: rgba(16, 18, 24, 0.6);
+    font-weight: 700;
+    font-size: 15px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .touch-controls .gas {
+    border-color: var(--mlp);
+  }
+  .touch-controls .brake {
+    border-color: var(--danger);
+    font-size: 12px;
+  }
+}
+
+/* ---------------------------------------------------------------- modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 10;
+}
+.modal {
+  position: relative;
+  max-width: 680px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+.modal h2 {
+  margin-top: 0;
+  padding-right: 24px;
+}
+.modal h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 18px 0 6px;
+}
+.modal li {
+  margin-bottom: 6px;
+}
+.modal .close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 0;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.fatal {
+  padding: 24px;
+}
+
+/* --------------------------------------------------------------- narrow */
+@media (max-width: 1000px) {
+  .app {
+    height: auto;
+    min-height: 100%;
+  }
+  main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .left {
+    overflow: visible;
+  }
+  .stage {
+    flex: none;
+    /* follow the track's shape: a wide oval needs less height than gp */
+    height: min(62vh, 560px, calc(100vw * var(--track-aspect, 0.75) * 1.12 + 70px));
+    min-height: 220px;
+  }
+  .panel {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    overflow: visible;
+  }
+  .about-button {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  header {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 8px 12px;
+    overflow: visible;
+  }
+  .brand {
+    flex: 1 1 auto;
+  }
+  .about-button {
+    margin-left: auto;
+  }
+  nav {
+    order: 3;
+  }
+  nav.tracks {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  nav.tracks button {
+    flex: 1;
+    padding: 5px 4px;
+  }
+  .controls,
+  .wide-circuit {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .lapboard {
+    margin: 8px 12px 12px;
+    font-size: 12px;
+  }
+  .lapboard td,
+  .lapboard th {
+    padding-right: 8px;
+  }
+  .lapboard td:first-child {
+    white-space: normal;
+  }
+  .panel {
+    padding: 4px 12px 12px;
+  }
+  .brain li {
+    grid-template-columns: 84px 1fr 40px;
+  }
+  .countdown {
+    font-size: 80px;
+  }
+  footer {
+    padding: 8px 12px;
+  }
+}
+

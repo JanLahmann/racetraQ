@@ -156,6 +156,7 @@ class _Car:
     controller: Any = None  # continuous-control policy (the hero racing-line driver)
     traj: list = field(default_factory=list)  # (x, y, theta) at decision rate, this lap
     traj_full: bool = True  # False once the trajectory overflowed and was dropped
+    decisions_this_lap: int = 0  # agent decisions since the lap (or spawn) began
 
 
 @dataclass
@@ -308,6 +309,10 @@ class DemoSession:
         self.dt = float(physics["dt"])
         self.substeps_per_decision = int(physics["substeps_per_decision"])
         self.car_physics = CarPhysics(physics)
+        # an agent that has not finished a lap after this many decisions
+        # respawns: the training env's episode cap, so a policy that brakes to
+        # a standstill (some snapshots park) does not stay stuck forever
+        self.stall_decisions = int(config["reward"]["max_decisions"])
 
         obs_cfg = config["observation"]
         # the profile's own observation — the baseline that _sync_to_weights
@@ -1306,6 +1311,11 @@ class DemoSession:
         for car in self.cars:
             if car.respawn_at is not None:
                 continue
+            if car.kind != "human":
+                if car.decisions_this_lap >= self.stall_decisions:
+                    self._event("timeout", car_id=car.id)
+                    self._respawn(car)
+                car.decisions_this_lap += 1
             self._record_traj(car)
             if car.controller is not None:
                 car.controls = car.controller(car.state)
@@ -1368,6 +1378,7 @@ class DemoSession:
                 car.last_lap_time = lap_time
                 car.lap = laps_now
                 car.lap_start_t = self.t
+                car.decisions_this_lap = 0
                 self._event("lap", car_id=car.id, lap_time=lap_time)
                 if not car.lap_dirty:
                     self._event("clean_lap", car_id=car.id, lap_time=lap_time)
@@ -1398,6 +1409,7 @@ class DemoSession:
         car.off_track = False
         car.lap_dirty = False
         car.respawn_at = None
+        car.decisions_this_lap = 0
         car.action = 0
         car.controls = (0.0, 0.0, 0.0)
         car.rays = None

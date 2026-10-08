@@ -410,3 +410,34 @@ def test_train_stop_ends_training(tmp_path):
         done = [m for m in session.drain_outbox()
                 if m["type"] == "event" and m["kind"] == "training_done"]
     assert done
+
+
+class _ParkingQ:
+    """Q-function stub that always brakes: the car never leaves the grid."""
+
+    n_actions = 4
+
+    def q_values(self, obs):
+        return np.array([[0.0, 0.0, 0.0, 1.0]])
+
+
+def test_parked_agent_respawns_after_the_episode_cap(tmp_path):
+    session = DemoSession(load_config(), ghosts_dir=tmp_path)
+    car = next(c for c in session.cars if c.kind == "quantum")
+    car.qfunc = _ParkingQ()
+    session.stall_decisions = 5
+    session.drain_outbox()
+    for _ in range(session.substeps_per_decision * 5):
+        session.tick()
+    assert not [m for m in session.drain_outbox() if m.get("kind") == "timeout"]
+    session.tick()  # the 6th decision finds 5 without a lap
+    timeouts = [m for m in session.drain_outbox()
+                if m["type"] == "event" and m.get("kind") == "timeout"]
+    assert timeouts == [{"type": "event", "kind": "timeout", "car_id": car.id}]
+    assert car.decisions_this_lap == 1
+
+
+def test_stall_cap_defaults_to_the_training_episode_cap(tmp_path):
+    config = load_config()
+    session = DemoSession(config, ghosts_dir=tmp_path)
+    assert session.stall_decisions == config["reward"]["max_decisions"] == 600

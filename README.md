@@ -303,6 +303,18 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
   trained for device noise — see the
   [exhibition runbook](docs/EXHIBITION.md) for what to expect.
 
+## Browser edition
+
+[`browser/`](browser/) is a static, server-less version for the web: the
+bundled drivers race in the browser, the circuit runs on
+[QAMPoser](https://qamposer.org)'s in-browser state-vector simulator, and the
+side panel shows every decision — sensors, the live circuit, ⟨Z⟩ of each qubit,
+the Q-values — with a one-click handoff of any decision's circuit to IBM Quantum
+Composer. Inference only (watch, race, learning snapshots; no training, noise
+or hardware), checked action for action against the Python implementation.
+Live at **https://janlahmann.github.io/traQmania/** — see
+[browser/README.md](browser/README.md).
+
 ## Documentation
 
 - [Explainer](docs/EXPLAINER.md) — the whole project in plain words for a
