@@ -867,7 +867,7 @@ One seed each (`racetraq/weights/<name>.meta.json`, block `selection`).
 "Fresh" is the 72-episode evaluation that chose among the shortlisted
 seeds; "re-check" is 36 episodes on an env seed no selection used
 (`python -m racetraq.records --episodes 36 --seed 47000`, run on
-2026-10-02). Lapped episodes, then mean lap:
+2026-10-02; the 10-qubit rows on 2026-10-08). Lapped episodes, then mean lap:
 
 | Driver | Qubits × blocks | Seeds in its study | Fresh (72 episodes) | Re-check (36 episodes) |
 |---|---|---|---|---|
@@ -879,6 +879,8 @@ seeds; "re-check" is 36 episodes on an env seed no selection used
 | `quantum_chicane_q6` | 6 × 4 | 8 | 72, 12.9 s | 36, 12.9 s |
 | `quantum_oval_q8` | 8 × 5 | 6 | 72, 13.4 s | 36, 13.4 s |
 | `quantum_chicane_q8` | 8 × 5 | 6 | 72, 12.6 s | 36, 12.6 s |
+| `quantum_oval_q10` | 10 × 6 | 6 | 72, 13.3 s | 36, 13.3 s |
+| `quantum_chicane_q10` | 10 × 6 | 6 | 72, 12.6 s | 35, 12.6 s |
 | `mlp_oval` | — | 8 | 72, 12.6 s | 36, 12.6 s |
 | `mlp_chicane` | — | 8 | 72, 13.3 s | 36, 13.3 s |
 | `mlp_gp` | — | 10 | 72, 22.5 s | 36, 22.5 s |
@@ -910,11 +912,13 @@ quantum --track oval --seed 0 --episodes 800`, run in this tree on
 2026-10-02, reproduced `quantum_oval.npz` bit for bit (the sha256 its
 sidecar records) on the machine the studies ran on.
 
-Not re-selected: the three 10-qubit drivers are still the July files (4
-blocks, chosen under the old protocol). On the same 36 re-check episodes
-`quantum_oval_q10` laps in 34 (12.6 s), `quantum_chicane_q10` in 34
-(13.7 s) and `quantum_gp_q10` in 24 (22.2 s, best 19.7 s); on the second
-re-check seed in 32, 34 and 26, on the third in 35, 36 and 25.
+The two 6-block 10-qubit drivers were bundled after that re-check
+(`data/studies/oval_q10` and `chicane_q10`, variant `L6`, seed 2 in both);
+their rows come from the records run of 2026-10-08. On the further seeds
+61000 and 88000 both lap in all 36 episodes, mean laps within 0.01 s.
+Not re-selected: `quantum_gp_q10` is still the July file (4 blocks, chosen
+under the old protocol). On the same 36 re-check episodes it laps in 24
+(22.2 s, best 19.7 s), on the second re-check seed in 26, on the third in 25.
 
 ### Scaling and the light cone
 
@@ -1026,7 +1030,7 @@ lap:
 | `quantum_chicane` | 35, 12.6 s | 35, 12.7 s | 0 | 0 |
 | `quantum_gp` | 36, 22.2 s | 36, 22.8 s | 36, 27.9 s | 21, 32.9 s |
 | `quantum_combo` | 36, 26.7 s | 36, 26.8 s | 36, 34.5 s | 36, 37.2 s |
-| `quantum_universal` | 36, 13.7 s | 36, 13.9 s | 36, 32.3 s | 35, 41.8 s |
+| `quantum_universal` | 36, 27.6 s | 36, 27.4 s | 36, 35.2 s | 36, 38.2 s |
 | `mlp_oval` | 36, 12.6 s | 36, 12.7 s | 0 | 0 |
 | `mlp_chicane` | 36, 13.1 s | 36, 13.3 s | 0 | 0 |
 | `mlp_gp` | 36, 17.3 s | 36, 17.9 s | 36, 22.5 s | 1 |
@@ -1038,7 +1042,7 @@ specialists never lap gp or combo. The new 4-qubit oval
 specialist does not even transfer to chicane (2 of 36), while the chicane
 specialist drives the oval. On the second re-check seed (61000) no cell of
 the matrix moves by more than three episodes (`mlp_combo` on chicane 29,
-`quantum_universal` on combo 33, `quantum_gp` on gp 34 and on combo 22,
+`quantum_gp` on gp 34 and on combo 22,
 `quantum_oval` on chicane 3); on a third (88000) one does — `quantum_gp`
 on combo laps in 16 — and every other cell is within one episode. The gp
 specialist's combo transfer is the one number here to quote as a range,
@@ -1089,21 +1093,21 @@ Ranking seeds on unseen tracks as well is the open item. The hard-track speciali
 `quantum_combo` each lap all ten generated tracks in 120 of 120 episodes
 at both difficulties (gp: mean laps of 30–39 s and 33–41 s), and `mlp_gp`
 in 120 and 113 of 120. Ten other generated tracks (seeds 300–309, env seed
-61000) give the same picture: the bundled universal driver 0 of 120 at
+61000) give the same picture: seed 0 0 of 120 at
 both difficulties, seed 3 120 of 120 at both, `quantum_gp` 120 of 120 at
 both, `quantum_combo` 120 and 106 (it laps one of the ten in none of its
 12 episodes), `mlp_gp` 120 and 113, the July universal driver 116 and 118,
 seed 1 120 and 68. A third set (seeds 500–509, env seed 88000) repeats it
-once more: the bundled universal driver 0 of 120 at both difficulties,
+once more: seed 0 0 of 120 at both difficulties,
 seed 3 and `quantum_gp` 120 of 120 at both, `quantum_combo` 120 and 108,
-`mlp_gp` 120 and 116. So in the bundle as it stands, "universal" means
+`mlp_gp` 120 and 116. Had seed 0 shipped, "universal" would have meant
 "all four bundled tracks", and the random- and drawn-track modes, which
-hand the car to `quantum_universal`, get a driver that brakes to a stop
-within the first tens of metres (in the demo's attract mode on 20 generated
-tracks it never left the start line on one and was standing still at the
-end on the other 19, mostly on the track with Brake as its greedy action;
-the July driver and seed 3 lapped all 20). A universal driver has to be
-ranked on tracks it was not trained on.
+hand the car to `quantum_universal`, would get a driver that brakes to a
+stop within the first tens of metres (in the demo's attract mode on 20
+generated tracks seed 0 never left the start line on one and was standing
+still at the end on the other 19, mostly on the track with Brake as its
+greedy action; the July driver and seed 3 lapped all 20). A universal
+driver has to be ranked on tracks it was not trained on.
 
 ### The ceiling: a model-based reference driver
 

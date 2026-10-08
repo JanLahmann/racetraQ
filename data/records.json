@@ -3,7 +3,7 @@
     "hero|chicane": {
       "best_s": 12.1,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "hero",
       "episodes": 36,
       "home_track": "-",
@@ -18,7 +18,7 @@
     "hero|combo": {
       "best_s": 19.0,
       "crashed_before_lap": 19,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "hero",
       "episodes": 36,
       "home_track": "-",
@@ -33,7 +33,7 @@
     "hero|gp": {
       "best_s": 16.4,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "hero",
       "episodes": 36,
       "home_track": "-",
@@ -48,7 +48,7 @@
     "hero|oval": {
       "best_s": 12.1,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "hero",
       "episodes": 36,
       "home_track": "-",
@@ -63,7 +63,7 @@
     "mlp_chicane|chicane": {
       "best_s": 12.8,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -78,7 +78,7 @@
     "mlp_chicane|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -93,7 +93,7 @@
     "mlp_chicane|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -108,7 +108,7 @@
     "mlp_chicane|oval": {
       "best_s": 12.6,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -123,7 +123,7 @@
     "mlp_combo|chicane": {
       "best_s": 31.3,
       "crashed_before_lap": 10,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -138,7 +138,7 @@
     "mlp_combo|combo": {
       "best_s": 35.7,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -153,7 +153,7 @@
     "mlp_combo|gp": {
       "best_s": 32.0,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -168,7 +168,7 @@
     "mlp_combo|oval": {
       "best_s": 30.6,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -183,7 +183,7 @@
     "mlp_gp|chicane": {
       "best_s": 17.0,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -198,7 +198,7 @@
     "mlp_gp|combo": {
       "best_s": 27.5,
       "crashed_before_lap": 35,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -213,7 +213,7 @@
     "mlp_gp|gp": {
       "best_s": 21.4,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -228,7 +228,7 @@
     "mlp_gp|oval": {
       "best_s": 16.5,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -243,7 +243,7 @@
     "mlp_oval|chicane": {
       "best_s": 12.2,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -258,7 +258,7 @@
     "mlp_oval|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -273,7 +273,7 @@
     "mlp_oval|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -288,7 +288,7 @@
     "mlp_oval|oval": {
       "best_s": 12.0,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "mlp_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -303,7 +303,7 @@
     "pro|chicane": {
       "best_s": 12.5,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "pro",
       "episodes": 36,
       "home_track": "-",
@@ -318,7 +318,7 @@
     "pro|combo": {
       "best_s": 19.1,
       "crashed_before_lap": 1,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "pro",
       "episodes": 36,
       "home_track": "-",
@@ -333,7 +333,7 @@
     "pro|gp": {
       "best_s": 16.5,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "pro",
       "episodes": 36,
       "home_track": "-",
@@ -348,7 +348,7 @@
     "pro|oval": {
       "best_s": 12.1,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "pro",
       "episodes": 36,
       "home_track": "-",
@@ -361,24 +361,24 @@
       "track": "oval"
     },
     "quantum_chicane_q10|chicane": {
-      "best_s": 13.1,
-      "crashed_before_lap": 2,
-      "date": "2026-10-03",
+      "best_s": 12.1,
+      "crashed_before_lap": 1,
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q10",
       "episodes": 36,
       "home_track": "chicane",
       "kind": "quantum",
-      "lapped_episodes": 34,
-      "laps": 136,
-      "mean_s": 13.7,
+      "lapped_episodes": 35,
+      "laps": 140,
+      "mean_s": 12.62,
       "n_qubits": 10,
-      "p90_s": 15.0,
+      "p90_s": 13.9,
       "track": "chicane"
     },
     "quantum_chicane_q10|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q10",
       "episodes": 36,
       "home_track": "chicane",
@@ -393,7 +393,7 @@
     "quantum_chicane_q10|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q10",
       "episodes": 36,
       "home_track": "chicane",
@@ -406,24 +406,24 @@
       "track": "gp"
     },
     "quantum_chicane_q10|oval": {
-      "best_s": 13.0,
-      "crashed_before_lap": 2,
-      "date": "2026-10-03",
+      "best_s": 12.0,
+      "crashed_before_lap": 0,
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q10",
       "episodes": 36,
       "home_track": "chicane",
       "kind": "quantum",
-      "lapped_episodes": 34,
-      "laps": 136,
-      "mean_s": 13.6,
+      "lapped_episodes": 36,
+      "laps": 144,
+      "mean_s": 12.55,
       "n_qubits": 10,
-      "p90_s": 14.9,
+      "p90_s": 13.9,
       "track": "oval"
     },
     "quantum_chicane_q6|chicane": {
       "best_s": 12.4,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q6",
       "episodes": 36,
       "home_track": "chicane",
@@ -438,7 +438,7 @@
     "quantum_chicane_q6|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q6",
       "episodes": 36,
       "home_track": "chicane",
@@ -453,7 +453,7 @@
     "quantum_chicane_q6|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q6",
       "episodes": 36,
       "home_track": "chicane",
@@ -468,7 +468,7 @@
     "quantum_chicane_q6|oval": {
       "best_s": 12.5,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q6",
       "episodes": 36,
       "home_track": "chicane",
@@ -483,7 +483,7 @@
     "quantum_chicane_q8|chicane": {
       "best_s": 12.1,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q8",
       "episodes": 36,
       "home_track": "chicane",
@@ -498,7 +498,7 @@
     "quantum_chicane_q8|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q8",
       "episodes": 36,
       "home_track": "chicane",
@@ -513,7 +513,7 @@
     "quantum_chicane_q8|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q8",
       "episodes": 36,
       "home_track": "chicane",
@@ -528,7 +528,7 @@
     "quantum_chicane_q8|oval": {
       "best_s": 12.1,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane_q8",
       "episodes": 36,
       "home_track": "chicane",
@@ -543,7 +543,7 @@
     "quantum_chicane|chicane": {
       "best_s": 12.0,
       "crashed_before_lap": 1,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -558,7 +558,7 @@
     "quantum_chicane|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -573,7 +573,7 @@
     "quantum_chicane|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -588,7 +588,7 @@
     "quantum_chicane|oval": {
       "best_s": 12.0,
       "crashed_before_lap": 1,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_chicane",
       "episodes": 36,
       "home_track": "chicane",
@@ -603,7 +603,7 @@
     "quantum_combo|chicane": {
       "best_s": 25.8,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -618,7 +618,7 @@
     "quantum_combo|combo": {
       "best_s": 36.0,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -633,7 +633,7 @@
     "quantum_combo|gp": {
       "best_s": 33.2,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -648,7 +648,7 @@
     "quantum_combo|oval": {
       "best_s": 25.9,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_combo",
       "episodes": 36,
       "home_track": "combo",
@@ -663,7 +663,7 @@
     "quantum_gp_q10|chicane": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp_q10",
       "episodes": 36,
       "home_track": "gp",
@@ -678,7 +678,7 @@
     "quantum_gp_q10|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp_q10",
       "episodes": 36,
       "home_track": "gp",
@@ -693,7 +693,7 @@
     "quantum_gp_q10|gp": {
       "best_s": 19.7,
       "crashed_before_lap": 12,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp_q10",
       "episodes": 36,
       "home_track": "gp",
@@ -708,7 +708,7 @@
     "quantum_gp_q10|oval": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp_q10",
       "episodes": 36,
       "home_track": "gp",
@@ -723,7 +723,7 @@
     "quantum_gp|chicane": {
       "best_s": 21.5,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -738,7 +738,7 @@
     "quantum_gp|combo": {
       "best_s": 32.4,
       "crashed_before_lap": 15,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -753,7 +753,7 @@
     "quantum_gp|gp": {
       "best_s": 26.6,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -768,7 +768,7 @@
     "quantum_gp|oval": {
       "best_s": 21.4,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_gp",
       "episodes": 36,
       "home_track": "gp",
@@ -781,24 +781,24 @@
       "track": "oval"
     },
     "quantum_oval_q10|chicane": {
-      "best_s": 12.2,
-      "crashed_before_lap": 12,
-      "date": "2026-10-03",
+      "best_s": 12.9,
+      "crashed_before_lap": 25,
+      "date": "2026-10-08",
       "driver": "quantum_oval_q10",
       "episodes": 36,
       "home_track": "oval",
       "kind": "quantum",
-      "lapped_episodes": 24,
-      "laps": 82,
-      "mean_s": 13.03,
+      "lapped_episodes": 11,
+      "laps": 24,
+      "mean_s": 13.76,
       "n_qubits": 10,
-      "p90_s": 14.2,
+      "p90_s": 14.7,
       "track": "chicane"
     },
     "quantum_oval_q10|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q10",
       "episodes": 36,
       "home_track": "oval",
@@ -813,7 +813,7 @@
     "quantum_oval_q10|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q10",
       "episodes": 36,
       "home_track": "oval",
@@ -826,24 +826,24 @@
       "track": "gp"
     },
     "quantum_oval_q10|oval": {
-      "best_s": 12.0,
-      "crashed_before_lap": 2,
-      "date": "2026-10-03",
+      "best_s": 12.8,
+      "crashed_before_lap": 0,
+      "date": "2026-10-08",
       "driver": "quantum_oval_q10",
       "episodes": 36,
       "home_track": "oval",
       "kind": "quantum",
-      "lapped_episodes": 34,
-      "laps": 136,
-      "mean_s": 12.55,
+      "lapped_episodes": 36,
+      "laps": 144,
+      "mean_s": 13.3,
       "n_qubits": 10,
-      "p90_s": 13.9,
+      "p90_s": 14.6,
       "track": "oval"
     },
     "quantum_oval_q6|chicane": {
       "best_s": 12.7,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q6",
       "episodes": 36,
       "home_track": "oval",
@@ -858,7 +858,7 @@
     "quantum_oval_q6|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q6",
       "episodes": 36,
       "home_track": "oval",
@@ -873,7 +873,7 @@
     "quantum_oval_q6|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q6",
       "episodes": 36,
       "home_track": "oval",
@@ -888,7 +888,7 @@
     "quantum_oval_q6|oval": {
       "best_s": 12.5,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q6",
       "episodes": 36,
       "home_track": "oval",
@@ -903,7 +903,7 @@
     "quantum_oval_q8|chicane": {
       "best_s": 12.9,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q8",
       "episodes": 36,
       "home_track": "oval",
@@ -918,7 +918,7 @@
     "quantum_oval_q8|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q8",
       "episodes": 36,
       "home_track": "oval",
@@ -933,7 +933,7 @@
     "quantum_oval_q8|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q8",
       "episodes": 36,
       "home_track": "oval",
@@ -948,7 +948,7 @@
     "quantum_oval_q8|oval": {
       "best_s": 12.8,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval_q8",
       "episodes": 36,
       "home_track": "oval",
@@ -963,7 +963,7 @@
     "quantum_oval|chicane": {
       "best_s": 12.3,
       "crashed_before_lap": 34,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -978,7 +978,7 @@
     "quantum_oval|combo": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -993,7 +993,7 @@
     "quantum_oval|gp": {
       "best_s": null,
       "crashed_before_lap": 36,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -1008,7 +1008,7 @@
     "quantum_oval|oval": {
       "best_s": 12.1,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_oval",
       "episodes": 36,
       "home_track": "oval",
@@ -1021,63 +1021,63 @@
       "track": "oval"
     },
     "quantum_universal|chicane": {
-      "best_s": 13.2,
+      "best_s": 26.2,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_universal",
       "episodes": 36,
       "home_track": "universal",
       "kind": "quantum",
       "lapped_episodes": 36,
-      "laps": 144,
-      "mean_s": 13.89,
+      "laps": 72,
+      "mean_s": 27.37,
       "n_qubits": 4,
-      "p90_s": 15.2,
+      "p90_s": 28.2,
       "track": "chicane"
     },
     "quantum_universal|combo": {
-      "best_s": 38.9,
-      "crashed_before_lap": 1,
-      "date": "2026-10-03",
+      "best_s": 37.5,
+      "crashed_before_lap": 0,
+      "date": "2026-10-08",
       "driver": "quantum_universal",
       "episodes": 36,
       "home_track": "universal",
       "kind": "quantum",
-      "lapped_episodes": 35,
-      "laps": 35,
-      "mean_s": 41.75,
+      "lapped_episodes": 36,
+      "laps": 36,
+      "mean_s": 38.19,
       "n_qubits": 4,
-      "p90_s": 43.6,
+      "p90_s": 38.7,
       "track": "combo"
     },
     "quantum_universal|gp": {
-      "best_s": 28.3,
+      "best_s": 34.0,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_universal",
       "episodes": 36,
       "home_track": "universal",
       "kind": "quantum",
       "lapped_episodes": 36,
-      "laps": 37,
-      "mean_s": 32.3,
+      "laps": 36,
+      "mean_s": 35.18,
       "n_qubits": 4,
-      "p90_s": 33.7,
+      "p90_s": 36.15,
       "track": "gp"
     },
     "quantum_universal|oval": {
-      "best_s": 13.1,
+      "best_s": 26.2,
       "crashed_before_lap": 0,
-      "date": "2026-10-03",
+      "date": "2026-10-08",
       "driver": "quantum_universal",
       "episodes": 36,
       "home_track": "universal",
       "kind": "quantum",
       "lapped_episodes": 36,
-      "laps": 144,
-      "mean_s": 13.69,
+      "laps": 72,
+      "mean_s": 27.64,
       "n_qubits": 4,
-      "p90_s": 15.0,
+      "p90_s": 28.9,
       "track": "oval"
     }
   },

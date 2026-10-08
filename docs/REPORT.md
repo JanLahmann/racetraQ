@@ -268,16 +268,17 @@ in-training evals on oval and chicane run under emulated device noise.)
 | `quantum_chicane_q6` | 6 × 4 | 8 | 72, 12.9 s | 36, 12.9 s |
 | `quantum_oval_q8` | 8 × 5 | 6 | 72, 13.4 s | 36, 13.4 s |
 | `quantum_chicane_q8` | 8 × 5 | 6 | 72, 12.6 s | 36, 12.6 s |
-| `quantum_oval_q10` | 10 × 6 | 6 | 72, 13.3 s | none committed (see note) |
-| `quantum_chicane_q10` | 10 × 6 | 6 | 72, 12.6 s | none committed (see note) |
+| `quantum_oval_q10` | 10 × 6 | 6 | 72, 13.3 s | 36, 13.3 s |
+| `quantum_chicane_q10` | 10 × 6 | 6 | 72, 12.6 s | 35, 12.6 s |
 | `mlp_oval` / `mlp_chicane` | — | 8 / 8 | 72, 12.6 s / 72, 13.3 s | 36, 12.6 s / 36, 13.3 s |
 | `mlp_gp` / `mlp_combo` | — | 10 / 10 | 72, 22.5 s / 72, 36.9 s | 36, 22.5 s / 36, 36.9 s |
 
 (source: SCIENCE.md "The bundled drivers"; `racetraq/weights/<name>.meta.json`
-`selection.fresh_eval`; `data/records.md`. Note: `records.md` was generated
-with the July 10-qubit files; the 6-block drivers were bundled afterwards from
-`data/studies/oval_q10` and `chicane_q10`, variant `L6`, seed 2 in both.
-`quantum_gp_q10` stays the July file: 24 of 36 re-check episodes at 22.2 s.)
+`selection.fresh_eval`; `data/records.md`. The 6-block 10-qubit drivers were
+bundled after the first re-check, from `data/studies/oval_q10` and
+`chicane_q10`, variant `L6`, seed 2 in both; their re-check is the records run
+of 2026-10-08. `quantum_gp_q10` stays the July file: 24 of 36 re-check
+episodes at 22.2 s.)
 Reliability ranks before pace: `mlp_combo` (36.9 s) was preferred to a seed
 lapping in 25.6 s that missed one of 72 episodes. On env seeds 61 000 and
 88 000 mean laps stay within 0.3 s.
@@ -433,7 +434,7 @@ and the mean lap:
 | `quantum_chicane` | 35, 12.6 s | 35, 12.7 s | 0 | 0 |
 | `quantum_gp` | 36, 22.2 s | 36, 22.8 s | 36, 27.9 s | 21, 32.9 s |
 | `quantum_combo` | 36, 26.7 s | 36, 26.8 s | 36, 34.5 s | 36, 37.2 s |
-| `quantum_universal` | 36, 13.7 s | 36, 13.9 s | 36, 32.3 s | 35, 41.8 s |
+| `quantum_universal` | 36, 27.6 s | 36, 27.4 s | 36, 35.2 s | 36, 38.2 s |
 | `mlp_oval` | 36, 12.6 s | 36, 12.7 s | 0 | 0 |
 | `mlp_chicane` | 36, 13.1 s | 36, 13.3 s | 0 | 0 |
 | `mlp_gp` | 36, 17.3 s | 36, 17.9 s | 36, 22.5 s | 1 |
@@ -619,8 +620,6 @@ and the July 8/10-qubit mechanisms were never re-measured.
 - *Denominators*: comparisons are per training episode; per second the MLP
   trains far faster, and from 6 qubits a growing share of circuit parameters is
   dead.
-- *Stale cross-references*: `data/records.md` and SCIENCE.md's audit note
-  predate the 10-qubit re-bundle; their 10-qubit rows describe the July files.
 
 ## 6 Relation to the literature
 
@@ -707,6 +706,6 @@ IBM's teaching material [19] set the bar this project does not meet.
    post-audit measurement.
 7. **Kernelized fitted Q-iteration** on the product kernel [15] was not run;
    the surrogate dequantizes inference only.
-8. **Stale records.** Regenerate `data/records.md` with the 6-block 10-qubit
-   drivers; refresh SCIENCE.md's audit note, which still calls the 10-qubit
-   chicane study pending.
+8. **Stale records** — done 2026-10-08: `data/records.md` regenerated with
+   the 6-block 10-qubit drivers and the bundled universal driver (seed 3; the
+   2026-10-03 matrix still showed seed 0, 13.7 s on the oval).
