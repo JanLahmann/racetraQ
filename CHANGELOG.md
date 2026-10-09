@@ -1,17 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-10-09
 
-- Studio: the stage during setup and training, a first-lap moment, test
-  results as a chart, you against your circuit, time estimates measured
-  on this machine, plainer words.
-- Board moderation: a name filter and operator controls (`#operator`).
-- German UI: an EN/DE switch in the header; `[ui] language = "de"` makes
-  German the booth default (the visitor's own choice wins).
-- Science follow-ups: which device-noise lever matters (both, on oval and
-  chicane; neither on gp), a pace phase with a pace selection rule
-  (`snapshot_rank = "pace"`), 10 qubits on gp under the July recipe (8
-  seeds per depth), and the universal driver re-selected by a rule that
+- **Studio** (#15): the stage during setup and training, a first-lap
+  moment, test results as a chart, you against your circuit, time
+  estimates measured on this machine, plainer words.
+- **Board moderation** (#15): a name filter and operator controls
+  (`#operator`).
+- **German UI** (#18): an EN/DE switch in the header; `[ui] language =
+  "de"` makes German the booth default (the visitor's own choice wins).
+- **Learning path** (#19): docs/LEARN.md with five routes (visitor to researcher), a
+  new notebook 00 (qubits for drivers), exercises and checkpoints in
+  notebooks 01–04, docs/GLOSSARY.md and docs/TEACHING.md, all reachable
+  from the booth's docs menu.
+- **Science follow-ups** (#20): which device-noise lever matters (both,
+  on oval and chicane; neither on gp), a pace phase with a pace selection
+  rule (`snapshot_rank = "pace"`), 10 qubits on gp under the July recipe
+  (8 seeds per depth), and the universal driver re-selected by a rule that
   includes ten generated tracks (`bundle_driver.py --unseen`; same seed).
   New trainer option: widening a 4-action init to 6 or 8 actions.
 
