@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Studio: the stage during setup and training, a first-lap moment, test
+  results as a chart, you against your circuit, time estimates measured
+  on this machine, plainer words.
+- Board moderation: a name filter and operator controls (`#operator`).
+
 ## 0.2.2 — 2026-10-09
 
 - Container: the publish workflow's Trivy gate now reads a `.trivyignore`
@@ -38,6 +45,14 @@ repository `JanLahmann/racetraQ`, website https://racetraq.org, container
   watching phone can no longer reset the booth; offline-safe `run.sh`; a
   pre-event checklist; link previews and a first-visit explainer on
   racetraq.org.
+- **Race feedback, attract headline, kiosk mode** (#12): 3-2-1-GO, a YOU
+  tag, a lap clock, a lap result with board rank, recovery where the car
+  left the track; any arrow key or controller button starts a race from
+  Watch; the kiosk hides operator controls (`#operator` shows them).
+- **README for first-time readers, shared vocabulary, accessibility**
+  (#14): CONTRIBUTING.md and CITATION.cff; chase camera by default on
+  phones; qubit sizes without a driver greyed out; colour-blind-safe car
+  colours.
 
 ## 0.1.0 — 2026-07-12
 
