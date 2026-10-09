@@ -37,6 +37,7 @@ from racetraq.agents.training import DEFAULT_EVAL_EPISODES, DQNTrainer
 from racetraq.config import load_config
 from racetraq.env.car import CarPhysics
 from racetraq.env.racing_env import CarObserver, RacingEnv
+from racetraq.moderation import name_allowed
 from racetraq.server import protocol
 from racetraq.server.runtime import (
     LEADERBOARD_MAX_ENTRIES,
@@ -493,6 +494,57 @@ class DemoSession:
     def _error(self, message: str) -> None:
         self._outbox.append({"type": "error", "message": message})
 
+    def _set_name(self, name: str) -> None:
+        """The visitor's board name (already stripped and length-capped); a
+        name with a blocked word is refused and the laps go unrecorded."""
+        extra = self.config.get("leaderboard", {}).get("blocklist", [])
+        if name and not name_allowed(name, extra):
+            self.racer_name = ""
+            self._outbox.append({"type": "error", "visitor": True, "field": "name",
+                                 "message": "Please choose another name for the board."})
+            return
+        self.racer_name = name
+
+    def moderate_board(self, msg: protocol.Board) -> None:
+        """Operator board moderation (ws.py accepts it only from the booth
+        machine): remove one entry, the entries dated today, or all of them.
+        AI reference laps stay. The changed board is saved and re-sent."""
+        track = msg.track or self.track_name
+        today = time.strftime("%Y-%m-%d")
+        if msg.board == "studio":
+            from racetraq import studio as studio_mod
+
+            entries = studio_mod.load_board(track, self.studio.board_dir)
+            entries = self._moderated(entries, msg, today, key="index")
+            studio_mod.save_board(track, entries, self.studio.board_dir)
+            self.studio.emit(full=True)
+            return
+        current = track == self.track_name
+        board = self._board if current else load_leaderboard(track, self._leaderboard_dir)
+        board["entries"] = self._moderated(board["entries"], msg, today, key="lap_s")
+        if not (current and self.track_is_random):
+            save_leaderboard(track, board, self._leaderboard_dir)
+        if current:
+            self._outbox.append(self.leaderboard_payload())
+
+    @staticmethod
+    def _moderated(entries: list[dict], msg: protocol.Board, today: str, key: str) -> list[dict]:
+        if msg.action == "clear":
+            return []
+        if msg.action == "clear_today":
+            return [e for e in entries if e.get("date") != today]
+        # remove: the race board names an entry by name + lap time, the
+        # studio board by name + position (its entries have no lap key)
+        for i, e in enumerate(entries):
+            if e.get("name") != msg.name:
+                continue
+            if key == "lap_s" and msg.lap_s is not None and abs(e["lap_s"] - msg.lap_s) > 1e-3:
+                continue
+            if key == "index" and msg.index is not None and i != msg.index:
+                continue
+            return entries[:i] + entries[i + 1:]
+        return entries
+
     def _event(self, kind: str, **fields: Any) -> None:
         self._outbox.append({"type": "event", "kind": kind, **fields})
 
@@ -523,7 +575,9 @@ class DemoSession:
         elif isinstance(msg, protocol.SetTrack):
             self._set_track(msg.track, msg.seed, msg.length)
         elif isinstance(msg, protocol.SetName):
-            self.racer_name = msg.name  # already stripped/length-capped
+            self._set_name(msg.name)
+        elif isinstance(msg, protocol.Board):
+            self.moderate_board(msg)
         elif isinstance(msg, protocol.DrawTrack):
             self._handle_draw_track(msg)
         elif isinstance(msg, protocol.Train):

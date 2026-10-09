@@ -289,7 +289,8 @@ class StudioController:
                      else round(float(best["mean_lap"]), 3),
                      "best_lap": None if best.get("best_lap") is None
                      else round(float(best["best_lap"]), 3),
-                     "seconds": self.result["seconds"]}
+                     "seconds": self.result["seconds"],
+                     "date": time.strftime("%Y-%m-%d")}
             entries, self.rank = studio.add_entry(entries, entry)
             studio.save_board(self.spec["track"], entries, self.board_dir)
         self.phase = "done"

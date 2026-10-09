@@ -53,7 +53,7 @@ export function studyLine(combo, limitS) {
   return line;
 }
 
-export function initStudioPanel({ root, send, setName, onPhase, onStart }) {
+export function initStudioPanel({ root, send, setName, onPhase, onStart, moderate }) {
   const DEFAULT_SEL = { track: null, qubits: 4, sensors: "lidar", actions: 4, warm: false };
   const sel = { ...DEFAULT_SEL };
   let catalog = null;
@@ -199,11 +199,16 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart }) {
       </div>`;
   }
 
+  // #operator: a ✕ per studio board entry (the server takes it from the booth machine only)
+  const operator = () => document.body.classList.contains("operator");
+
   function boardHtml(board) {
     if (!board) return "";
     const rows = (board.entries || [])
       .map(
-        (e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td>
+        (e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}${operator()
+          ? ` <button type="button" class="board-remove" data-studio-remove="${i}"
+              data-name="${esc(e.name)}" aria-label="Remove ${esc(e.name)}">✕</button>` : ""}</td>
           <td>${e.qubits}q · ${SENSOR_SHORT[e.sensors] || e.sensors} · ${e.actions}a${e.warm ? " · warm" : ""}</td>
           <td>${e.lapped}/${e.eval_episodes}</td><td>${fmtLap(e.mean_lap)}</td></tr>`,
       )
@@ -239,6 +244,11 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart }) {
       setName(name ? name.value.trim() : "");
       onStart && onStart();
       send("start", { ...sel });
+    } else if (btn.dataset.studioRemove !== undefined) {
+      if (moderate && last && last.board) {
+        moderate({ track: last.board.track, name: btn.dataset.name,
+          index: Number(btn.dataset.studioRemove) });
+      }
     } else if (btn.id === "studio-stop") {
       send("stop");
     } else if (btn.dataset.cmd) {
@@ -253,6 +263,12 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart }) {
   return {
     get phase() {
       return phase;
+    },
+    /** The server refused the name: empty the studio's name field. */
+    clearName() {
+      const name = root.querySelector("#studio-name");
+      if (name) name.value = "";
+      if (last) last = { ...last, name: null };
     },
     /** Booth idle: the next visitor gets the default choices and no name. */
     reset() {

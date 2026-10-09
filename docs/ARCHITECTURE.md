@@ -375,6 +375,18 @@ studio run is on. Only the browser holding the wheel sends it (after
 studio result is shown); when nobody holds the wheel, the server's 1 Hz
 control ticker applies the same reset after the same time.
 
+**`board`** — `{action, board?, track?, name?, lap_s?, index?}`: operator
+board moderation, accepted only from the booth machine itself (a client on
+127.0.0.1 / ::1; others get an `error`) and without taking the wheel.
+`action` ∈ `remove | clear_today | clear`, `board` ∈ `race | studio`
+(default race), `track` defaults to the current one. `remove` names the
+entry: `name` plus `lap_s` on the race board, `name` plus `index` on the
+studio board. `clear_today` drops the entries dated today, `clear` all of
+them; AI reference laps stay. The board is saved and re-sent. Names in
+`set_name` pass a word filter first (`racetraq/moderation.py`, plus
+`[leaderboard] blocklist`); a blocked name is refused with a visitor
+`error` and the laps go unrecorded.
+
 **`studio`** — the training studio (mode `studio`).
 
 | field | type | required | meaning |
@@ -561,7 +573,10 @@ numbers, a time estimate and whether a warm start exists.
 
 **`error`** — `{message}`; sent on the offending socket for malformed input,
 broadcast for session-level failures (unknown track, training already
-running, a training thread crashing, ...).
+running, a training thread crashing, ...). *Omitted-if-null* `visitor: true`
+marks a message written for visitors (a kiosk shows it as is; other errors
+become a plain line there) and `field: "name"` a refused board name (the
+UI empties its name fields).
 
 ## Data flow and rates
 

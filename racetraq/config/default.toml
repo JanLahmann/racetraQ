@@ -228,6 +228,12 @@ time_limit_s = 300
 attract_idle_seconds = 45
 kiosk = false
 
+[leaderboard]
+# Extra words a board name may not contain, on top of the packaged list
+# (racetraq/data/name_blocklist.json; whole words, letter swaps undone).
+# What slips through, the operator removes in the 🏆 tab (open #operator).
+blocklist = []
+
 [hardware]
 backend_name = ""          # real device, e.g. "ibm_fez" (CLI --backend overrides); empty -> least busy available
 # Local twin for --fake / the UI's "Simulated device"; any spelling (fake_fez, FakeFez).
