@@ -64,10 +64,11 @@ jobs:
           cache: pip
       - name: Install
         run: pip install -e ".[notebooks,hardware]"
-      - name: Execute notebooks 01-04, 06 and 07
+      - name: Execute notebooks 00-04, 06 and 07
         run: |
           jupyter nbconvert --to notebook --execute --output-dir /tmp/nb-out \
             --ExecutePreprocessor.timeout=900 \
+            notebooks/00_qubits_for_drivers.ipynb \
             notebooks/01_the_racing_env.ipynb \
             notebooks/02_q_learning_from_scratch.ipynb \
             notebooks/03_quantum_circuits_as_q_functions.ipynb \
