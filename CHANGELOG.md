@@ -6,6 +6,8 @@
   results as a chart, you against your circuit, time estimates measured
   on this machine, plainer words.
 - Board moderation: a name filter and operator controls (`#operator`).
+- German UI: an EN/DE switch in the header; `[ui] language = "de"` makes
+  German the booth default (the visitor's own choice wins).
 
 ## 0.2.2 — 2026-10-09
 
