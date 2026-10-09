@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `train_headless` without `--out` writes a new `runs/<agent>_<track>_<time>/`
+  folder instead of replacing the shipped weights; `--out bundled` does that
+  on purpose.
+
 ## 0.3.0 — 2026-10-09
 
 - **Studio** (#15): the stage during setup and training, a first-lap

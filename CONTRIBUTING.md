@@ -44,8 +44,9 @@ you change it. `python tools/export_browser.py` regenerates
 
 ## Training and results
 
-- `python -m racetraq.train_headless ... --out runs/<name>`: always pass
-  `--out` — without it the run overwrites the bundled weights.
+- `python -m racetraq.train_headless ...` writes a new
+  `runs/<agent>_<track>_<time>/` folder unless `--out` names one; only
+  `--out bundled` replaces the shipped weights in `racetraq/weights/`.
 - One run is an anecdote. A claim about a recipe needs a study
   (`tools/study.py`, several seeds, interval statistics), and a bundled
   driver changes only through `tools/bundle_driver.py`, which records the

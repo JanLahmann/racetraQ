@@ -5,8 +5,10 @@ Run as ``python -m racetraq.train_headless --agent mlp --track oval
 a Q-function, and the double-DQN trainer, trains for the requested number of
 sub-env episodes, prints a per-20-episode mean-return trace, reports the first
 episode (and wall-clock second) at which a full clean lap occurred, and saves
-the learned weights to ``racetraq/weights/<agent>_<track>.npz`` plus a JSON
-metadata sidecar.
+the learned weights as ``<agent>_<track>.npz`` plus a JSON metadata sidecar:
+to ``--out DIR``, by default a new ``runs/<agent>_<track>_<time>/`` folder.
+``--out bundled`` writes ``racetraq/weights/`` and replaces the shipped
+driver.
 
 The training recipe is ``[training]`` with the track's
 ``[training_presets.<track>]`` merged on top (``--preset none`` skips that);
@@ -36,6 +38,7 @@ from racetraq.env.racing_env import RacingEnv
 from racetraq.env.track import Track
 
 WEIGHTS_DIR = Path(__file__).resolve().parent / "weights"
+BUNDLED = "bundled"  # --out value that writes WEIGHTS_DIR
 REPORT_EVERY = 20  # episodes per mean-return line
 MULTI_TRACK_NAMES = ("oval", "chicane", "gp", "combo")  # the --track multi mixture
 PRESET_MODES = ("auto", "none")  # --preset: merge [training_presets.<track>] or not
@@ -425,6 +428,16 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     return summary
 
 
+def cli_out_dir(out: str | None, agent: str, track: str) -> str | None:
+    """The CLI's --out: a run of its own unless the bundled weights are asked for
+    by name (None: ``train`` writes WEIGHTS_DIR)."""
+    if out == BUNDLED:
+        return None
+    if out is not None:
+        return out
+    return str(Path("runs") / f"{agent}_{track}_{time.strftime('%Y%m%d-%H%M%S')}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="racetraQ headless training")
     parser.add_argument("--agent", default="mlp", choices=["mlp", "quantum"],
@@ -437,7 +450,10 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=None,
                         help="RNG seed (default: [training].seed)")
     parser.add_argument("--profile", default=None, help="config profile overlay (e.g. pi5)")
-    parser.add_argument("--out", default=None, help="weights output dir (default: bundled)")
+    parser.add_argument("--out", default=None,
+                        help="weights output dir (default: a new runs/<agent>_<track>_<time>/); "
+                             f"'{BUNDLED}' writes racetraq/weights/ and replaces the "
+                             "shipped driver")
     parser.add_argument("--init", default=None,
                         help="warm-start from a weights .npz (a quantum run continues at "
                              "its circuit depth and action count)")
@@ -464,7 +480,8 @@ def main() -> None:
                              "training, next to the best-snapshot weights")
     args = parser.parse_args()
     train(args.agent, args.track, args.episodes, args.seed, args.profile,
-          out_dir=args.out, init=args.init, history_path=args.history,
+          out_dir=cli_out_dir(args.out, args.agent, args.track), init=args.init,
+          history_path=args.history,
           actions=args.actions, pace=args.pace, preset=args.preset,
           overrides=args.overrides, save_final=args.save_final)
 
