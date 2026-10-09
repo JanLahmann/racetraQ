@@ -843,3 +843,20 @@ def test_train_headless_warns_about_light_cone_blind_spots(tmp_path, capsys):
 def test_option_keys_list_every_optional_key_the_trainer_reads():
     read = set(re.findall(r'training_cfg\.get\(\s*"(\w+)"', inspect.getsource(DQNTrainer)))
     assert read - {"seed"} == set(OPTION_KEYS)
+
+
+def test_train_headless_cli_never_overwrites_bundled_weights_by_default(monkeypatch):
+    from racetraq import train_headless
+
+    # no --out: a fresh runs/ folder, not racetraq/weights/
+    default = train_headless.cli_out_dir(None, "quantum", "gp")
+    assert default.startswith("runs/quantum_gp_")
+    assert train_headless.cli_out_dir("runs/x", "mlp", "oval") == "runs/x"
+    # bundling is asked for by name; train() then writes WEIGHTS_DIR
+    assert train_headless.cli_out_dir("bundled", "mlp", "oval") is None
+
+    seen = {}
+    monkeypatch.setattr(train_headless, "train", lambda *a, **kw: seen.update(kw))
+    monkeypatch.setattr(sys, "argv", ["train_headless", "--agent", "mlp", "--track", "oval"])
+    train_headless.main()
+    assert seen["out_dir"].startswith("runs/mlp_oval_")

@@ -76,7 +76,7 @@ flowchart LR
 | `racetraq/server/runtime.py` | Loading bundled agents/weights/tracks/ghosts, track payloads; what a weights file brings along (`weights_observation`, `weights_actions`, `weights_circuit`: its circuit depth and action count; `with_weights_config` overlays all of it on a config); re-exports `config.resolve_training_cfg`. |
 | `racetraq/server/ws.py` | Connection `Hub`, broadcast fan-out, per-socket receive loop, `DriverLock` (exclusive control, spectators watch). |
 | `racetraq/server/app.py` | FastAPI factory: `/health`, `/ws`, `/api/docs` + `/api/docs/{id}` (repo markdown for the in-UI docs browser; empty outside a source checkout) and `/docs-assets` (images), static frontend mounted last. |
-| `racetraq/train_headless.py` | Offline training CLI that produces the bundled `weights/*.npz` (+ `.meta.json`, history JSON). The recipe is `[training]` with the track's `[training_presets.<track>]` and then the agent's `[training_presets_<agent>.<track>]` merged on top (`--preset none` skips both); `--set section.key=value` overrides any config value (an unknown `training.` key is an error), `--episodes` / `--seed` win over everything, and `--save-final` also writes `<name>.final.npz`, the end-of-training parameters. The sidecar records the circuit shape, observation, action count and the resolved training table. Besides the bundled names, `--track multi` trains one policy on the oval+chicane+gp+combo mixture and `--track random` on a `MultiTrackEnv.random_pool` of generated tracks (seeded from `--seed`); weights save under the literal names (`quantum_multi.npz` / `quantum_random.npz`) — the universal-driver candidates. |
+| `racetraq/train_headless.py` | Offline training CLI: `<agent>_<track>.npz` (+ `.meta.json`, history JSON) into a new `runs/` folder, or `--out DIR`; `--out bundled` writes the shipped `weights/`. The recipe is `[training]` with the track's `[training_presets.<track>]` and then the agent's `[training_presets_<agent>.<track>]` merged on top (`--preset none` skips both); `--set section.key=value` overrides any config value (an unknown `training.` key is an error), `--episodes` / `--seed` win over everything, and `--save-final` also writes `<name>.final.npz`, the end-of-training parameters. The sidecar records the circuit shape, observation, action count and the resolved training table. Besides the bundled names, `--track multi` trains one policy on the oval+chicane+gp+combo mixture and `--track random` on a `MultiTrackEnv.random_pool` of generated tracks (seeded from `--seed`); weights save under the literal names (`quantum_multi.npz` / `quantum_random.npz`) — the universal-driver candidates. |
 | `racetraq/records.py` | `python -m racetraq.records [--episodes N] [--seed S] [--drivers a,b] [--tracks x,y] [--out FILE]`: greedy evaluation of every bundled driver on every bundled track (each under its own recorded observation, depth and action count) into `data/records.json`. |
 | `racetraq/bench.py` | Micro-benchmarks (env steps, forward passes, DQN updates). |
 | `tools/study.py` | Multi-seed study harness. `run` trains a (variant × seed) grid, one subprocess per cell, resumable; each cell saves best-snapshot and final weights and evaluates both over 36 distinct greedy episodes. `report` aggregates over seeds: IQM and median with bootstrap confidence intervals, stability, sample complexity, probability of improvement over a baseline (`report.md`, `report.json`). |
@@ -103,7 +103,7 @@ exactly that pair of config values, and `q8` the circuit depth as well:
   recorded in its sidecar). On a track
   without weights at the active size, the modes that need them stay
   unavailable until you train, e.g.
-  `python -m racetraq.train_headless --agent quantum --profile q8 --track gp`.
+  `python -m racetraq.train_headless --agent quantum --profile q8 --track gp --out bundled`.
 
 **Depth and the light cone.** Each readout only depends on features within
 ring distance `n_layers − 1` of its qubit (`agents/quantum/lightcone.py`;
@@ -642,8 +642,8 @@ The track appears automatically in `welcome.tracks` and the UI picker
 need weights though: train and save them with
 
 ```sh
-python -m racetraq.train_headless --agent quantum --track hairpin
-python -m racetraq.train_headless --agent mlp --track hairpin
+python -m racetraq.train_headless --agent quantum --track hairpin --out bundled
+python -m racetraq.train_headless --agent mlp --track hairpin --out bundled
 python tools/make_stages.py --track hairpin   # evolution stages + warm-start checkpoint (replays the quantum run above)
 ```
 
