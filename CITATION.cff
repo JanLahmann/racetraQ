@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use racetraQ in teaching or research, please cite it as below."
+title: "racetraQ: a quantum reinforcement learning racing demo"
+abstract: >-
+  A race car driven by a variational quantum circuit trained with double deep
+  Q-learning, next to a matched classical baseline, with multi-seed studies,
+  a light-cone analysis and a hardware path to IBM Quantum devices.
+type: software
+authors:
+  - family-names: Lahmann
+    given-names: Jan
+repository-code: "https://github.com/JanLahmann/racetraQ"
+url: "https://racetraq.org"
+license: Apache-2.0
+version: 0.2.0
+date-released: "2026-10-09"
+keywords:
+  - quantum machine learning
+  - quantum reinforcement learning
+  - variational quantum circuits
+  - deep Q-learning
+  - Qiskit
+  - education

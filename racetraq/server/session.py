@@ -123,6 +123,7 @@ def _hardware_run_fields(info: dict) -> dict:
 
 
 RANDOM_TRACK = "random"  # set_track name that triggers procedural generation
+QUBIT_SIZES = (4, 6, 8, 10)  # circuit sizes with a packaged profile
 
 
 def random_track_weights(n_qubits: int, suffix: str = "") -> tuple[Path, str]:
@@ -361,7 +362,24 @@ class DemoSession:
             "obs_labels": self._obs_labels(),
             "driver": self.driver,
             "drivers": self.available_drivers(),
+            "qubit_options": self.qubit_options(),
         }
+
+    def qubit_options(self) -> list[int]:
+        """Circuit sizes with a trained quantum driver for the current track
+        (generated and drawn tracks: the universal / gp fallback), so the UI
+        never offers a size that leaves Watch without a car."""
+        options = []
+        for n in QUBIT_SIZES:
+            path = (random_track_weights(n)[0] if self.track_is_random
+                    else quantum_weights_path(self.track_name, n))
+            if path.is_file():
+                options.append(n)
+        return options
+
+    def _track_message(self) -> dict:
+        return {"type": "track", "track": track_payload(self.track),
+                "qubit_options": self.qubit_options()}
 
     def available_drivers(self) -> list[str]:
         """Driver choices for SetDriver: "auto" plus every training whose
@@ -695,7 +713,7 @@ class DemoSession:
             self.track_is_random = False
             self._ghost = load_ghost(name, self._ghosts_dir)
         self._reload_board()
-        self._outbox.append({"type": "track", "track": track_payload(self.track)})
+        self._outbox.append(self._track_message())
         self._outbox.append(self.leaderboard_payload())
         if self.mode == "attract":
             self._enter_attract()
@@ -766,7 +784,7 @@ class DemoSession:
         self.track_is_random = True  # same fallbacks as generated tracks
         self._ghost = None
         self._reload_board()
-        self._outbox.append({"type": "track", "track": track_payload(self.track)})
+        self._outbox.append(self._track_message())
         self._outbox.append(self.leaderboard_payload())
         if self.mode == "attract":
             self._enter_attract()
