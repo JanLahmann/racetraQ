@@ -149,15 +149,18 @@ lose. **Hardware** runs a lap on the simulated device. Roll a random track or
 draw your own: the default *universal* driver and the *gp* driver both lap
 tracks they have never seen.
 
-The seven notebooks launch in a browser with nothing installed and build the
-whole stack from scratch: environment, classical driver, quantum circuit and
-its dead angles, the many-run comparison, the simulated device, more qubits,
-and finally the trained circuit taken apart.
+The eight notebooks launch in a browser with nothing installed and build the
+whole stack from scratch: a primer on qubits, environment, classical driver,
+quantum circuit and its dead angles, the many-run comparison, the simulated
+device, more qubits, and finally the trained circuit taken apart. The
+[learning path](LEARN.md) suggests where to start.
 
 ## Where to read more
 
 - [SCIENCE.md](SCIENCE.md) — every number above with its uncertainty, the
   protocol, what the audit corrected, and the literature.
+- [The learning path](LEARN.md) — what to read in which order, from five
+  minutes to half a day, and a [glossary](GLOSSARY.md) of the terms.
 - [The notebooks](../notebooks/) — the whole stack built from scratch.
 - [EXHIBITION.md](EXHIBITION.md) — the runbook for showing it, with a
   scripted five-minute demo and what to expect from each mode.

@@ -26,8 +26,11 @@ install, works on a phone. New here? Start with
 
   At a booth, follow the [exhibition runbook](docs/EXHIBITION.md).
 - **Learn how it works:** [racetraQ in plain words](docs/EXPLAINER.md), then
-  the seven [notebooks](#notebooks), which build the whole stack from
-  scratch and run in the browser on Binder.
+  the eight [notebooks](#notebooks), which build the whole stack from
+  scratch and run in the browser on Binder. The
+  [learning path](docs/LEARN.md) suggests an order for your background —
+  a 5-minute tour, a student track, tracks for ML people new to quantum and
+  physicists new to ML, and a research track.
 
 ## What it is
 
@@ -368,7 +371,14 @@ python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
   the October 2026 audit corrections, what this demo does *not* claim, and
   the literature (QRL benchmarking, classical surrogates, noise) it is
   measured against.
-- [Notebooks](#notebooks) — the seven-part build-it-from-scratch course above.
+- [Learning path](docs/LEARN.md) — five tracks through the material, from a
+  5-minute visit to a research reading list, and the classical and quantum
+  models side by side.
+- [Glossary](docs/GLOSSARY.md) — about 60 terms in one plain sentence each,
+  with where to learn more.
+- [Teaching with racetraQ](docs/TEACHING.md) — a 90-minute and a half-day
+  workshop plan, with an answer key for the notebook exercises.
+- [Notebooks](#notebooks) — the eight-part build-it-from-scratch course above.
 
 <!-- FWQ-FAMILY:START format=list — generated from family.json in JanLahmann/Fun-with-Quantum, do not edit by hand -->
 ## Part of the Fun with Quantum family
