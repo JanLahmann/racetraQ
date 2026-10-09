@@ -40,7 +40,11 @@ const lapChart = new LapChart($("#lap-chart"));
 
 const attract = new AttractManager({
   captionEl: $("#attract-caption"),
-  onIdle: () => net.setMode("attract"),
+  onIdle: () => {
+    net.idleReset(); // server: attract mode, name cleared, booth defaults
+    resetBoothUI();
+    applyMode("attract");
+  },
 });
 
 initExplain($("#panel-explain"));
@@ -58,7 +62,7 @@ const studioPanel = initStudioPanel({
     renderEpisodeOverlay();
   },
   onPhase: (phase) => {
-    attract.setBusy(phase === "training");
+    attract.setHold("studio", phase === "training" ? "hold" : phase === "done" ? "linger" : null);
     const driving = state.mode === "race" || (state.mode === "studio" && phase === "race");
     setInputActive(driving);
     $("#race-camera").hidden = !driving;
@@ -107,6 +111,10 @@ function applyMode(mode) {
   $("#race-camera").hidden = !humanDriving();
   $("#driver-picker").hidden = mode !== "attract";
   setInputActive(mode === "race" || (mode === "studio" && studioPanel.phase === "race"));
+  attract.setHold("evolution", mode === "evolution" ? "hold" : null);
+  if (mode !== "train") attract.setHold("train", null);
+  if (mode !== "hardware") attract.setHold("hardware", null);
+  if (mode === "attract") $("#race-name").value = ""; // the next visitor starts anonymous
   attract.setMode(mode);
   renderer.setMode(mode);
   $("#evo-caption").hidden = mode !== "evolution";
@@ -399,6 +407,7 @@ function escapeHtml(text) {
 // time; interacting while someone else drives joins the waiting line, and
 // turns are time-limited only while the line is non-empty.
 net.on("control", (msg) => {
+  attract.setDriving(msg.driving);
   const pill = $("#control-pill");
   let text = null;
   if (msg.driving) {
@@ -429,11 +438,17 @@ net.on("state", (msg) => {
 
 net.on("quantum", (msg) => quantumPanel.update(msg));
 
-net.on("hardware_status", (msg) => hardwarePanel.handleStatus(msg));
+// a hardware job (and the replay of its lap) holds off the idle return
+const HARDWARE_HOLD_PHASES = new Set(["connecting", "transpiling", "running", "replay"]);
+net.on("hardware_status", (msg) => {
+  attract.setHold("hardware", HARDWARE_HOLD_PHASES.has(msg.phase) ? "hold" : null);
+  hardwarePanel.handleStatus(msg);
+});
 
 net.on("studio", (msg) => studioPanel.handleStatus(msg));
 
 net.on("telemetry", (msg) => {
+  if (state.mode === "train") attract.setHold("train", "hold"); // a run is live
   chart.addPoint(msg.agent, msg.episode, msg.mean_return, msg.epsilon);
   if (msg.lap_times !== undefined || msg.best_lap_s != null) {
     lapChart.setAgentData(msg.agent, msg.lap_times, msg.best_lap_s);
@@ -475,6 +490,7 @@ net.on("event", (msg) => {
       break;
     case "training_done":
       state.training = false;
+      attract.setHold("train", null);
       $("#train-start").disabled = false;
       toast(`Training done${msg.agent ? ` (${msg.agent})` : ""}`, false);
       break;
@@ -527,10 +543,28 @@ $("#driver-select").addEventListener("change", (ev) => {
   net.setDriver(ev.target.value); // server rebuilds the attract car + re-welcomes
 });
 
-$("#race-start").addEventListener("click", () => {
+function startRace() {
   net.setName($("#race-name").value.trim()); // leaderboard name for this stint
   net.raceCmd("start", $("#race-opponent").value, state.trackName || undefined);
+}
+$("#race-start").addEventListener("click", (ev) => {
+  startRace();
+  ev.currentTarget.blur(); // Space and Enter are for driving now, not a restart
 });
+$("#race-name").addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  startRace();
+  ev.currentTarget.blur(); // hand the keys to the car
+});
+
+/** Booth defaults for the next visitor (the server resets its side on
+ *  idle_reset): no name, the stock opponent and camera, a fresh studio. */
+function resetBoothUI() {
+  $("#race-name").value = "";
+  $("#race-opponent").value = "quantum";
+  setCamera("top");
+  studioPanel.reset();
+}
 $("#race-reset").addEventListener("click", () => {
   state.bestLaps.clear();
   net.raceCmd("reset", $("#race-opponent").value);
@@ -578,6 +612,7 @@ $("#train-start").addEventListener("click", () => {
   episodeByAgent.clear();
   renderEpisodeOverlay();
   state.training = true;
+  attract.setHold("train", "hold");
   $("#train-start").disabled = true;
   net.trainCmd("start", agent, {
     track: state.trackName || undefined,
@@ -588,6 +623,7 @@ $("#train-start").addEventListener("click", () => {
 $("#train-stop").addEventListener("click", () => {
   net.trainCmd("stop", $("#train-agent").value);
   state.training = false;
+  attract.setHold("train", null);
   $("#train-start").disabled = false;
 });
 

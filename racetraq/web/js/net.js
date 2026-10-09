@@ -90,6 +90,8 @@ export function send(type, payload = {}) {
  *  present the server uses these instead of the keys bitmask (send keys:0). */
 export const sendInput = (keys, analog) => send("input", analog ? { keys, ...analog } : { keys });
 export const setMode = (mode) => send("set_mode", { mode });
+/** The booth went idle: attract mode with the booth defaults (name cleared). */
+export const idleReset = () => send("idle_reset", {});
 /** `seed` / `length` (optional, track "random" only): `seed` reproduces a
  *  specific generated track, `length` picks short / medium / long. */
 export const setTrack = (track, seed, length) => {

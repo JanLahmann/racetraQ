@@ -18,8 +18,9 @@ code; this page is the condensed reference.
 > changed with them: under 8–10 seeds the matched classical baseline is
 > ahead of the circuit on most metrics ("Honest claims"). Still open: a
 > universal driver selected on unseen tracks as well (the bundled one was
-> chosen by hand — "One driver, every track"), and a full lap on a physical
-> QPU ("Hardware": a first attempt on `ibm_marrakesh` is recorded there).
+> chosen by hand — "One driver, every track"), and lap reliability on a
+> physical QPU: one full lap on `ibm_marrakesh` exists ("Hardware"), a
+> single data point.
 
 ## The circuit
 

@@ -1,5 +1,9 @@
 // Attract-mode caption rotation + client-side idle timer that returns the
 // exhibit to attract mode after `ui.attract_idle_seconds` without interaction.
+// Only the browser holding the wheel runs the timer (a watching phone never
+// resets the booth; the server covers a wheel nobody holds). Running demos
+// hold it off: training, a hardware job, the evolution show ("hold": never)
+// and a visitor reading their studio result ("linger": longer).
 
 // Rewritten by setCircuitSpec() from the welcome's circuit_spec / obs_labels:
 // indexes 0, 1, 3 and 7 carry the qubit count, the parameter count (live
@@ -64,6 +68,8 @@ export class AttractManager {
     this.captionIdx = 0;
     this.rotateId = null;
     this.idleId = null;
+    this.holds = new Map(); // reason -> "hold" | "linger"
+    this.driving = false;
 
     const bump = () => this.notifyActivity();
     for (const ev of ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"]) {
@@ -71,11 +77,26 @@ export class AttractManager {
     }
   }
 
-  /** While busy (a studio training run) the exhibit never idles back to
-   *  attract mode — watching training IS the interaction. */
-  setBusy(busy) {
-    this.busy = Boolean(busy);
+  /** Hold off the idle return for `reason` (a studio run, training, a
+   *  hardware job …): level "hold" never idles — watching the run IS the
+   *  interaction — "linger" waits max(3 × idle, 90 s); null releases it. */
+  setHold(reason, level) {
+    if (level) this.holds.set(reason, level);
+    else this.holds.delete(reason);
     this._armIdle();
+  }
+
+  /** Only the browser that holds the wheel runs the idle timer. */
+  setDriving(driving) {
+    this.driving = Boolean(driving);
+    this._armIdle();
+  }
+
+  /** Seconds until the idle return under the current holds (0: never). */
+  effectiveIdleSeconds() {
+    const levels = new Set(this.holds.values());
+    if (!this.idleSeconds || levels.has("hold")) return 0;
+    return levels.has("linger") ? Math.max(3 * this.idleSeconds, 90) : this.idleSeconds;
   }
 
   setIdleSeconds(s) {
@@ -118,10 +139,11 @@ export class AttractManager {
   _armIdle() {
     if (this.idleId) clearTimeout(this.idleId);
     this.idleId = null;
-    if (this.mode === "attract" || !this.idleSeconds || this.busy) return;
+    const seconds = this.effectiveIdleSeconds();
+    if (this.mode === "attract" || !seconds || !this.driving) return;
     this.idleId = setTimeout(() => {
       if (this.mode !== "attract" && this.onIdle) this.onIdle();
-    }, this.idleSeconds * 1000);
+    }, seconds * 1000);
   }
 
   _startCaptions() {

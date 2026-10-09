@@ -362,7 +362,18 @@ profile exists.
 
 **`set_name`** — `{name}`: the racer's display name for the leaderboard (a
 string of at most 24 characters, stripped; empty clears it — unnamed laps
-are not recorded).
+are not recorded). Switching to attract mode (`set_mode`) clears it, so the
+next visitor starts anonymous.
+
+**`idle_reset`** — `{}`: the booth went idle. Back to attract mode with the
+booth defaults: the name is cleared, the studio forgets its model and
+returns to setup, and with `[ui] kiosk = true` the startup track, qubit
+count and driver come back (`track` / `welcome` are re-broadcast). Ignored
+while training, a hardware job or its replay, the evolution show or a
+studio run is on. Only the browser holding the wheel sends it (after
+`attract_idle_seconds` without input, or 3× that, at least 90 s, while a
+studio result is shown); when nobody holds the wheel, the server's 1 Hz
+control ticker applies the same reset after the same time.
 
 **`studio`** — the training studio (mode `studio`).
 

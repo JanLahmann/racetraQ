@@ -16,6 +16,17 @@ from racetraq.server.session import DemoSession
 from racetraq.server.ws import Hub, control_ticker, handle_socket
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+
+
+class _RevalidatedStaticFiles(StaticFiles):
+    """The frontend's files with ``Cache-Control: no-cache``: browsers keep
+    them but ask (ETag) before reuse, so a booth browser picks up an updated
+    racetraQ on reload instead of running stale JS modules from its cache."""
+
+    def file_response(self, *args: Any, **kwargs: Any):
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 REPO_ROOT = WEB_DIR.parent.parent  # only meaningful in a source checkout
 
 # Documentation surfaced in the web UI (Explain -> Full documentation), in
@@ -98,5 +109,5 @@ def create_app(config: dict[str, Any]) -> FastAPI:
         await handle_socket(websocket, hub, session)
 
     if WEB_DIR.is_dir():  # keep LAST: the catch-all static mount must not shadow /ws
-        app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+        app.mount("/", _RevalidatedStaticFiles(directory=WEB_DIR, html=True), name="web")
     return app

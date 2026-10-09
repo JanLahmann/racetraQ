@@ -3,6 +3,10 @@
 A short explainer for visitors, journalists and students. The long version,
 with every table and caveat, is [SCIENCE.md](SCIENCE.md).
 
+**Try it first:** [racetraq.org](https://racetraq.org/) runs the trained
+drivers in any browser, phone included — watch the circuit drive, then race
+it yourself.
+
 ## What is this?
 
 racetraQ is a racing game in which the driver is a tiny quantum circuit. A
@@ -132,6 +136,10 @@ and computing, with no error correction of any kind. One lap on one day is
 a data point, not a track record.
 
 ## What can I try?
+
+In any browser, at [racetraq.org](https://racetraq.org/): watch the bundled
+drivers, race them, and open every decision's circuit in IBM Quantum
+Composer.
 
 At the booth: **Watch** the circuit drive. **Train** a fresh driver and see
 the first clean lap land within minutes on the oval (on a Raspberry Pi, tick
