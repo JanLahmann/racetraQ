@@ -40,6 +40,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: true
+          trivyignores: .trivyignore  # base-image findings, each with its reason there
 
       - name: Build + push multi-arch
         id: push

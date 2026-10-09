@@ -1,11 +1,18 @@
 # Changelog
 
+## 0.2.2 — 2026-10-09
+
+- Container: the publish workflow's Trivy gate now reads a `.trivyignore`
+  for four findings that are artefacts of the QuBins base image (versions
+  recorded in a base layer that a later layer replaces; the image has the
+  fixed versions). This is the first `ghcr.io/janlahmann/racetraq` image:
+  the v0.2.0 and v0.2.1 publish runs stopped at that gate.
+
 ## 0.2.1 — 2026-10-09
 
-- Container: upgrades msgpack, setuptools and urllib3 from the base image,
-  whose versions failed the publish workflow's security scan, so the v0.2.0
-  image was never pushed. This is the first `ghcr.io/janlahmann/racetraq`
-  image.
+- Container: floors msgpack, setuptools and urllib3 in the Dockerfile. It
+  did not clear the scan: the image already had the fixed versions (see
+  0.2.2).
 
 ## 0.2.0 — 2026-10-09
 

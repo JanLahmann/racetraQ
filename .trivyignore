@@ -5,3 +5,21 @@
 # reachable in racetraQ's usage. Fixed in pyo3 0.29.0; the base image
 # has not yet rebased. Justified upstream in the QuBins .trivyignore.
 GHSA-36hh-v3qg-5jq4
+
+# Trivy layer-resolution artefacts in the QuBins base image, not packages
+# racetraQ ships:
+#   GHSA-6v7p-g79w-8964  msgpack     reported 1.1.2  (image has 1.2.3)
+#   CVE-2025-47273       setuptools  reported 70.3.0 (image has 84.0.0)
+#   CVE-2026-97687/97689 urllib3     reported 2.7.0  (image has 2.8.0)
+# Trivy reads them from a base layer whose files a later base layer
+# replaces; the image has a single site-packages tree with the fixed
+# versions (the Dockerfile floors all three again). QuBins verified this
+# and suppresses the same IDs in its own .trivyignore
+# (github.com/QuBins/qiskit-images, "Trivy layer-resolution artefacts"),
+# but a repo-level ignore file does not travel with the image, so an image
+# built on top needs its own. Drop these when the base stops carrying the
+# superseded layers or Trivy resolves overwritten metadata across layers.
+GHSA-6v7p-g79w-8964
+CVE-2025-47273
+CVE-2026-97687
+CVE-2026-97689
