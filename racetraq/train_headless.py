@@ -452,7 +452,8 @@ def main() -> None:
     parser.add_argument("--profile", default=None, help="config profile overlay (e.g. pi5)")
     parser.add_argument("--out", default=None,
                         help="weights output dir (default: a new runs/<agent>_<track>_<time>/); "
-                             f"'{BUNDLED}' writes racetraq/weights/ and replaces the shipped driver")
+                             f"'{BUNDLED}' writes racetraq/weights/ and replaces the "
+                             "shipped driver")
     parser.add_argument("--init", default=None,
                         help="warm-start from a weights .npz (a quantum run continues at "
                              "its circuit depth and action count)")
@@ -479,7 +480,8 @@ def main() -> None:
                              "training, next to the best-snapshot weights")
     args = parser.parse_args()
     train(args.agent, args.track, args.episodes, args.seed, args.profile,
-          out_dir=cli_out_dir(args.out, args.agent, args.track), init=args.init, history_path=args.history,
+          out_dir=cli_out_dir(args.out, args.agent, args.track), init=args.init,
+          history_path=args.history,
           actions=args.actions, pace=args.pace, preset=args.preset,
           overrides=args.overrides, save_final=args.save_final)
 
