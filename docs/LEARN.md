@@ -195,7 +195,7 @@ an estimate from shots on real hardware, never an exact number.
 
 ## More
 
-- [Glossary](GLOSSARY.md) — about 60 terms in one sentence each.
+- [Glossary](GLOSSARY.md) — about 70 terms in one sentence each.
 - [Teaching with racetraQ](TEACHING.md) — a 90-minute and a half-day
   workshop, with an answer key.
 - [racetraQ in plain words](EXPLAINER.md), [SCIENCE.md](SCIENCE.md),

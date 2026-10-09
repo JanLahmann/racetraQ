@@ -374,7 +374,7 @@ python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
 - [Learning path](docs/LEARN.md) — five tracks through the material, from a
   5-minute visit to a research reading list, and the classical and quantum
   models side by side.
-- [Glossary](docs/GLOSSARY.md) — about 60 terms in one plain sentence each,
+- [Glossary](docs/GLOSSARY.md) — about 70 terms in one plain sentence each,
   with where to learn more.
 - [Teaching with racetraQ](docs/TEACHING.md) — a 90-minute and a half-day
   workshop plan, with an answer key for the notebook exercises.
