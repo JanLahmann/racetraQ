@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "racetraq"
-version = "0.2.0"
+version = "0.2.1"
 description = "racetraQ — a quantum reinforcement learning racing demo (Qiskit-powered)"
 readme = "README.md"
 license = { text = "Apache-2.0" }

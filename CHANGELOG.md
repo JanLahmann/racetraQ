@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-09
+
+- Container: upgrades msgpack, setuptools and urllib3 from the base image,
+  whose versions failed the publish workflow's security scan, so the v0.2.0
+  image was never pushed. This is the first `ghcr.io/janlahmann/racetraq`
+  image.
+
 ## 0.2.0 — 2026-10-09
 
 The project is now **racetraQ** (formerly traQmania): package `racetraq`,
