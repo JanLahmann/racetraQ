@@ -117,6 +117,12 @@ gamma = 0.99
 #   On 10 seeds the MLP tends to do worse with the 0.30 floor (a consistent
 #   trend, not a supported difference), hence per agent; the 10-qubit
 #   feature-observation circuit fails under it too (see docs/SCIENCE.md).
+# Device-noise levers (action_gap + act_noise) on oval and chicane only:
+#   2026-10-09, 8 seeds, simulated device: either lever alone helps a little,
+#   both together lap 95 of 96 device episodes on each track (73 and 48 with
+#   neither). On gp they hurt learning (best snapshots lap 0.99 -> 0.05 with
+#   both), so gp and combo train without them (docs/SCIENCE.md, "Follow-ups
+#   to the audit").
 [training_presets_quantum.oval]
 action_gap = 0.8
 act_noise = { attenuation = 0.95, shots = 1024 }

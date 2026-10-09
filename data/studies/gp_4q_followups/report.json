@@ -1,0 +1,795 @@
+{
+ "schema": 1,
+ "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp4_follow",
+ "baseline": "feat4",
+ "bootstrap": {
+  "resamples": 2000,
+  "seed": 0,
+  "ci": 0.95,
+  "method": "stratified percentile bootstrap over seeds"
+ },
+ "reliable_fraction": 0.5,
+ "thresholds": [
+  0.5,
+  0.9
+ ],
+ "eval": {
+  "episodes": 36,
+  "seed": 20000
+ },
+ "git_commits": [
+  "6556e70dadfc63d6b8c2805ed0d9edc86ab5d40e"
+ ],
+ "failed_cells": [],
+ "variants": {
+  "feat4": {
+   "recipe": {
+    "name": "feat4",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": false,
+    "init": null,
+    "overrides": [
+     "observation.ray_angles_deg=[-45.0,45.0]",
+     "observation.features=[\"rays\",\"speed\",\"corner_speed_ratio\"]"
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 8,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 2,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 8,
+     "iqm": {
+      "value": 0.1111111111111111,
+      "ci_low": 0.0,
+      "ci_high": 0.45833333333333337
+     },
+     "median": {
+      "value": 0.05555555555555555,
+      "ci_low": 0.0,
+      "ci_high": 0.45833333333333337
+     }
+    },
+    "final_lapped_frac": {
+     "n": 8,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 8,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.006944444444444445
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "best_mean_lap": {
+     "n": 5,
+     "iqm": {
+      "value": 32.53733831308441,
+      "ci_low": 22.72090954532727,
+      "ci_high": 49.09904860102857
+     },
+     "median": {
+      "value": 27.50178626432143,
+      "ci_low": 21.300000426,
+      "ci_high": 50.533334344000004
+     }
+    },
+    "first_clean_episode": {
+     "n": 1,
+     "iqm": {
+      "value": 2947.0,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": 2947.0,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 2,
+     "fraction_reached": 0.25,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 2100.0,
+      "ci_low": 1450.0,
+      "ci_high": 2750.0
+     },
+     "median": {
+      "value": 2100.0,
+      "ci_low": 1450.0,
+      "ci_high": 2750.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 0,
+     "fraction_reached": 0.0,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     },
+     "median": {
+      "value": null,
+      "ci_low": null,
+      "ci_high": null
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 3,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.08333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 50.533334344000004,
+     "first_clean_episode": 2947,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 1632.6907750419923
+    },
+    {
+     "seed": 1,
+     "best_lapped": 12,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3333333333333333,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 26.036364157090905,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 1251.032034667005
+    },
+    {
+     "seed": 2,
+     "best_lapped": 30,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8333333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.50178626432143,
+     "first_clean_episode": null,
+     "stability": 0.02777777777777778,
+     "episodes_to_50": 1450,
+     "episodes_to_90": null,
+     "wall_time_s": 1144.949141500023
+    },
+    {
+     "seed": 3,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 865.1553255409817
+    },
+    {
+     "seed": 4,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 782.4938118749997
+    },
+    {
+     "seed": 5,
+     "best_lapped": 21,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5833333333333334,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 45.75238186742857,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": 2750,
+     "episodes_to_90": null,
+     "wall_time_s": 797.6669594590203
+    },
+    {
+     "seed": 6,
+     "best_lapped": 1,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.027777777777777776,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 21.300000426,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 477.63230579101946
+    },
+    {
+     "seed": 7,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": null,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 422.0543946250109
+    }
+   ]
+  },
+  "pace_rel": {
+   "recipe": {
+    "name": "pace_rel",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": true,
+    "init": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/levers_gp/cells/none/seed{seed}/quantum_gp.npz",
+    "overrides": []
+   },
+   "n_params": 56,
+   "n_seeds": 8,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 5,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 8,
+     "iqm": {
+      "value": 0.5625,
+      "ci_low": 0.2986111111111111,
+      "ci_high": 0.7986111111111112
+     },
+     "median": {
+      "value": 0.5833333333333334,
+      "ci_low": 0.2777777777777778,
+      "ci_high": 0.8340277777777739
+     }
+    },
+    "final_lapped_frac": {
+     "n": 8,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 8,
+     "iqm": {
+      "value": 0.005681818181818182,
+      "ci_low": 0.0,
+      "ci_high": 0.05134680134680135
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.05303030303030303
+     }
+    },
+    "best_mean_lap": {
+     "n": 7,
+     "iqm": {
+      "value": 28.1015807174819,
+      "ci_low": 24.042055574859237,
+      "ci_high": 36.65202967256952
+     },
+     "median": {
+      "value": 27.01515205545455,
+      "ci_low": 24.24655220906897,
+      "ci_high": 35.28648719221622
+     }
+    },
+    "first_clean_episode": {
+     "n": 8,
+     "iqm": {
+      "value": 10.75,
+      "ci_low": 6.493750000000011,
+      "ci_high": 14.5
+     },
+     "median": {
+      "value": 11.0,
+      "ci_low": 6.0,
+      "ci_high": 15.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 0.75,
+     "episodes_half_of_seeds": 150,
+     "iqm": {
+      "value": 141.66666666666666,
+      "ci_low": 75.0,
+      "ci_high": 300.0
+     },
+     "median": {
+      "value": 125.0,
+      "ci_low": 75.0,
+      "ci_high": 325.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 2,
+     "fraction_reached": 0.25,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 250.0,
+      "ci_low": 100.0,
+      "ci_high": 400.0
+     },
+     "median": {
+      "value": 250.0,
+      "ci_low": 100.0,
+      "ci_high": 400.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 26,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.63404304587234,
+     "first_clean_episode": 7,
+     "stability": 0.0,
+     "episodes_to_50": 100,
+     "episodes_to_90": null,
+     "wall_time_s": 195.68713050000952
+    },
+    {
+     "seed": 1,
+     "best_lapped": 13,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3611111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 31.82307755953847,
+     "first_clean_episode": 14,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 345.4852165830089
+    },
+    {
+     "seed": 2,
+     "best_lapped": 10,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2777777777777778,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 21.157143280285712,
+     "first_clean_episode": 10,
+     "stability": 0.05303030303030303,
+     "episodes_to_50": 250,
+     "episodes_to_90": null,
+     "wall_time_s": 511.92764795801486
+    },
+    {
+     "seed": 3,
+     "best_lapped": 22,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6111111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.01515205545455,
+     "first_clean_episode": 2,
+     "stability": 0.022727272727272728,
+     "episodes_to_50": 50,
+     "episodes_to_90": null,
+     "wall_time_s": 325.53003270798945
+    },
+    {
+     "seed": 4,
+     "best_lapped": 20,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5555555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 43.535000870699996,
+     "first_clean_episode": 16,
+     "stability": 0.0,
+     "episodes_to_50": 150,
+     "episodes_to_90": null,
+     "wall_time_s": 323.85371554098674
+    },
+    {
+     "seed": 5,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 15,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 226.95944174999022
+    },
+    {
+     "seed": 6,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.28648719221622,
+     "first_clean_episode": 6,
+     "stability": 0.0,
+     "episodes_to_50": 100,
+     "episodes_to_90": 100,
+     "wall_time_s": 281.4691503329959
+    },
+    {
+     "seed": 7,
+     "best_lapped": 31,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.24655220906897,
+     "first_clean_episode": 12,
+     "stability": 0.12962962962962962,
+     "episodes_to_50": 400,
+     "episodes_to_90": 400,
+     "wall_time_s": 213.9975728339923
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.5,
+     "ci_low": 0.5,
+     "ci_high": 0.5,
+     "n": 8,
+     "n_baseline": 8
+    },
+    "stability": {
+     "p_improvement": 0.6328125,
+     "ci_low": 0.4375,
+     "ci_high": 0.8125,
+     "n": 8,
+     "n_baseline": 8
+    }
+   }
+  },
+  "pace_fast": {
+   "recipe": {
+    "name": "pace_fast",
+    "agent": "quantum",
+    "track": "gp",
+    "profile": null,
+    "episodes": null,
+    "preset": "auto",
+    "actions": null,
+    "pace": true,
+    "init": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/levers_gp/cells/none/seed{seed}/quantum_gp.npz",
+    "overrides": [
+     "training.snapshot_rank=\"pace\""
+    ]
+   },
+   "n_params": 56,
+   "n_seeds": 8,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "failed_seeds": [],
+   "missing_seeds": [],
+   "reliable_seeds": 5,
+   "metrics": {
+    "best_lapped_frac": {
+     "n": 8,
+     "iqm": {
+      "value": 0.5625,
+      "ci_low": 0.2986111111111111,
+      "ci_high": 0.7986111111111112
+     },
+     "median": {
+      "value": 0.5833333333333334,
+      "ci_low": 0.2777777777777778,
+      "ci_high": 0.8340277777777739
+     }
+    },
+    "final_lapped_frac": {
+     "n": 8,
+     "iqm": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+     }
+    },
+    "stability": {
+     "n": 8,
+     "iqm": {
+      "value": 0.005681818181818182,
+      "ci_low": 0.0,
+      "ci_high": 0.05134680134680135
+     },
+     "median": {
+      "value": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.05303030303030303
+     }
+    },
+    "best_mean_lap": {
+     "n": 7,
+     "iqm": {
+      "value": 28.1015807174819,
+      "ci_low": 24.042055574859237,
+      "ci_high": 36.65202967256952
+     },
+     "median": {
+      "value": 27.01515205545455,
+      "ci_low": 24.24655220906897,
+      "ci_high": 35.28648719221622
+     }
+    },
+    "first_clean_episode": {
+     "n": 8,
+     "iqm": {
+      "value": 10.75,
+      "ci_low": 6.493750000000011,
+      "ci_high": 14.5
+     },
+     "median": {
+      "value": 11.0,
+      "ci_low": 6.0,
+      "ci_high": 15.0
+     }
+    }
+   },
+   "sample_complexity": {
+    "episodes_to_50": {
+     "threshold": 0.5,
+     "reached": 6,
+     "fraction_reached": 0.75,
+     "episodes_half_of_seeds": 150,
+     "iqm": {
+      "value": 141.66666666666666,
+      "ci_low": 75.0,
+      "ci_high": 300.0
+     },
+     "median": {
+      "value": 125.0,
+      "ci_low": 75.0,
+      "ci_high": 325.0
+     }
+    },
+    "episodes_to_90": {
+     "threshold": 0.9,
+     "reached": 2,
+     "fraction_reached": 0.25,
+     "episodes_half_of_seeds": null,
+     "iqm": {
+      "value": 250.0,
+      "ci_low": 100.0,
+      "ci_high": 400.0
+     },
+     "median": {
+      "value": 250.0,
+      "ci_low": 100.0,
+      "ci_high": 400.0
+     }
+    }
+   },
+   "per_seed": [
+    {
+     "seed": 0,
+     "best_lapped": 26,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.7222222222222222,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.63404304587234,
+     "first_clean_episode": 7,
+     "stability": 0.0,
+     "episodes_to_50": 100,
+     "episodes_to_90": null,
+     "wall_time_s": 160.78360937497928
+    },
+    {
+     "seed": 1,
+     "best_lapped": 13,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.3611111111111111,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 31.82307755953847,
+     "first_clean_episode": 14,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 714.2757771250035
+    },
+    {
+     "seed": 2,
+     "best_lapped": 10,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.2777777777777778,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 21.157143280285712,
+     "first_clean_episode": 10,
+     "stability": 0.05303030303030303,
+     "episodes_to_50": 250,
+     "episodes_to_90": null,
+     "wall_time_s": 326.94760574999964
+    },
+    {
+     "seed": 3,
+     "best_lapped": 22,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.6111111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 27.01515205545455,
+     "first_clean_episode": 2,
+     "stability": 0.022727272727272728,
+     "episodes_to_50": 50,
+     "episodes_to_90": null,
+     "wall_time_s": 359.8030958749878
+    },
+    {
+     "seed": 4,
+     "best_lapped": 20,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.5555555555555556,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 43.535000870699996,
+     "first_clean_episode": 16,
+     "stability": 0.0,
+     "episodes_to_50": 150,
+     "episodes_to_90": null,
+     "wall_time_s": 112.20412287500221
+    },
+    {
+     "seed": 5,
+     "best_lapped": 0,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.0,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": null,
+     "first_clean_episode": 15,
+     "stability": 0.0,
+     "episodes_to_50": null,
+     "episodes_to_90": null,
+     "wall_time_s": 180.74064012500457
+    },
+    {
+     "seed": 6,
+     "best_lapped": 34,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.9444444444444444,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 35.28648719221622,
+     "first_clean_episode": 6,
+     "stability": 0.0,
+     "episodes_to_50": 100,
+     "episodes_to_90": 100,
+     "wall_time_s": 272.1992566670233
+    },
+    {
+     "seed": 7,
+     "best_lapped": 31,
+     "final_lapped": 0,
+     "eval_episodes": 36,
+     "best_lapped_frac": 0.8611111111111112,
+     "final_lapped_frac": 0.0,
+     "best_mean_lap": 24.24655220906897,
+     "first_clean_episode": 12,
+     "stability": 0.12962962962962962,
+     "episodes_to_50": 400,
+     "episodes_to_90": 400,
+     "wall_time_s": 206.09757708301186
+    }
+   ],
+   "vs_baseline": {
+    "final_lapped_frac": {
+     "p_improvement": 0.5,
+     "ci_low": 0.5,
+     "ci_high": 0.5,
+     "n": 8,
+     "n_baseline": 8
+    },
+    "stability": {
+     "p_improvement": 0.6328125,
+     "ci_low": 0.4375,
+     "ci_high": 0.8125,
+     "n": 8,
+     "n_baseline": 8
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,586 @@
+{
+ "_doc": "Simulated-device reliability of every cell's best-snapshot driver (tools/hw_reliability.py at commit 6556e70: Aer twin of fake_miami, 1024 shots, no rescale, resilience 0; 12 device episodes capped at device_max_decisions, plus 36 emulated-noise and 36 exact episodes). lapped = episodes that completed a lap.",
+ "variants": {
+  "none": {
+   "seeds": {
+    "0": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 34,
+      "crashed": 13
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 1
+     }
+    },
+    "1": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 32,
+      "crashed": 15
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 1
+     }
+    },
+    "2": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 0,
+      "crashed": 36
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 0,
+      "crashed": 12
+     }
+    },
+    "3": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "4": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 20,
+      "crashed": 31
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 10,
+      "crashed": 2
+     }
+    },
+    "5": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 33,
+      "crashed": 13
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 14,
+      "crashed": 34
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 5,
+      "crashed": 7
+     }
+    },
+    "6": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 24,
+      "crashed": 34
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 3
+     }
+    },
+    "7": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 31,
+      "crashed": 8
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    }
+   },
+   "device_lapped": 73,
+   "device_episodes": 96,
+   "emulation_lapped": 191,
+   "emulation_episodes": 288,
+   "seeds_device_11_of_12": 5
+  },
+  "gap": {
+   "seeds": {
+    "0": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "1": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 19,
+      "crashed": 35
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 3,
+      "crashed": 9
+     }
+    },
+    "2": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 35,
+      "crashed": 1
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "3": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 34,
+      "crashed": 4
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "4": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 32,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 33,
+      "crashed": 2
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 1
+     }
+    },
+    "5": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 20
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "6": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "7": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 9,
+      "crashed": 35
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 7,
+      "crashed": 7
+     }
+    }
+   },
+   "device_lapped": 81,
+   "device_episodes": 96,
+   "emulation_lapped": 238,
+   "emulation_episodes": 288,
+   "seeds_device_11_of_12": 6
+  },
+  "noise": {
+   "seeds": {
+    "0": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 33,
+      "crashed": 11
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 9,
+      "crashed": 3
+     }
+    },
+    "1": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 1
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 1
+     }
+    },
+    "2": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 30,
+      "crashed": 6
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 21,
+      "crashed": 34
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 6,
+      "crashed": 6
+     }
+    },
+    "3": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 33,
+      "crashed": 20
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 9,
+      "crashed": 3
+     }
+    },
+    "4": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 34,
+      "crashed": 2
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 31,
+      "crashed": 12
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 1
+     }
+    },
+    "5": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 14,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 3
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 3
+     }
+    },
+    "6": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "7": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 35,
+      "crashed": 9
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 10,
+      "crashed": 2
+     }
+    }
+   },
+   "device_lapped": 79,
+   "device_episodes": 96,
+   "emulation_lapped": 261,
+   "emulation_episodes": 288,
+   "seeds_device_11_of_12": 4
+  },
+  "both": {
+   "seeds": {
+    "0": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "1": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "2": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "3": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "4": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "5": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 29,
+      "crashed": 7
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 30,
+      "crashed": 6
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 11,
+      "crashed": 1
+     }
+    },
+    "6": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 33,
+      "crashed": 12
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 31,
+      "crashed": 23
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    },
+    "7": {
+     "exact": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 0
+     },
+     "emulation": {
+      "episodes": 36,
+      "lapped": 36,
+      "crashed": 3
+     },
+     "device": {
+      "episodes": 12,
+      "lapped": 12,
+      "crashed": 0
+     }
+    }
+   },
+   "device_lapped": 95,
+   "device_episodes": 96,
+   "emulation_lapped": 277,
+   "emulation_episodes": 288,
+   "seeds_device_11_of_12": 8
+  }
+ },
+ "device_max_decisions": 200
+}

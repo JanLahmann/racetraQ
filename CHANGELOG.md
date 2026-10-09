@@ -8,6 +8,12 @@
 - Board moderation: a name filter and operator controls (`#operator`).
 - German UI: an EN/DE switch in the header; `[ui] language = "de"` makes
   German the booth default (the visitor's own choice wins).
+- Science follow-ups: which device-noise lever matters (both, on oval and
+  chicane; neither on gp), a pace phase with a pace selection rule
+  (`snapshot_rank = "pace"`), 10 qubits on gp under the July recipe (8
+  seeds per depth), and the universal driver re-selected by a rule that
+  includes ten generated tracks (`bundle_driver.py --unseen`; same seed).
+  New trainer option: widening a 4-action init to 6 or 8 actions.
 
 ## 0.2.2 — 2026-10-09
 

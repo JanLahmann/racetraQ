@@ -16,11 +16,10 @@ code; this page is the condensed reference.
 > reports those studies; their per-seed summaries are in `data/studies/`),
 > except `quantum_gp_q10`, which stays a July single run. The headline
 > changed with them: under 8–10 seeds the matched classical baseline is
-> ahead of the circuit on most metrics ("Honest claims"). Still open: a
-> universal driver selected on unseen tracks as well (the bundled one was
-> chosen by hand — "One driver, every track"), and lap reliability on a
-> physical QPU: one full lap on `ibm_marrakesh` exists ("Hardware"), a
-> single data point.
+> ahead of the circuit on most metrics ("Honest claims"). The universal
+> driver is now selected by a rule that includes unseen tracks ("Follow-ups
+> to the audit"). Still open: lap reliability on a physical QPU — one full
+> lap on `ibm_marrakesh` exists ("Hardware"), a single data point.
 
 ## The circuit
 
@@ -1057,10 +1056,11 @@ across 5 seeds the fresh recipe gives best snapshots that lap in 0.89
 universal driver under the same recipe did worse (0.64 [0.49, 0.85];
 stability P 1.00 for fresh). The top three seeds lapped in 144, 143 and 141
 of 144 fresh episodes. The bundled one is seed 3 (143 of 144: oval 27.7 s,
-chicane 27.4 s, gp 35.3 s, combo 38.5 s), chosen by hand over the
+chicane 27.4 s, gp 35.3 s, combo 38.5 s), first chosen by hand over the
 top-ranked seed 0 (144 of 144 at 13.7 / 13.9 / 32.2 / 41.5 s) for the
 reason the next paragraph measures: seed 0 drives only the four tracks it
-was trained on. The end of training is again not the
+was trained on. Since 2026-10-09 a bundling rule that ranks on generated
+tracks as well picks the same seed ("Follow-ups to the audit"). The end of training is again not the
 driver (final-params lapped 0.47 [0.25, 0.76], stability 0.35
 [0.28, 0.48]). An MLP under the identical recipe reaches 0.95 [0.60, 1.00]
 and stability 0.48 [0.46, 0.49] — with the caveat that the 0.30 floor is
@@ -1166,6 +1166,88 @@ Three things follow.
 
 Hero and pro laps are excluded from ghost records — records stay with the
 standard demo agents (and humans).
+
+### Follow-ups to the audit (2026-10-08/09)
+
+Four questions the audit left open, under the same protocol (8 seeds per
+variant; per-seed data in `data/studies/<name>/`).
+
+**Which training levers make a driver device-robust?** The oval and
+chicane recipe adds two levers for device noise, `action_gap = 0.8` and
+`act_noise = { attenuation = 0.95, shots = 1024 }`; the gp recipe has
+neither. Each lever on its own and both together, against none, at 4
+qubits (oval and chicane 800 episodes, gp its 3000-episode preset), and
+every seed's best snapshot then drove 12 episodes on the simulated device
+(Aer twin of `fake_miami`, 1024 shots, no rescale, resilience 0):
+
+| Track | Device laps, of 96: none | gap | noise | both | Best-snapshot lapped (IQM): none | gap | noise | both |
+|---|---|---|---|---|---|---|---|---|
+| oval | 73 | 81 | 79 | **95** | 1.00 | 1.00 | 0.99 | 1.00 |
+| chicane | 48 | 71 | 54 | **95** | 0.94 | 0.94 | 0.96 | 1.00 |
+| gp | 36 | 49 | 29 | 21 | **0.99** | 0.75 | 0.42 | 0.05 |
+
+On oval and chicane the two levers are complementary: either alone helps
+a little, together every seed laps in at least 11 of 12 device episodes
+(8 of 8 seeds on both tracks, against 5 and 0 with neither) and training
+does not suffer (stability 0.78 and 0.64 against 0.69 and 0.47). The
+"none" oval cells reproduce the October oval study seed for seed. On gp
+both levers hurt learning itself — with both, 2 of 8 seeds reach a best
+snapshot that laps in half its test episodes, against 8 of 8 without —
+so the gp recipe stays without them and gp stays fragile on the device
+(`data/studies/levers_{oval,chicane,gp}_4q/`, device results in each
+`device.json`).
+
+**A pace phase with a pace selection rule.** The trainer can now rank
+snapshots by lap time above a reliability floor (`[training]
+snapshot_rank = "pace"`, `snapshot_floor`, default 0.75 of the test
+episodes). On gp at 4 qubits, starting from each seed's best snapshot of
+the lever study's "none" cells, a 600-episode pace phase (`--pace`) with
+exploration falling to 0.02 lost reliability (best-snapshot lapped 0.56
+[0.30, 0.80] against 0.99 before), and the rule changed nothing because no
+snapshot reached the floor (`data/studies/gp_4q_followups/`). With
+exploration held at 0.30 — the gp recipe's floor — reliability stays
+(0.94 [0.83, 1.00]) but the laps do not get supportedly faster (32.8 s
+[27.3, 36.0] with the pace rule, 33.6 s [28.7, 36.2] without, against
+34.9 s [30.1, 39.2] before; `gp_4q_pace30`). Re-evaluated on 72 fresh
+episodes, the seed the bundling rule picks from that study laps 72 of 72
+at 36.3 s, slower than the bundled gp driver's 27.9 s, so nothing was
+re-bundled.
+
+**Fewer, engineered sensors at 4 qubits.** Two rays (±45°), speed and
+`corner_speed_ratio` in place of three rays and speed: on gp no seed
+learns a reliable policy (best-snapshot lapped 0.11 [0.00, 0.46];
+`gp_4q_followups`, variant `feat4`). At 4 qubits the third ray matters
+more than the corner feature.
+
+**The universal driver, selected by rule.** `tools/bundle_driver.py
+--unseen N` also drives every candidate zero-shot on N generated tracks
+(seeds 100–109, difficulty 0.65, 12 episodes each) and ranks by tracks
+lapped reliably on the bundled and the generated tracks together. Applied
+to the universal study it picks seed 3, the seed chosen by hand before:
+on 72 fresh episodes per bundled track it laps 287 of 288 (27.6 / 27.4 /
+35.3 / 38.2 s) and on the generated tracks 120 of 120 (10 of 10 tracks
+reliable), while the top-ranked seed 0 laps 283 of 288 and 0 of 120
+(seeds 1, 2 and 4: 3, 0 and 1 generated tracks). The weights are
+unchanged; the sidecar now records the rule instead of a hand choice.
+
+**10 qubits on gp under the July recipe.** The engineered-feature
+circuit (5 rays, speed and four track features) at 4 and 6 layers, 8
+seeds each, with exploration falling to 0.05 as in July
+(`data/studies/gp_q10feat_8seeds/`):
+
+| Layers | Params | Best-snapshot lapped | Seeds ≥ 50 % | Final-params lapped | Mean lap | First clean lap |
+|---|---|---|---|---|---|---|
+| 4 | 128 | 0.44 [0.10, 0.82] | 5/8 | 0.02 [0.00, 0.30] | 28.0 s [23.7, 31.2] | 2194 |
+| 6 | 188 | 0.42 [0.21, 0.79] | 3/8 | 0.06 [0.00, 0.30] | 22.2 s [20.7, 24.9] | 1673 |
+
+Under this recipe the circuit does learn gp at 10 qubits, where the 0.30
+floor recipe of the 4-qubit gp driver did not (3 seeds per depth); six
+layers drive faster laps and find the first one earlier, neither keeps
+what it learned (final parameters lap almost never). The bundled
+`quantum_gp_q10` (July, 4 layers, 24 of 36 at 22.2 s) stays for now.
+Still running: the plain-ray `q10` profile under the same recipe, a pace
+phase from these snapshots, and scaled action sets (6 and 8 actions, the
+4-action weights widened as the start).
 
 ### July 2026 exploratory results (old protocol)
 

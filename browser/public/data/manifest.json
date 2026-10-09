@@ -1062,12 +1062,12 @@
     "n_layers": 4,
     "n_actions": 4
    },
-   "provenance": "best snapshot of seed 3, chosen from the 5-seed study universal variant quantum (quantum on multi, 3000 episodes, training.bootstrap_truncation=true, training.epsilon_end=0.30, training.epsilon_decay_episodes=2000, training.gamma=0.99); seeds ranked by the study's 36-episode reliability eval, the top 1 re-evaluated on fresh episodes and chosen by that result; fresh greedy eval of 36 episodes per track (env seed 31000): oval laps in 36/36 episodes, best 26.0 s, mean 27.7 s; chicane laps in 36/36 episodes, best 26.4 s, mean 27.4 s; gp laps in 35/36 episodes, best 33.8 s, mean 35.3 s; combo laps in 36/36 episodes, best 37.1 s, mean 38.5 s; the recipe across its 5 seeds (IQM [95% CI]): best snapshot laps in 0.89 [0.68, 1.00] of the study's eval episodes, final params in 0.47 [0.25, 0.76], stability 0.35 [0.28, 0.48]; 5/5 seeds lap in at least half; seed 3 instead of the top-ranked seed 0: seed 0 laps the four bundled tracks but brakes to a stop on generated and drawn tracks (the demo's random/draw modes), seed 3 drives them (20/20 generated tracks probed in the October 2026 audit)",
+   "provenance": "best snapshot of seed 3, chosen from the 5-seed study universal variant quantum (quantum on multi, 3000 episodes, training.bootstrap_truncation=true, training.epsilon_end=0.30, training.epsilon_decay_episodes=2000, training.gamma=0.99); seeds ranked by the study's 36-episode reliability eval, the top 5 re-evaluated on fresh episodes and chosen by that result; fresh greedy eval of 72 episodes per track (env seed 31000): oval laps in 72/72 episodes, best 25.9 s, mean 27.6 s; chicane laps in 71/72 episodes, best 26.3 s, mean 27.4 s; gp laps in 72/72 episodes, best 33.6 s, mean 35.3 s; combo laps in 72/72 episodes, best 37.0 s, mean 38.2 s; the recipe across its 5 seeds (IQM [95% CI]): best snapshot laps in 0.89 [0.68, 1.00] of the study's eval episodes, final params in 0.47 [0.25, 0.76], stability 0.35 [0.28, 0.48]; 5/5 seeds lap in at least half",
    "fresh_eval": {
-    "episodes": 144,
-    "lapped_fraction": 0.9931,
-    "mean_lap": 30.657,
-    "best_lap": 26.0
+    "episodes": 288,
+    "lapped_fraction": 0.9965,
+    "mean_lap": 30.618,
+    "best_lap": 25.9
    },
    "features": [
     "rays",

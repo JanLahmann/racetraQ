@@ -262,11 +262,12 @@ round-robin (3000 episodes, 5 seeds). The seed that ranks first on those
 four tracks (144 of 144 fresh episodes at 13.7 / 13.9 / 32.2 / 41.5 s) does
 **not** generalize beyond them — on ten generated tracks it completes no
 lap (0 of 120 episodes) and in the demo's random-track mode it brakes to a
-stop — so the bundled file is seed 3 instead, chosen by hand: it laps every
-bundled track (143 of 144 fresh episodes at 27.7 / 27.4 / 35.3 / 38.5 s)
-and every generated one (240 of 240), at about twice the easy-track lap
-time. Ranking seeds on unseen tracks as well is an open item
-(docs/SCIENCE.md, "One driver, every track"). The hard-track specialists
+stop — so the bundled file is seed 3 instead: it laps every bundled track
+(287 of 288 fresh episodes at 27.6 / 27.4 / 35.3 / 38.2 s) and every
+generated one (120 of 120), at about twice the easy-track lap time. It was
+first chosen by hand; the bundling rule now ranks seeds on ten generated
+tracks as well and picks the same seed (docs/SCIENCE.md, "Follow-ups to the
+audit"). The hard-track specialists
 transfer better: the gp driver laps oval and chicane in 36 of 36 episodes
 each, combo in 16–22 of 36 (three sets), and every generated track we
 tried — three sets of ten, 120 of 120 each.

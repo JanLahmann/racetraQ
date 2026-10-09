@@ -467,10 +467,11 @@ rule would have shipped seed 0; on ten generated tracks (`env/trackgen`, seeds
 seed 61 000, 500–509 on 88 000 — repeat it: seed 0 0 of 120 at both
 difficulties, seed 3 120 of 120 at both; `quantum_gp` 120 of 120 everywhere,
 `quantum_combo` 120 and 106–108, `mlp_gp` 120 and 113–116.) Seed 3 ships,
-chosen by hand (`tools/bundle_driver.py --seed 3`, reason in the sidecar
-`note`), at about twice seed 0's easy-track lap time. A rule that ranks only on
-the training tracks picks a specialist; ranking on unseen tracks is the open
-item. For scale, the model-based `hero` reference drives best laps of
+at about twice seed 0's easy-track lap time. A rule that ranks only on the
+training tracks picks a specialist. It was first chosen by hand; since
+2026-10-09 `tools/bundle_driver.py --unseen 10` ranks by tracks lapped
+reliably over the bundled and ten generated tracks and picks seed 3 (287 of
+288 fresh bundled episodes, 120 of 120 generated; seed 0: 283 and 0). For scale, the model-based `hero` reference drives best laps of
 12.1 / 12.1 / 16.5 / 19.0 s and the 2,436-parameter `pro` MLP matches it on
 oval and gp with the same four actions (SCIENCE.md "The ceiling").
 
@@ -616,7 +617,7 @@ and the July 8/10-qubit mechanisms were never re-measured.
   the dozens of comparisons made.
 - *Selection effects*: a bundled driver's numbers come after two selection
   steps (best snapshot, best seed), and the 72-episode fresh eval still picks
-  among 3–4 candidates; the universal driver was chosen by hand.
+  among 3–5 candidates.
 - *Denominators*: comparisons are per training episode; per second the MLP
   trains far faster, and from 6 qubits a growing share of circuit parameters is
   dead.
@@ -684,26 +685,36 @@ IBM's teaching material [19] set the bar this project does not meet.
 
 ## 8 Open questions and next steps
 
-1. **Selection on unseen tracks.** `bundle_driver.py` ranks on the training
-   tracks only; the top universal seed laps none of 120 generated-track
-   episodes. Add generated tracks to the ranking and re-select `quantum_universal`.
+1. **Selection on unseen tracks** — done 2026-10-09: `bundle_driver.py
+   --unseen 10` adds ten generated tracks to the ranking; re-selecting
+   `quantum_universal` with it picks seed 3 (the former hand choice).
 2. **A physical QPU.** Every multi-seed hardware number is a simulated snapshot;
    one real lap exists (ibm_marrakesh, 2026-10-03, Open Plan batch mode, 27 CZ,
    ~280 QPU-seconds, 27 minutes wall clock; `data/qpu/`). Repeating it across
    days and devices, and on a Nighthawk, is the open item (Open Plan: job and
    batch mode only, 10 QPU-minutes per 28 days, heavy-hex Herons).
-3. **Which robustness lever matters.** `action_gap` and `act_noise` were only
-   tested together, and only on oval and chicane; gp, combo and the universal
-   driver train without them and lap 3–9 of 12 device episodes.
+3. **Which robustness lever matters** — measured 2026-10-09 (SCIENCE.md,
+   "Follow-ups to the audit"): on oval and chicane the two levers are
+   complementary (device laps of 96: 73/48 with neither, 81/71 gap only,
+   79/54 noise only, 95/95 both); on gp they hurt learning (best-snapshot
+   lapped 0.99 without, 0.05 with both), so gp still trains without them
+   and remains fragile on the device (36 of 96). Combo and the universal
+   driver were not tested.
 4. **gp warm start and the end of training.** No variant makes the
    end-of-training parameters lap on gp, and warm live-training on gp mostly
    fails (`default.toml` `[training_warm_gp]`: 3 of 11 seeds end lapping).
-5. **10 qubits on gp.** No lane has enough seeds for an interval; the October
-   recipe fails at both depths and the July recipe gives seed-dominated single
-   runs. A dependable 10-qubit gp driver is an open problem.
-6. **Feature engineering never re-measured**: the engineered observation,
-   scaled action sets and the pace objective remain in the code without a
-   post-audit measurement.
+5. **10 qubits on gp.** The October recipe fails at both depths (3 seeds
+   each). Under the July recipe, 8 seeds per depth: the engineered-feature
+   circuit learns gp at 4 and 6 layers (best snapshots lap 0.44 and 0.42 of
+   their test episodes; 6 layers 22.2 s), but no run keeps what it learned.
+   A dependable 10-qubit gp driver is still open; the plain-ray profile, a
+   pace phase and scaled action sets are being measured.
+6. **Feature engineering and pace**: at 4 qubits on gp, two rays plus the
+   corner feature do not learn (0.11), and a pace phase either loses
+   reliability (exploration to 0.02) or keeps it without faster laps (held
+   at 0.30); a pace selection rule (`snapshot_rank = "pace"`) exists but
+   changed nothing there. Scaled action sets are being measured at 10
+   qubits.
 7. **Kernelized fitted Q-iteration** on the product kernel [15] was not run;
    the surrogate dequantizes inference only.
 8. **Stale records** — done 2026-10-08: `data/records.md` regenerated with
