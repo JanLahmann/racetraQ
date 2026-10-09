@@ -265,3 +265,19 @@ def test_converges_once_every_test_laps_and_nothing_improves(tmp_path):
         ctl._watch_tests(job)  # the same test seen twice counts once
     assert ctl.best_test["mean_lap"] == 14.0
     assert ctl.stop_reason == "converged" and stops == [True]
+
+
+def test_estimates_use_this_machines_measured_speed(tmp_path):
+    """The setup screen's time estimate comes from the reference laptop until
+    a studio run on this machine has measured its own training speed."""
+    from racetraq import studio as st
+
+    stats = {"cells": {"oval_q4": {"first_lap": {"median": 200}}},
+             "speed": {"4": {"s_per_episode": 0.1}}}
+    laptop = st.catalog(stats, {}, 300.0)["combos"]["oval_q4"]
+    assert laptop["estimate_s"] == 20.0 and laptop["estimate_here"] is False
+    st.record_local_speed(tmp_path, 4, episodes=10, seconds=5.0)  # too short to count
+    assert st.load_local_speed(tmp_path) == {}
+    st.record_local_speed(tmp_path, 4, episodes=400, seconds=120.0)
+    here = st.catalog(stats, {}, 300.0, st.load_local_speed(tmp_path))["combos"]["oval_q4"]
+    assert here["estimate_s"] == 60.0 and here["estimate_here"] is True

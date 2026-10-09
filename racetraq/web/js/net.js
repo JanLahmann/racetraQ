@@ -103,6 +103,10 @@ export const setTrack = (track, seed, length) => {
 export const setQubits = (n) => send("qubits", { n });
 export const drawTrack = (points) => send("draw_track", { points });
 export const setName = (name) => send("set_name", { name });
+/** Operator board moderation (the server accepts it from the booth machine
+ *  only): action remove | clear_today | clear; opts {board, track, name,
+ *  lap_s, index}. */
+export const boardCmd = (action, opts = {}) => send("board", { action, ...opts });
 /** Pick which training's quantum weights drive the agent ("auto" = per-track). */
 export const setDriver = (driver) => send("set_driver", { driver });
 

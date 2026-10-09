@@ -97,9 +97,12 @@ racetraq/config/exhibition.toml`. Run the browser fullscreen, e.g.
    answers.
 3. Hardware step: `python -m racetraq.hardware lap --track oval --fake`
    completes; save its transcript in case you want to show it.
-4. Clear the boards you don't want to show: stop the server, delete
-   `racetraq/data/leaderboard/<track>.json` and, for the ghosts,
-   `racetraq/data/ghosts/<track>.json`.
+4. Clear the boards you don't want to show: open
+   `http://127.0.0.1:8000/#operator` on the booth machine, 🏆 tab, **Clear
+   the board** (or **Clear today's laps**, or ✕ next to one entry; the
+   Studio board has ✕ too). Ghosts: stop the server and delete
+   `racetraq/data/ghosts/<track>.json`. Add your own words to the name
+   filter with `[leaderboard] blocklist = [...]` in a config overlay.
 5. Pick the profile: `--profile exhibition` (plus `--config` for a Pi or
    q6), and the default track in a `./config/exhibition.toml` if not gp.
 6. Browser fullscreen in kiosk mode; check the gamepad pill lights up.

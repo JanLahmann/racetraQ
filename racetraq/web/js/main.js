@@ -51,6 +51,14 @@ initExplain($("#panel-explain"));
 const studioPanel = initStudioPanel({
   root: $("#panel-studio"),
   send: net.studioCmd,
+  moderate: (opts) => net.boardCmd("remove", { board: "studio", ...opts }),
+  stage: $("#studio-stage"),
+  onTrack: (name) => {
+    if (name !== state.trackName) net.setTrack(name); // the stage shows the chosen track
+  },
+  onFirstLap: (episode) => showBanner(`FIRST LAP · episode ${episode}`),
+  laps: () => ({ human: state.bestLaps.get("human"), model: state.bestLaps.get("studio") }),
+  active: () => state.mode === "studio",
   setName: (name) => {
     net.setName(name);
     $("#race-name").value = name;
@@ -120,6 +128,7 @@ function applyMode(mode) {
   $("#race-camera").hidden = !humanDriving();
   $("#driver-picker").hidden = mode !== "attract";
   setInputActive(mode === "race" || (mode === "studio" && studioPanel.phase === "race"));
+  studioPanel.syncStage();
   attract.setHold("evolution", mode === "evolution" ? "hold" : null);
   if (mode !== "train") attract.setHold("train", null);
   if (mode !== "hardware") attract.setHold("hardware", null);
@@ -322,8 +331,8 @@ const episodeByAgent = new Map(); // agent -> latest episode
 
 function renderEpisodeOverlay() {
   const el = $("#episode-overlay");
-  const training = state.mode === "train" ||
-    (state.mode === "studio" && studioPanel.phase === "training");
+  // (the studio's own ticker on the stage carries the episode count)
+  const training = state.mode === "train";
   if (!training || episodeByAgent.size === 0) {
     el.hidden = true;
     return;
@@ -338,8 +347,12 @@ function renderEpisodeOverlay() {
 }
 
 function showBestBanner(lapTime) {
+  showBanner(`NEW BEST LAP ${lapTime.toFixed(2)}s`);
+}
+
+function showBanner(text) {
   const el = $("#best-banner");
-  el.textContent = `NEW BEST LAP ${lapTime.toFixed(2)}s`;
+  el.textContent = text;
   el.hidden = false;
   el.classList.remove("banner-in");
   void el.offsetWidth; // retrigger the animation
@@ -418,13 +431,23 @@ function applyQubitOptions(options) {
 }
 
 // Leaderboard: ranked named human laps + unranked AI reference rows.
+const isOperator = () => document.body.classList.contains("operator");
+
 net.on("leaderboard", (msg) => {
   $("#board-track").textContent = TRACK_NAMES[msg.track] || msg.track;
+  state.boardTrack = msg.track;
   const entries = $("#board-entries");
+  // #operator: a ✕ per entry and the clear buttons (the server takes them
+  // from the booth machine only)
+  const remove = (e) => isOperator()
+    ? `<button type="button" class="board-remove" data-name="${escapeHtml(e.name)}"
+        data-lap="${e.lap_s}" title="Remove this entry" aria-label="Remove ${escapeHtml(e.name)}">✕</button>`
+    : "";
   entries.innerHTML = msg.entries
     .map((e) => `<li><span class="board-name">${escapeHtml(e.name)}</span>
-      <b>${e.lap_s.toFixed(2)}s</b><span class="board-date">${e.date || ""}</span></li>`)
+      <b>${e.lap_s.toFixed(2)}s</b><span class="board-date">${e.date || ""}</span>${remove(e)}</li>`)
     .join("");
+  $("#board-moderation").hidden = !isOperator();
   $("#board-empty").hidden = msg.entries.length > 0;
   $("#board-references").innerHTML = msg.references
     .map((r) => `<div class="board-ref">
@@ -565,6 +588,7 @@ net.on("event", (msg) => {
   switch (msg.kind) {
     case "lap":
     case "clean_lap":
+      if (msg.car_id && state.mode === "studio") setTimeout(() => studioPanel.refresh(), 0);
       if (msg.car_id) {
         renderer.addEffect("lap", msg.car_id);
         if (typeof msg.lap_time === "number") {
@@ -606,7 +630,13 @@ net.on("event", (msg) => {
 // (#operator shows it).
 net.on("error", (msg) => {
   const detail = msg.message || "server error";
-  if (document.body.classList.contains("kiosk") && !document.body.classList.contains("operator")) {
+  if (msg.field === "name") {
+    $("#race-name").value = "";
+    studioPanel.clearName();
+  }
+  if (msg.visitor) {
+    toast(detail); // written for visitors
+  } else if (document.body.classList.contains("kiosk") && !isOperator()) {
     console.warn("racetraQ:", detail);
     toast("That isn't available right now — try another track or mode.");
   } else {
@@ -799,6 +829,34 @@ initDraw({
     localStorage.removeItem("traq-sidebar-w");
   });
 }
+
+// -- board moderation (#operator) -----------------------------------------------
+
+$("#board-entries").addEventListener("click", (ev) => {
+  const btn = ev.target.closest(".board-remove");
+  if (!btn) return;
+  net.boardCmd("remove", { track: state.boardTrack, name: btn.dataset.name,
+    lap_s: Number(btn.dataset.lap) });
+});
+$("#board-clear-today").addEventListener("click", () => {
+  net.boardCmd("clear_today", { track: state.boardTrack });
+});
+// two clicks to clear the whole board (the page cannot show a confirm dialog)
+$("#board-clear").addEventListener("click", (ev) => {
+  const btn = ev.currentTarget;
+  if (btn.dataset.armed === "1") {
+    net.boardCmd("clear", { track: state.boardTrack });
+    btn.dataset.armed = "";
+    btn.textContent = "Clear the board";
+    return;
+  }
+  btn.dataset.armed = "1";
+  btn.textContent = "Click again to clear";
+  setTimeout(() => {
+    btn.dataset.armed = "";
+    btn.textContent = "Clear the board";
+  }, 3000);
+});
 
 // -- boot --------------------------------------------------------------------
 

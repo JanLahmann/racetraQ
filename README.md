@@ -92,7 +92,7 @@ reliably here. Under the hood:
   the camera: top-down, chase (turns with your car, heading up) or cockpit
   (closer); the rotating views add a minimap.
 - **Studio**: build and train your own quantum driver — pick the track, 4–10
-  qubits, the sensors (lidar + speed, or lidar + corner speed) and 4, 6 or 8
+  qubits, the sensors (distance + speed, or distance + corner warning) and 4, 6 or 8
   actions, optionally warm-start, and train it live for at most 5 minutes
   (sooner once it passes every test drive and stops improving). The result
   shows when it first lapped and how its best test compares with the study

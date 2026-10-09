@@ -264,9 +264,12 @@ class StudioController:
             episodes = job.episode + 1
         best = history.get("best_eval")
         self.model = job.trainer.qfunc if job.error is None else None
+        seconds = self.stopped_at - (self.started_at or self.stopped_at)
+        if job.error is None:  # this machine's training speed, for the next estimates
+            studio.record_local_speed(self.board_dir, self.spec["qubits"], int(episodes), seconds)
         self.result = {
             "episodes": int(episodes),
-            "seconds": round(self.stopped_at - (self.started_at or self.stopped_at), 1),
+            "seconds": round(seconds, 1),
             "first_lap": first_lap,
             "best_eval": best,
             "stop_reason": self.stop_reason,
@@ -289,7 +292,8 @@ class StudioController:
                      else round(float(best["mean_lap"]), 3),
                      "best_lap": None if best.get("best_lap") is None
                      else round(float(best["best_lap"]), 3),
-                     "seconds": self.result["seconds"]}
+                     "seconds": self.result["seconds"],
+                     "date": time.strftime("%Y-%m-%d")}
             entries, self.rank = studio.add_entry(entries, entry)
             studio.save_board(self.spec["track"], entries, self.board_dir)
         self.phase = "done"
@@ -352,7 +356,8 @@ class StudioController:
                                 "entries": studio.load_board(track, self.board_dir)[:10]}
         if full:
             payload["catalog"] = studio.catalog(self.stats, self._warm_available(),
-                                                self.time_limit_s)
+                                                self.time_limit_s,
+                                                studio.load_local_speed(self.board_dir))
         return payload
 
     def emit(self, full: bool = False) -> None:

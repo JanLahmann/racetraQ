@@ -83,6 +83,7 @@
         <div class="headline">A quantum circuit is driving this car</div>
         <div class="subline">Press an arrow key or a controller button to race it</div>
       </div>
+      <div id="studio-stage" hidden></div>
       <div id="race-hud" hidden aria-live="off"></div>
       <div id="race-countdown" hidden aria-live="assertive"></div>
       <div id="offtrack-banner" hidden>Off track — back on the road in a moment</div>
@@ -207,6 +208,10 @@
         they race, but they don't rank.</p>
         <ol id="board-entries" class="board-list"></ol>
         <p class="hint" id="board-empty">No named laps yet — be the first.</p>
+        <div id="board-moderation" class="board-moderation" hidden>
+          <button type="button" id="board-clear-today">Clear today's laps</button>
+          <button type="button" id="board-clear">Clear the board</button>
+        </div>
         <h2>Reference drivers</h2>
         <div id="board-references"></div>
       </div>

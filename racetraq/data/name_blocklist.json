@@ -1,0 +1,11 @@
+{
+  "_doc": "Words a leaderboard name may not contain (racetraq/moderation.py). Matched case-insensitively after undoing common letter swaps (0->o, 1->i, 3->e, 4->a, 5->s, 7->t, @->a, $->s) as whole words with a plain ending (shits, fucker), or as the whole name spelled with dots or spaces (f.u.c.k). Whole words only, so real names such as Scunthorpe or Dickens stay allowed. A booth adds its own words with [leaderboard] blocklist in a config overlay. Kept short on purpose: it catches the obvious, an operator clears the rest from the board (#operator).",
+  "words": [
+    "arsch", "arschloch", "asshole", "bastard", "bitch", "blowjob", "cock", "cunt",
+    "dick", "dildo", "fag", "faggot", "fick", "ficken", "fotze", "fuck", "fucker",
+    "hitler", "hure", "kanake", "kike", "milf", "motherfucker", "nazi", "neger",
+    "nigga", "nigger", "nutte", "penis", "porn", "porno", "pussy", "rape", "retard",
+    "schlampe", "schwanz", "scheisse", "shit", "slut", "spast", "titten", "twat",
+    "vagina", "wank", "wanker", "whore", "wichser", "heil", "shithead", "dickhead", "fuckface"
+  ]
+}

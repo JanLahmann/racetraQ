@@ -22,7 +22,17 @@ from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from racetraq.server.protocol import Hello, ProtocolError, parse_client
+from racetraq.server.protocol import Board, Hello, ProtocolError, parse_client
+
+LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost", "testclient"}
+
+
+def is_local(websocket: WebSocket) -> bool:
+    """The client runs on the booth machine itself (operator moderation is
+    refused from visitors' phones on the LAN). ``testclient`` is Starlette's
+    in-process test client."""
+    client = websocket.client
+    return client is not None and client.host in LOCAL_HOSTS
 
 DRIVER_IDLE_RELEASE_S = 90.0  # driver inactivity before the wheel frees up
 DRIVER_TURN_S = 120.0         # max turn length while someone is waiting
@@ -253,6 +263,13 @@ async def handle_socket(websocket: WebSocket, hub: Hub, session: Any) -> None:
             if isinstance(msg, Hello):
                 await websocket.send_json(session.welcome_payload())
                 await hub.send_control_state(websocket)
+                continue
+            if isinstance(msg, Board):  # operator console: no wheel needed, local only
+                if is_local(websocket):
+                    session.handle_message(msg)
+                else:
+                    await websocket.send_json({"type": "error", "message":
+                                               "board moderation only from the booth machine"})
                 continue
             was_driving = hub.lock.driving(websocket)
             if hub.lock.try_control(websocket):

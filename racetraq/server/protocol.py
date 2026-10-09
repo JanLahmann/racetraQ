@@ -25,6 +25,8 @@ STUDIO_ACTIONS = ("start", "stop", "race", "watch", "result", "setup")
 STUDIO_SENSORS = ("lidar", "corner")
 STUDIO_PHASES = ("setup", "training", "done", "race", "watch")
 HARDWARE_BACKENDS = ("fake", "real")
+BOARD_ACTIONS = ("remove", "clear_today", "clear")
+BOARD_KINDS = ("race", "studio")
 HARDWARE_PHASES = ("idle", "connecting", "transpiling", "running", "replay", "done", "error")
 HARDWARE_EXECUTION_MODES = ("session", "batch", "job")
 HARDWARE_RESCALES = ("global", "readout")  # attenuation rescale kinds ([hardware] rescale)
@@ -72,6 +74,23 @@ class IdleReset:
     track, circuit size and driver) for the next visitor."""
 
     TYPE: ClassVar[str] = "idle_reset"
+
+
+@dataclass(frozen=True)
+class Board:
+    """Operator board moderation (accepted only from the booth machine
+    itself): ``remove`` one entry (``name`` + ``lap_s`` for the race board,
+    ``name`` + ``index`` for the studio board), ``clear_today`` the entries
+    dated today, or ``clear`` the whole board of ``track`` (AI reference
+    laps stay)."""
+
+    action: str
+    board: str = "race"
+    track: str | None = None  # None -> the current track
+    name: str | None = None
+    lap_s: float | None = None
+    index: int | None = None
+    TYPE: ClassVar[str] = "board"
 
 
 @dataclass(frozen=True)
@@ -349,6 +368,8 @@ class Control:
 @dataclass(frozen=True)
 class Error:
     message: str
+    visitor: bool | None = None  # written for visitors: show it as is, even on a kiosk
+    field: str | None = None  # the input it is about ("name": clear the name fields)
     TYPE: ClassVar[str] = "error"
 
 
@@ -467,6 +488,24 @@ def _parse_hello(d: dict) -> Hello:
     return Hello()
 
 
+def _parse_board(d: dict) -> Board:
+    _check_extra(d, {"action", "board", "track", "name", "lap_s", "index"})
+    action = _enum(_req(d, "action"), "action", BOARD_ACTIONS)
+    board = _enum(d["board"], "board", BOARD_KINDS) if d.get("board") is not None else "race"
+    name = d.get("name")
+    if name is not None and (not isinstance(name, str) or len(name) > 24):
+        raise ProtocolError("'name' must be a string of at most 24 characters")
+    if action == "remove" and name is None:
+        raise ProtocolError("'remove' needs the entry's 'name'")
+    return Board(
+        action=action, board=board,
+        track=_str(d["track"], "track") if d.get("track") is not None else None,
+        name=name,
+        lap_s=_float(d["lap_s"], "lap_s") if d.get("lap_s") is not None else None,
+        index=_int(d["index"], "index", 0) if d.get("index") is not None else None,
+    )
+
+
 def _parse_idle_reset(d: dict) -> IdleReset:
     _check_extra(d, set())
     return IdleReset()
@@ -583,6 +622,7 @@ _CLIENT_PARSERS = {
     Input.TYPE: _parse_input,
     SetMode.TYPE: _parse_set_mode,
     IdleReset.TYPE: _parse_idle_reset,
+    Board.TYPE: _parse_board,
     SetTrack.TYPE: _parse_set_track,
     SetName.TYPE: _parse_set_name,
     DrawTrack.TYPE: _parse_draw_track,
@@ -597,8 +637,8 @@ _CLIENT_PARSERS = {
 
 def parse_client(
     data: Any,
-) -> (Hello | Input | SetMode | IdleReset | SetTrack | SetName | DrawTrack | Train
-      | Race | Qubits | SetDriver | HardwareMsg | Studio):
+) -> (Hello | Input | SetMode | IdleReset | Board | SetTrack | SetName | DrawTrack
+      | Train | Race | Qubits | SetDriver | HardwareMsg | Studio):
     """Strictly parse a client -> server dict; raises ProtocolError on anything off."""
     if not isinstance(data, dict):
         raise ProtocolError("message must be a JSON object")
@@ -735,7 +775,11 @@ def _parse_control(d: dict) -> Control:
 
 
 def _parse_error(d: dict) -> Error:
-    return Error(message=_str(_req(d, "message"), "message"))
+    return Error(
+        message=_str(_req(d, "message"), "message"),
+        visitor=_bool(d["visitor"], "visitor") if d.get("visitor") is not None else None,
+        field=_str(d["field"], "field") if d.get("field") is not None else None,
+    )
 
 
 def _opt_int(d: dict, key: str, lo: int | None = None) -> int | None:
