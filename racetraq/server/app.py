@@ -27,6 +27,8 @@ class _RevalidatedStaticFiles(StaticFiles):
         response = super().file_response(*args, **kwargs)
         response.headers["Cache-Control"] = "no-cache"
         return response
+
+
 REPO_ROOT = WEB_DIR.parent.parent  # only meaningful in a source checkout
 
 # Documentation surfaced in the web UI (Explain -> Full documentation), in
@@ -37,8 +39,11 @@ REPO_ROOT = WEB_DIR.parent.parent  # only meaningful in a source checkout
 _DOC_SOURCES = (
     ("README", "README.md", "racetraQ"),
     ("EXPLAINER", "docs/EXPLAINER.md", "Explainer"),
+    ("LEARN", "docs/LEARN.md", "Learning path"),
+    ("GLOSSARY", "docs/GLOSSARY.md", "Glossary"),
     ("REPORT", "docs/REPORT.md", "Report"),
     ("EXHIBITION", "docs/EXHIBITION.md", "Exhibiting"),
+    ("TEACHING", "docs/TEACHING.md", "Teaching"),
     ("SCIENCE", "docs/SCIENCE.md", "Science"),
     ("ARCHITECTURE", "docs/ARCHITECTURE.md", "Architecture"),
 )

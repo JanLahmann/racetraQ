@@ -26,8 +26,11 @@ install, works on a phone. New here? Start with
 
   At a booth, follow the [exhibition runbook](docs/EXHIBITION.md).
 - **Learn how it works:** [racetraQ in plain words](docs/EXPLAINER.md), then
-  the seven [notebooks](#notebooks), which build the whole stack from
-  scratch and run in the browser on Binder.
+  the eight [notebooks](#notebooks), which build the whole stack from
+  scratch and run in the browser on Binder. The
+  [learning path](docs/LEARN.md) suggests an order for your background —
+  a 5-minute tour, a student track, tracks for ML people new to quantum and
+  physicists new to ML, and a research track.
 
 ## What it is
 
@@ -115,19 +118,33 @@ reliably here. Under the hood:
 
 ## Notebooks
 
-Seven teaching notebooks build the whole stack up from scratch — no local install
+Eight teaching notebooks build the whole stack up from scratch — no local install
 needed, each badge launches on Binder (via [QuBins](https://qubins.org) `xl`
-images with Qiskit preinstalled):
+images with Qiskit preinstalled). Notebooks 01–04 end with "predict, then check"
+exercises and every notebook from 00 to 04 with three checkpoint questions;
+the [learning path](docs/LEARN.md) says which ones to read for your background,
+and the [glossary](docs/GLOSSARY.md) explains the terms.
 
-| Notebook | What it covers | Launch |
-|---|---|---|
-| [01 — The racing environment](notebooks/01_the_racing_env.ipynb) | tracks, car physics (why you must brake for hairpins), lidar, reward, a scripted lap | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/01_the_racing_env.ipynb) |
-| [02 — Q-learning from scratch](notebooks/02_q_learning_from_scratch.ipynb) | MDPs, double DQN in pure numpy, a 76-parameter MLP learns to lap in seconds | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/02_q_learning_from_scratch.ipynb) |
-| [03 — Quantum circuits as Q-functions](notebooks/03_quantum_circuits_as_q_functions.ipynb) | the data re-uploading VQC, expressivity, fastsim ≡ `EstimatorQNN`, light cones and dead parameters, adjoint vs param-shift | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/03_quantum_circuits_as_q_functions.ipynb) |
-| [04 — Training the quantum driver](notebooks/04_training_the_quantum_driver.ipynb) | one live quantum-vs-classical training run, then the same recipes over 8–10 seeds with interval statistics, the stabilisation study on gp, and how a run becomes the bundled driver | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/04_training_the_quantum_driver.ipynb) |
-| [05 — Real quantum hardware](notebooks/05_real_quantum_hardware.ipynb) | the simulated Nighthawk device, transpilation, device noise and mitigation, noise-aware training, the guarded SPSA sprint, and laps on simulated IBM Quantum devices | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/05_real_quantum_hardware.ipynb) |
-| [06 — More qubits or better features?](notebooks/06_scaling_and_features.ipynb) | what a wider circuit changes (observation, parameters, light cone), oval and chicane at 4, 6 and 8 qubits against matched MLPs over many seeds, 8 qubits at 4 against 5 blocks, gp at 10 qubits, and what the July feature experiments did and did not show | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/06_scaling_and_features.ipynb) |
-| [07 — Light cones and classical surrogates](notebooks/07_light_cones_and_classical_surrogates.ipynb) | what each action's readout can see (blind spots, dead parameters, the pruned hardware circuit), the trained driver as an exact Fourier series (and how little of the allowed spectrum it uses), classical RFF/kernel surrogates fitted from samples that drive its laps, with controls — and what that does and does not mean | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/07_light_cones_and_classical_surrogates.ipynb) |
+| Notebook | What it covers | Level · prerequisites | Time: reading · run | Launch |
+|---|---|---|---|---|
+| [00 — Qubits for drivers](notebooks/00_qubits_for_drivers.ipynb) | an optional primer: one qubit, RY and ⟨Z⟩ = P(0) − P(1), shots as coin flips, why RZ alone is invisible, CZ, and one block of the racetraQ circuit built by hand | Beginner · no prerequisites | 15 min · runs in ~15 s | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/00_qubits_for_drivers.ipynb) |
+| [01 — The racing environment](notebooks/01_the_racing_env.ipynb) | tracks, car physics (why you must brake for hairpins), lidar, reward, a scripted lap | Beginner · basic Python | 20 min · runs in ~20 s | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/01_the_racing_env.ipynb) |
+| [02 — Q-learning from scratch](notebooks/02_q_learning_from_scratch.ipynb) | a Q-table warm-up, a five-minute neural-network primer (neuron, activation, loss, backprop, learning rate), MDPs, double DQN in pure numpy, a 76-parameter MLP learns to lap in seconds | Beginner · after nb01 | 40 min · runs in ~1–1.5 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/02_q_learning_from_scratch.ipynb) |
+| [03 — Quantum circuits as Q-functions](notebooks/03_quantum_circuits_as_q_functions.ipynb) | the data re-uploading VQC, expressivity, fastsim ≡ `EstimatorQNN`, light cones and dead parameters, adjoint vs param-shift, gradient variance against width and depth (the barren-plateau trend) | Intermediate · after nb00, nb02 | 60 min · runs in ~1 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/03_quantum_circuits_as_q_functions.ipynb) |
+| [04 — Training the quantum driver](notebooks/04_training_the_quantum_driver.ipynb) | one live quantum-vs-classical training run, then the same recipes over 8–10 seeds with interval statistics, the stabilisation study on gp, and how a run becomes the bundled driver | Intermediate · after nb02, nb03 | 60 min · runs in ~3–8 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/04_training_the_quantum_driver.ipynb) |
+| [05 — Real quantum hardware](notebooks/05_real_quantum_hardware.ipynb) | the simulated Nighthawk device, transpilation, device noise and mitigation, noise-aware training, the guarded SPSA sprint, and laps on simulated IBM Quantum devices | Advanced · after nb03, nb04 | 60 min · runs in ~30 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/05_real_quantum_hardware.ipynb) |
+| [06 — More qubits or better features?](notebooks/06_scaling_and_features.ipynb) | what a wider circuit changes (observation, parameters, light cone), oval and chicane at 4, 6 and 8 qubits against matched MLPs over many seeds, 8 qubits at 4 against 5 blocks, gp at 10 qubits, and what the July feature experiments did and did not show | Advanced · after nb04 | 45 min · runs in ~30 s | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/06_scaling_and_features.ipynb) |
+| [07 — Light cones and classical surrogates](notebooks/07_light_cones_and_classical_surrogates.ipynb) | what each action's readout can see (blind spots, dead parameters, the pruned hardware circuit), the trained driver as an exact Fourier series (and how little of the allowed spectrum it uses), classical RFF/kernel surrogates fitted from samples that drive its laps, with controls — and what that does and does not mean | Advanced · after nb03, nb04 | 60 min · runs in ~6 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/07_light_cones_and_classical_surrogates.ipynb) |
+
+Reading times are estimates. Run times are end-to-end executions
+(`jupyter nbconvert --execute`) on an M1 Max laptop that was busy with other
+work at the time, rounded, with a range where two runs differed; a quiet
+machine is faster, a Binder machine slower. Notebook 05 simulates the device
+locally; with `RACETRAQ_SKIP_HW=1` (as in CI) those cells are skipped, and the
+notebook reports 4 to 10 minutes for what is left.
+
+**Run locally:** `pip install -e ".[notebooks]"` from a clone of the repository,
+then `jupyter lab` and open `notebooks/`.
 
 ## Measured results (October 2026, multi-seed)
 
@@ -368,7 +385,14 @@ python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
   the October 2026 audit corrections, what this demo does *not* claim, and
   the literature (QRL benchmarking, classical surrogates, noise) it is
   measured against.
-- [Notebooks](#notebooks) — the seven-part build-it-from-scratch course above.
+- [Learning path](docs/LEARN.md) — five tracks through the material, from a
+  5-minute visit to a research reading list, and the classical and quantum
+  models side by side.
+- [Glossary](docs/GLOSSARY.md) — about 70 terms in one plain sentence each,
+  with where to learn more.
+- [Teaching with racetraQ](docs/TEACHING.md) — a 90-minute and a half-day
+  workshop plan, with an answer key for the notebook exercises.
+- [Notebooks](#notebooks) — the eight-part build-it-from-scratch course above.
 
 <!-- FWQ-FAMILY:START format=list — generated from family.json in JanLahmann/Fun-with-Quantum, do not edit by hand -->
 ## Part of the Fun with Quantum family

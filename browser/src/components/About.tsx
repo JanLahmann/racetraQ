@@ -84,6 +84,17 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
           </a>
           .
         </p>
+        <p className="hint">
+          Learn how it works: eight{' '}
+          <a href={`${REPO}#notebooks`} target="_blank" rel="noopener" {...outbound(REPO)}>
+            notebooks
+          </a>{' '}
+          build the whole thing from scratch and open in your browser on Binder, nothing to install. The{' '}
+          <a href={`${REPO}/blob/main/docs/LEARN.md`} target="_blank" rel="noopener" {...outbound(REPO)}>
+            learning path
+          </a>{' '}
+          suggests where to start, from a 5-minute tour to a research track.
+        </p>
       </div>
     </div>
   );
