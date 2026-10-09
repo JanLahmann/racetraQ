@@ -83,6 +83,14 @@ The `exhibition` profile (`racetraq/config/exhibition.toml`):
   get them back for setting up. In Watch, an arrow key or any controller
   button starts a race against the quantum driver.
 
+The interface speaks English or German: `[ui] language = "de"` (in your
+overlay, e.g. `./config/exhibition.toml` or a `--config` file) makes German
+the booth default — set it for booths in Germany. Visitors can flip it with
+the EN/DE switch in the header (also in kiosk mode); on a kiosk the idle
+reset brings the booth language back for the next visitor. The strings live
+in `racetraq/web/i18n/en.json` and `de.json`; the linked documentation stays
+English.
+
 Profiles stack with an extra overlay via `--config <file.toml>`, and any
 `./config/<name>.toml` in the working directory shadows the packaged profile
 of the same name — so a Pi kiosk is `./run.sh --profile pi5 --config

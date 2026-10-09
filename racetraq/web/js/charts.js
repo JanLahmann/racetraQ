@@ -2,6 +2,8 @@
 // (quantum vs mlp) plus epsilon on a secondary 0..1 axis, and a lap-time
 // vs episode scatter fed from telemetry.lap_times / best_lap_s.
 
+import { t } from "./i18n.js";
+
 const SERIES_COLORS = { quantum: "#7a5cff", mlp: "#56b4e9" };
 const EPS_COLOR = "rgba(160,168,186,0.7)";
 const PAD = { l: 40, r: 34, t: 10, b: 22 };
@@ -66,7 +68,7 @@ export class TrainingChart {
     if (!ext) {
       ctx.fillStyle = "#8a91a0";
       ctx.textAlign = "center";
-      ctx.fillText("waiting for telemetry…", W / 2, H / 2);
+      ctx.fillText(t("chart.waiting"), W / 2, H / 2);
       return;
     }
 
@@ -188,7 +190,7 @@ export class LossChart {
     if (!ext) {
       ctx.fillStyle = "#8a91a0";
       ctx.textAlign = "center";
-      ctx.fillText("no sprint data yet…", W / 2, H / 2);
+      ctx.fillText(t("chart.no_sprint"), W / 2, H / 2);
       return;
     }
 
@@ -308,7 +310,7 @@ export class LapChart {
     if (!ext) {
       ctx.fillStyle = "#8a91a0";
       ctx.textAlign = "center";
-      ctx.fillText("no laps yet…", W / 2, H / 2);
+      ctx.fillText(t("chart.no_laps"), W / 2, H / 2);
       return;
     }
 

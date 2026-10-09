@@ -3,6 +3,8 @@
 // rescales/smooths/validates it (errors come back as the usual toast — draw
 // again to adjust). Escape or ✕ cancels.
 
+import { t } from "./i18n.js";
+
 export function initDraw({ button, stage, getTransform, submit }) {
   let overlay = null;
 
@@ -21,9 +23,8 @@ export function initDraw({ button, stage, getTransform, submit }) {
     overlay = document.createElement("div");
     overlay.className = "draw-overlay";
     overlay.innerHTML =
-      '<div class="draw-hint">Draw one closed loop — release to build the track ' +
-      "(Esc cancels)</div>" +
-      '<button type="button" class="draw-cancel" aria-label="Cancel drawing">✕</button>';
+      `<div class="draw-hint">${t("draw.hint")}</div>` +
+      `<button type="button" class="draw-cancel" aria-label="${t("draw.cancel")}">✕</button>`;
     const canvas = document.createElement("canvas");
     overlay.prepend(canvas);
     stage.append(overlay);

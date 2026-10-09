@@ -501,6 +501,7 @@ class DemoSession:
         if name and not name_allowed(name, extra):
             self.racer_name = ""
             self._outbox.append({"type": "error", "visitor": True, "field": "name",
+                                 "key": "error.name_blocked",  # web/i18n string tables
                                  "message": "Please choose another name for the board."})
             return
         self.racer_name = name

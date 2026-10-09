@@ -2,9 +2,12 @@
 // [-1, 1] plus a Q-value bar chart with argmax highlight. Gauge/bar counts
 // follow the incoming `quantum` messages. UI updates throttled to <= 15 fps.
 
+import { t, actionLabel } from "./i18n.js";
+
 // Action 0 steers -1 (theta decreases = clockwise = RIGHT on screen); action 2 is +1 = left.
 // Fallback only: the server sends the active driver's labels in circuit_spec
-// (6/8-action drivers add trail-brake and half-steer actions).
+// (6/8-action drivers add trail-brake and half-steer actions). The labels
+// stay English here; actionLabel() shows them in the active language.
 export const ACTION_LABELS = ["Right", "Straight", "Left", "Brake"];
 
 const UPDATE_MS = 67; // ~15 fps
@@ -66,9 +69,9 @@ export class QuantumPanel {
         row.classList.add("qgauge-readout");
         const action = document.createElement("span");
         action.className = "qgauge-action";
-        action.textContent = this.actionLabels[i] ?? `A${i}`;
+        action.textContent = this.actionLabels[i] == null ? `A${i}` : actionLabel(this.actionLabels[i]);
         label.append(" ", action);
-        label.title = `readout qubit — this ⟨Z⟩ becomes one of the ${this.nReadout} Q-values`;
+        label.title = t("quantum.readout_title", { n: this.nReadout });
       }
       const track = document.createElement("div");
       track.className = "qgauge-track";
@@ -102,11 +105,26 @@ export class QuantumPanel {
       val.textContent = "—";
       const label = document.createElement("span");
       label.className = "qbar-label";
-      label.textContent = this.actionLabels[i] ?? `A${i}`;
+      label.textContent = this.actionLabels[i] == null ? `A${i}` : actionLabel(this.actionLabels[i]);
       col.append(val, stack, label);
       this.barsEl.append(col);
       this.bars.push({ col, bar, val });
     }
+  }
+
+  /** Rebuild the labels in the active language (a language switch). */
+  relabel() {
+    this._buildGauges(this.gauges.length);
+    this._buildBars(this.bars.length);
+    this._rangeEl.textContent = "";
+    if (this.actionEl && Number.isInteger(this._lastAction)) {
+      this.actionEl.textContent = this._actionText(this._lastAction);
+    }
+  }
+
+  _actionText(a) {
+    const label = this.actionLabels[a];
+    return label == null ? t("quantum.action_n", { n: a }) : actionLabel(label);
   }
 
   /** Feed a `quantum` protocol message; applied on the next UI tick. */
@@ -147,8 +165,8 @@ export class QuantumPanel {
       }
       const zoomed = axisHi - axisLo < 1.98;
       this._rangeEl.textContent = zoomed
-        ? `axis auto-zoomed to ${axisLo.toFixed(2)} … ${axisHi.toFixed(2)} (full scale is −1 … +1)`
-        : "axis: −1 … +1";
+        ? t("quantum.axis_zoomed", { lo: axisLo.toFixed(2), hi: axisHi.toFixed(2) })
+        : t("quantum.axis_full");
       if (this._rangeEl.parentElement !== this.gaugesEl.parentElement) {
         this.gaugesEl.after(this._rangeEl);
       }
@@ -170,7 +188,8 @@ export class QuantumPanel {
     }
 
     if (this.actionEl && Number.isInteger(msg.action)) {
-      this.actionEl.textContent = this.actionLabels[msg.action] ?? `action ${msg.action}`;
+      this._lastAction = msg.action;
+      this.actionEl.textContent = this._actionText(msg.action);
     }
   }
 }

@@ -370,6 +370,7 @@ class Error:
     message: str
     visitor: bool | None = None  # written for visitors: show it as is, even on a kiosk
     field: str | None = None  # the input it is about ("name": clear the name fields)
+    key: str | None = None  # string-table key of a visitor message (the page translates it)
     TYPE: ClassVar[str] = "error"
 
 
@@ -392,6 +393,7 @@ _OMIT_IF_NONE: dict[str, set[str]] = {
                           "lap_time", "execution_mode", "note", "two_qubit_gates",
                           "circuit_depth", "shots", "rescale", "attenuation"},
     CarState.__name__: {"rays", "label", "ghost"},
+    Error.TYPE: {"visitor", "field", "key"},
 }
 
 
@@ -779,6 +781,7 @@ def _parse_error(d: dict) -> Error:
         message=_str(_req(d, "message"), "message"),
         visitor=_bool(d["visitor"], "visitor") if d.get("visitor") is not None else None,
         field=_str(d["field"], "field") if d.get("field") is not None else None,
+        key=_str(d["key"], "key") if d.get("key") is not None else None,
     )
 
 

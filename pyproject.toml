@@ -37,7 +37,7 @@ include = ["racetraq*"]
 racetraq = [
     "config/*.toml", "env/tracks/*.json", "weights/*.npz", "weights/*.json",
     "data/ghosts/*.json", "data/*.json",
-    "web/*.html", "web/css/*.css", "web/js/*.js",
+    "web/*.html", "web/css/*.css", "web/js/*.js", "web/i18n/*.json",
 ]
 
 [tool.ruff]
