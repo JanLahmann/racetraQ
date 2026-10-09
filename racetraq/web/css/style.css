@@ -202,6 +202,28 @@ input[type="number"],
   border-color: rgba(47, 191, 113, 0.35);
 }
 
+/* EN/DE switch: both codes shown, the active one filled (kiosk too) */
+.lang-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.lang-toggle span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.lang-toggle span.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* -- layout ----------------------------------------------------------------- */
 
 #layout {

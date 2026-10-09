@@ -440,7 +440,9 @@ it cannot influence any action and the hardware path drops it).
 hardware path really drops the dead gates — the page says "skipped on
 hardware" only when it is true. For a circuit shape the analysis rejects,
 the light-cone fields and every `live` are null. `ui` is the
-`[ui]` config section (`attract_idle_seconds`, `kiosk`). `obs_labels` (*omitted-if-null*) is the
+`[ui]` config section (`attract_idle_seconds`, `kiosk`, `language` — the
+page's default interface language, `"en"` or `"de"`; a visitor's own EN/DE
+choice, kept in the browser, wins). `obs_labels` (*omitted-if-null*) is the
 display name of each observation feature feeding the circuit, in qubit order
 (`env.feature_names`, e.g. `["ray -60°", "ray 0°", "ray +60°", "speed"]`).
 
@@ -576,7 +578,10 @@ broadcast for session-level failures (unknown track, training already
 running, a training thread crashing, ...). *Omitted-if-null* `visitor: true`
 marks a message written for visitors (a kiosk shows it as is; other errors
 become a plain line there) and `field: "name"` a refused board name (the
-UI empties its name fields).
+UI empties its name fields). *Omitted-if-null* `key` (str) names a visitor
+message in the page's string tables (`racetraq/web/i18n/<lang>.json`, e.g.
+`"error.name_blocked"`): the page shows that entry in the active language
+and falls back to `message`, which stays English.
 
 ## Data flow and rates
 

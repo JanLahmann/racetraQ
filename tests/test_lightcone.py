@@ -517,8 +517,8 @@ def _run_node(probe: str, js_file: str, payload) -> list:
 # each welcome re-renders into the same nodes, so anything stale would show.
 _WEB_PROBE = """
 import fs from "node:fs";
-const src = fs.readFileSync(process.argv[1]);
-const C = await import("data:text/javascript;base64," + src.toString("base64"));
+import { pathToFileURL } from "node:url";
+const C = await import(pathToFileURL(process.argv[1]).href);  // (its ./i18n.js import resolves)
 const diagram = { innerHTML: "" }, legend = { innerHTML: "" };
 const section = { innerHTML: "", hidden: true };
 const out = JSON.parse(fs.readFileSync(0, "utf8")).map(({ spec, labels }) => {
@@ -686,11 +686,15 @@ def test_web_diagram_and_matrix_render_the_spec():
 
 
 # explain.js imports the documentation browser (fetch + DOM); the probe swaps
-# that import for a stub and gives initExplain the few DOM calls it makes.
+# that import for a stub and gives initExplain the few DOM calls it makes. The
+# string tables (./i18n.js) load from the file next to it.
 _EXPLAIN_PROBE = """
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
+const i18n = pathToFileURL(process.argv[1].replace(/explain\\.js$/, "i18n.js")).href;
 const src = fs.readFileSync(process.argv[1], "utf8")
-  .replace('import { initDocs } from "./docs.js";', "const initDocs = () => {};");
+  .replace('import { initDocs } from "./docs.js";', "const initDocs = () => {};")
+  .replace('from "./i18n.js"', `from "${i18n}"`);
 class El {
   constructor() {
     this.children = []; this.dataset = {}; this.innerHTML = ""; this.active = false;

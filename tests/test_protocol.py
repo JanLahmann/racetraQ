@@ -63,6 +63,8 @@ SERVER_MSGS = [
     P.Event(kind="new_best_lap", car_id="human", lap_time=17.5),
     P.Event(kind="new_best_lap", agent="quantum", lap_time=18.1),
     P.Error(message="boom"),
+    P.Error(message="Please choose another name for the board.", visitor=True, field="name",
+            key="error.name_blocked"),
     P.HardwareStatus(phase="idle"),
     P.HardwareStatus(phase="connecting", message="connecting to IBM Quantum"),
     P.HardwareStatus(phase="transpiling", backend_name="fake_manila"),

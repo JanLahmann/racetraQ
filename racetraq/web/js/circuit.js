@@ -8,6 +8,8 @@
 // Everything light-cone related is optional: a spec without it (older server,
 // or a shape the analysis rejects) renders the plain diagram and no matrix.
 
+import { t, actionLabel, featureLabel } from "./i18n.js";
+
 const WIRE_GAP = 44;
 const COL_W = 34;
 const LEFT_PAD = 46;
@@ -30,10 +32,6 @@ const COLORS = {
   measText: "#9fe8c4",
   mutedText: "#8a91a0",
 };
-
-const DEAD_TIP = "Outside every readout's light cone — cannot influence any action";
-const GAUGE_ONLY_TIP =
-  "Not an action readout: this qubit's ⟨Z⟩ only feeds its gauge above.";
 
 function esc(s) {
   return String(s)
@@ -106,7 +104,9 @@ function prunedOnHardware(spec) {
 export function circuitSvg(spec) {
   const n = spec.n_qubits;
   const nReadout = readoutCount(spec);
-  const deadTip = esc(`${DEAD_TIP}${prunedOnHardware(spec) ? "; skipped on hardware" : ""}.`);
+  const deadTip = esc(t("circuit.dead_tip", {
+    hw: prunedOnHardware(spec) ? t("circuit.dead_tip_hw") : "",
+  }));
   const { placed, nCols } = layoutGates(spec);
   const width = LEFT_PAD + nCols * COL_W + 58;
   const height = TOP_PAD + (n - 1) * WIRE_GAP + 30;
@@ -114,7 +114,7 @@ export function circuitSvg(spec) {
 
   out.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"` +
-      ` viewBox="0 0 ${width} ${height}" role="img" aria-label="Quantum circuit diagram">`,
+      ` viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(t("circuit.aria"))}">`,
   );
 
   // wires + qubit labels + terminal <Z> boxes (green = an action reads it)
@@ -130,7 +130,7 @@ export function circuitSvg(spec) {
         COLORS.measText));
     } else {
       out.push(
-        `<g class="meas-gauge-only" data-tip="${esc(GAUGE_ONLY_TIP)}">` +
+        `<g class="meas-gauge-only" data-tip="${esc(t("circuit.gauge_only_tip"))}">` +
           gateBox(width - 26, y, COLORS.box, COLORS.boxStroke, `⟨Z${q}⟩`, null,
             COLORS.mutedText) +
           "</g>",
@@ -192,8 +192,8 @@ export function parameterCaption(spec) {
   const total = spec.n_params && spec.n_params.total;
   if (!Number.isInteger(total) || total <= 0) return ""; // numbers only: this lands in innerHTML
   const dead = spec.dead_params;
-  if (!Number.isInteger(dead)) return `${total} trainable parameters`;
-  return `${total} trainable parameters, ${dead > 0 ? dead : "none"} structurally dead`;
+  if (!Number.isInteger(dead)) return t("circuit.params", { total });
+  return t("circuit.params_dead", { total, dead: dead > 0 ? dead : t("circuit.none") });
 }
 
 /** Render circuit + legend into the given containers (once, static). */
@@ -204,24 +204,22 @@ export function renderCircuit(spec, diagramEl, legendEl) {
   const hasDead = Boolean(spec.dead_gates && spec.dead_gates.total > 0);
   legendEl.innerHTML = `
     <ul class="circuit-legend">
-      <li><span class="lg lg-enc"></span> Encoding gate RY(λ·x): writes an observation feature onto a qubit (re-uploaded every layer)</li>
-      <li><span class="lg lg-var"></span> Trainable rotation RY/RZ(θ): the "weights" the agent learns</li>
-      <li><span class="lg lg-cz"></span> CZ entangler ring: lets qubits influence each other</li>
-      <li><span class="lg lg-meas"></span> ⟨Z⟩ readout: one expectation value per action</li>${
+      <li><span class="lg lg-enc"></span> ${esc(t("circuit.legend.enc"))}</li>
+      <li><span class="lg lg-var"></span> ${esc(t("circuit.legend.var"))}</li>
+      <li><span class="lg lg-cz"></span> ${esc(t("circuit.legend.cz"))}</li>
+      <li><span class="lg lg-meas"></span> ${esc(t("circuit.legend.meas"))}</li>${
         hasDead
           ? `
-      <li><span class="lg lg-dead"></span> Dimmed gate: outside every readout's light cone — it cannot influence any action${
-        prunedOnHardware(spec) ? " and is skipped on hardware" : ""
-      }</li>`
+      <li><span class="lg lg-dead"></span> ${esc(t("circuit.legend.dead", {
+        hw: prunedOnHardware(spec) ? t("circuit.legend.dead_hw") : "",
+      }))}</li>`
           : ""
       }
     </ul>
-    <p class="hint">${esc(spec.n_qubits)} qubits × ${esc(spec.n_layers)} data re-uploading layers${
+    <p class="hint">${esc(t("circuit.size", { n: spec.n_qubits, layers: spec.n_layers }))}${
       caption ? ` — ${caption}` : ""
     }${
-      caption && spec.dead_params > 0
-        ? " (zero gradient for every input: they cannot change any Q-value)"
-        : ""
+      caption && spec.dead_params > 0 ? esc(t("circuit.zero_gradient")) : ""
     }.</p>`;
 }
 
@@ -237,14 +235,14 @@ function visibilityRows(spec) {
 
 function actionName(spec, a) {
   const labels = Array.isArray(spec.action_labels) ? spec.action_labels : [];
-  return String(labels[a] ?? `Z${a}`);
+  return labels[a] == null ? `Z${a}` : actionLabel(labels[a]);
 }
 
 /** Feature j is encoded on qubit j; fall back to the wire name when the
  *  server sent no (or a mismatched) obs_labels list. */
 function featureName(spec, obsLabels, j) {
   const ok = Array.isArray(obsLabels) && obsLabels.length === spec.n_qubits;
-  return ok ? String(obsLabels[j]) : `q${j}`;
+  return ok ? featureLabel(obsLabels[j]) : `q${j}`;
 }
 
 /** Actions with hidden features: [{action, hidden: [feature names]}], in
@@ -273,37 +271,33 @@ export function visibilityNote(spec, obsLabels) {
   const n = spec.n_qubits;
   const layers = spec.n_layers;
   if (blind.length === 0) {
-    return {
-      kind: "ok",
-      text: `Every action can see every input: ${layers} layers are deep enough at ${n} qubits.`,
-    };
+    return { kind: "ok", text: t("cone.note_ok", { n, layers }) };
   }
   const example = blind[blind.length - 1];
   const others = blind.length - 1;
   const more =
-    others > 0 ? ` (${others} more action${others > 1 ? "s" : ""} also miss inputs)` : "";
+    others === 1 ? t("cone.more_one") : others > 1 ? t("cone.more", { count: others }) : "";
   const needed = spec.min_layers_full_visibility;
-  const fix = Number.isInteger(needed) ? ` — full visibility needs ${needed} layers` : "";
+  const fix = Number.isInteger(needed) ? t("cone.fix", { needed }) : "";
   return {
     kind: "warn",
-    text:
-      `At ${n} qubits and ${layers} layers, ${example.action} cannot see: ` +
-      `${example.hidden.join(", ")}${more}${fix}.`,
+    text: t("cone.note_warn", {
+      n, layers, action: example.action, hidden: example.hidden.join(", "), more, fix,
+    }),
   };
 }
 
 function cellTip(spec, obsLabels, a, j, visible) {
   const action = actionName(spec, a);
   const feature = featureName(spec, obsLabels, j);
-  if (visible) return `${action} can see ${feature}.`;
+  if (visible) return t("cone.cell_on", { action, feature });
   // On the CZ ring an input reaches a readout qubit one neighbour per layer.
   const n = spec.n_qubits;
   const steps = Math.min(Math.abs(a - j), n - Math.abs(a - j));
   const reach = spec.n_layers - 1;
   return steps > reach
-    ? `${action} cannot see ${feature}: it enters on qubit ${j}, ${steps} steps around the ` +
-        `ring from readout qubit ${a} — ${spec.n_layers} layers only reach ${reach}.`
-    : `${action} cannot see ${feature}: outside the light cone of readout qubit ${a}.`;
+    ? t("cone.cell_far", { action, feature, j, steps, a, layers: spec.n_layers, reach })
+    : t("cone.cell_off", { action, feature, a });
 }
 
 /** The matrix as an HTML table: one row per observation feature (in qubit
@@ -360,14 +354,14 @@ export function renderVisibility(spec, obsLabels, el) {
       ? `<p class="cone-note cone-warn"><span aria-hidden="true">⚠</span> ${esc(note.text)}</p>`
       : `<p class="cone-note">${esc(note.text)}</p>`;
   el.innerHTML = `
-    <h2>Who sees what</h2>
+    <h2>${esc(t("cone.heading"))}</h2>
     ${noteHtml}
     <div class="vis-wrap">${visibilityMatrixHtml(spec, obsLabels)}</div>
     <ul class="circuit-legend">
-      <li><span class="lg vis-mark-on"></span> Filled: this action's Q-value can depend on this input</li>${
+      <li><span class="lg vis-mark-on"></span> ${esc(t("cone.legend_on"))}</li>${
         note.kind === "warn"
           ? `
-      <li><span class="lg vis-mark-off"></span> Empty: it cannot — the input lies outside that action's light cone</li>`
+      <li><span class="lg vis-mark-off"></span> ${esc(t("cone.legend_off"))}</li>`
           : ""
       }
     </ul>`;

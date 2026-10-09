@@ -1,14 +1,15 @@
 // Documentation browser (Explain -> Documentation): fetches the repo's
 // markdown docs from /api/docs and renders them client-side with md.js.
 // Outside a source checkout the API reports no docs and the widget points
-// at GitHub instead.
+// at GitHub instead. The documents are English; a German page says so.
 
 import { renderMarkdown } from "./md.js";
+import { t } from "./i18n.js";
 
 let docList = null; // fetched once per page load
 
 export async function initDocs(root) {
-  root.innerHTML = '<p class="doc-note">loading documentation…</p>';
+  root.innerHTML = `<p class="doc-note">${t("docs.loading")}</p>`;
   if (docList === null) {
     try {
       const res = await fetch("/api/docs");
@@ -18,16 +19,13 @@ export async function initDocs(root) {
     }
   }
   if (!docList.length) {
-    root.innerHTML =
-      '<p class="doc-note">The full documentation ships with the source ' +
-      'checkout — browse it on <a href="https://github.com/JanLahmann/racetraQ" ' +
-      'target="_blank" rel="noopener">GitHub</a>.</p>';
+    root.innerHTML = `<p class="doc-note">${t("docs.no_docs")}</p>`;
     return;
   }
 
   const picker = document.createElement("nav");
   picker.className = "doc-nav";
-  picker.setAttribute("aria-label", "Document");
+  picker.setAttribute("aria-label", t("docs.picker"));
   for (const doc of docList) {
     const btn = document.createElement("button");
     btn.dataset.docId = doc.id;
@@ -38,13 +36,13 @@ export async function initDocs(root) {
   content.className = "md";
 
   async function show(id) {
-    content.innerHTML = '<p class="doc-note">loading…</p>';
+    content.innerHTML = `<p class="doc-note">${t("docs.loading_one")}</p>`;
     try {
       const res = await fetch(`/api/docs/${encodeURIComponent(id)}`);
       const doc = await res.json();
       content.innerHTML = renderMarkdown(doc.markdown);
     } catch {
-      content.innerHTML = '<p class="doc-note">failed to load this document.</p>';
+      content.innerHTML = `<p class="doc-note">${t("docs.failed")}</p>`;
     }
     for (const btn of picker.querySelectorAll("button")) {
       btn.classList.toggle("active", btn.dataset.docId === id);

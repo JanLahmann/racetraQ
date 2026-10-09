@@ -1,6 +1,7 @@
 // Track + car renderer. Prerenders the track surface to an offscreen canvas,
 // interpolates car states between websocket frames, and draws effects.
 
+
 export const KIND_COLORS = {
   quantum: "#7a5cff",
   mlp: "#56b4e9", // sky blue, not green: orange vs green is a colour-blind confusion pair
@@ -146,6 +147,9 @@ export class RaceRenderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
+    // the tag over the visitor's car; the booth sets it per language (the
+    // browser edition, which shares this renderer, keeps the English one)
+    this.youLabel = "YOU";
     this.track = null;
     this.trackLayer = document.createElement("canvas");
     this.transform = { s: 1, ox: 0, oy: 0 };
@@ -617,7 +621,7 @@ export class RaceRenderer {
       // "YOU" tag above the visitor's car: which one is mine, at a glance
       const p = this._toScreen(car.x, car.y);
       ctx.font = `800 ${11 * dpr}px system-ui, sans-serif`;
-      const tw = ctx.measureText("YOU").width;
+      const tw = ctx.measureText(this.youLabel).width;
       const padX = 5 * dpr;
       const th = 15 * dpr;
       const ty = p.y - s * 2.2 - th;
@@ -633,7 +637,7 @@ export class RaceRenderer {
       ctx.fillStyle = "#101218";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("YOU", p.x, ty + th / 2 + 0.5 * dpr);
+      ctx.fillText(this.youLabel, p.x, ty + th / 2 + 0.5 * dpr);
       ctx.textBaseline = "alphabetic";
     }
     for (const car of cars) {

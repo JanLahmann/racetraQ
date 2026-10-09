@@ -12,8 +12,18 @@ import { initExplain } from "./explain.js";
 import { initHardwarePanel } from "./hardware-panel.js";
 import { initTooltips } from "./tooltip.js";
 import { initStudioPanel } from "./studio-panel.js";
+import {
+  t, has, lang, setLang, loadI18n, applyDom, onLangChange, storedLang, clearStoredLang,
+  featureLabel,
+} from "./i18n.js";
 
 const $ = (sel) => document.querySelector(sel);
+
+// Both string tables load before anything renders; until the welcome says
+// otherwise the page speaks the visitor's stored choice (or English).
+await loadI18n();
+setLang(storedLang() || "en", { persist: false });
+applyDom();
 
 const state = {
   mode: "attract",
@@ -22,11 +32,19 @@ const state = {
   bestLaps: new Map(), // car id -> best lap seconds
   lastState: null,
   training: false,
+  // the last of each message the page renders from: a language switch
+  // re-renders them
+  welcome: null,
+  leaderboard: null,
+  control: null,
+  status: ["status.connecting", "pill-off"],
+  boothLang: "en", // [ui] language: the default when the visitor chose none
 };
 
 // -- components --------------------------------------------------------------
 
 const renderer = new RaceRenderer($("#race-canvas"));
+renderer.youLabel = t("race.you");
 renderer.start();
 
 const quantumPanel = new QuantumPanel({
@@ -56,7 +74,7 @@ const studioPanel = initStudioPanel({
   onTrack: (name) => {
     if (name !== state.trackName) net.setTrack(name); // the stage shows the chosen track
   },
-  onFirstLap: (episode) => showBanner(`FIRST LAP · episode ${episode}`),
+  onFirstLap: (episode) => showBanner(t("banner.first_lap", { episode })),
   laps: () => ({ human: state.bestLaps.get("human"), model: state.bestLaps.get("studio") }),
   active: () => state.mode === "studio",
   setName: (name) => {
@@ -95,7 +113,45 @@ initInput(() => attract.notifyActivity(), {
 // the names racetraq.org uses too (track ids stay the short file names)
 const TRACK_NAMES = { oval: "Oval", chicane: "Chicane", gp: "Grand Prix", combo: "Combo" };
 
-const KIND_NAMES = { quantum: "Quantum", mlp: "MLP", human: "You", hero: "Hero", pro: "Pro" };
+/** A track's display name: the bundled ones by name, generated and drawn
+ *  ones ("random #42", "drawn #3") in the active language. */
+function trackLabel(name) {
+  if (TRACK_NAMES[name]) return TRACK_NAMES[name];
+  const m = /^(random|drawn) #(\d+)/.exec(name || "");
+  return m ? t(`track.${m[1]}_n`, { n: m[2] }) : name;
+}
+
+/** Driver kind ("quantum", "mlp", "human", …) in the active language. */
+const kindName = (kind) => (has(`kind.${kind}`) ? t(`kind.${kind}`) : kind);
+
+// Car labels come from the server in English ("ep 250", "best 14.2s · gp",
+// "driver: gp-trained", "your circuit · Ada"); the known shapes are shown in
+// the active language, anything else as sent.
+const CAR_LABELS = [
+  [/^ep (\d+)$/, (m) => t("car.ep", { n: m[1] })],
+  [/^stage (\d+)$/, (m) => t("car.stage", { n: m[1] })],
+  [/^best \(of (\d+) ep run\)$/, (m) => t("car.best_of", { n: m[1] })],
+  [/^best$/, () => t("car.best")],
+  [/^best (\d+(?:\.\d+)?s)(?: · (.+))?$/, (m) =>
+    t("car.ghost_best", { time: m[1] }) + (m[2] ? ` · ${carDriver(m[2])}` : "")],
+  [/^driver: (.+)$/, (m) => t("car.driver", { driver: carDriver(m[1]) })],
+  [/^your circuit(?: · (.+))?$/, (m) => t("car.your_circuit") + (m[1] ? ` · ${m[1]}` : "")],
+  [/^hardware lap$/, () => t("car.hardware_lap")],
+];
+function carDriver(text) {
+  if (text === "racing line (model-based, not learned)") return t("car.driver_hero");
+  if (text === "pro (classical DQN, big MLP)") return t("car.driver_pro");
+  if (text === "gp-trained generalist") return t("car.driver_generalist");
+  const m = /^(.+)-trained$/.exec(text);
+  return m ? t("car.trained", { track: m[1] }) : text;
+}
+function carLabel(label) {
+  for (const [re, fn] of CAR_LABELS) {
+    const m = re.exec(label);
+    if (m) return fn(m);
+  }
+  return label;
+}
 
 function fmtLap(t) {
   if (typeof t !== "number" || !isFinite(t)) return "—";
@@ -113,9 +169,10 @@ function toast(message, isError = true) {
   }, 4000);
 }
 
-function setStatus(text, cls) {
+function setStatus(key, cls) {
+  state.status = [key, cls];
   const pill = $("#status-pill");
-  pill.textContent = text;
+  pill.textContent = t(key);
   pill.className = `pill ${cls}`;
 }
 
@@ -165,8 +222,6 @@ function applyTrack(payload) {
   // Generated tracks are named "random #<seed>"; they map onto the picker's
   // "random" entry, whose label shows the seed so the track is reproducible.
   const isRandom = payload.name.startsWith("random #");
-  const randomOpt = sel.querySelector('option[value="random"]');
-  if (randomOpt) randomOpt.textContent = isRandom ? `🎲 ${payload.name}` : "🎲 random";
   // Drawn tracks ("drawn #N") live in a transient picker entry of their own.
   const isDrawn = payload.name.startsWith("drawn #");
   let drawnOpt = sel.querySelector('option[value="drawn"]');
@@ -175,10 +230,8 @@ function applyTrack(payload) {
     drawnOpt.value = "drawn";
     sel.append(drawnOpt);
   }
-  if (drawnOpt) {
-    if (isDrawn) drawnOpt.textContent = `✏️ ${payload.name}`;
-    else drawnOpt.remove();
-  }
+  if (drawnOpt && !isDrawn) drawnOpt.remove();
+  applyTrackLabels();
   const value = isRandom ? "random" : isDrawn ? "drawn" : payload.name;
   if (sel.value !== value) sel.value = value;
   $("#track-reroll").hidden = !isRandom;
@@ -198,14 +251,27 @@ function applyTrack(payload) {
 // a model-based racing-line controller, the demo's "perfect drive" ceiling.
 const EXPERT = window.location.hash.includes("expert");
 
+/** The picker's 🎲 / ✏️ entries name the current generated or drawn track
+ *  ("🎲 random #42"; plain "🎲 random" otherwise). */
+function applyTrackLabels() {
+  const sel = $("#track-select");
+  const name = state.trackName || "";
+  const randomOpt = sel.querySelector('option[value="random"]');
+  if (randomOpt) {
+    randomOpt.textContent = `🎲 ${name.startsWith("random #") ? trackLabel(name) : t("track.random")}`;
+  }
+  const drawnOpt = sel.querySelector('option[value="drawn"]');
+  if (drawnOpt && name.startsWith("drawn #")) drawnOpt.textContent = `✏️ ${trackLabel(name)}`;
+}
+
 /** Populate the Watch-mode driver picker from welcome.drivers/driver. */
 function applyDrivers(drivers, current) {
   const sel = $("#driver-select");
   const label = (d) =>
-    d === "auto" ? "auto (this track)"
-    : d === "hero" ? "hero — racing line"
-    : d === "pro" ? "pro — big classical DQN"
-    : `${d}-trained`;
+    d === "auto" ? t("driver.auto")
+    : d === "hero" ? t("driver.hero")
+    : d === "pro" ? t("driver.pro")
+    : t("driver.trained", { track: d });
   sel.replaceChildren(
     ...(drivers || ["auto"])
       .filter((d) => EXPERT || (d !== "hero" && d !== "pro"))
@@ -240,13 +306,7 @@ function applyCircuitSize(spec, obsLabels) {
   const sel = $("#qubit-select");
   if (sel && sel.value !== String(n)) sel.value = String(n);
   const hint = $("#qubit-hint");
-  if (hint) {
-    hint.innerHTML =
-      n === 4
-        ? "Pauli-Z expectation values &lt;Z<sub>a</sub>&gt; of the 4 qubits — one per action."
-        : `Pauli-Z expectation values &lt;Z<sub>i</sub>&gt; of all ${n} qubits — ` +
-          "the highlighted first four are the action readout.";
-  }
+  if (hint) hint.innerHTML = n === 4 ? t("quantum.hint4") : t("quantum.hint_n", { n });
   initExplain($("#panel-explain"), spec, obsLabels);
 }
 
@@ -254,30 +314,33 @@ function applyCircuitSize(spec, obsLabels) {
 function applyObsLabels(labels) {
   const el = $("#obs-labels");
   if (!el) return;
-  el.textContent = Array.isArray(labels) && labels.length ? `Inputs: ${labels.join(" · ")}` : "";
+  el.textContent = Array.isArray(labels) && labels.length
+    ? t("quantum.inputs", { inputs: labels.map(featureLabel).join(" · ") }) : "";
 }
 
 // -- lap board ---------------------------------------------------------------
 
 let lapboardAt = 0;
 
-function renderLapboard(cars) {
+function renderLapboard(cars, force = false) {
   const now = performance.now();
-  if (now - lapboardAt < 250) return;
+  if (!force && now - lapboardAt < 250) return;
   lapboardAt = now;
   const board = $("#lapboard");
   const rows = cars.map((car) => {
     const best = state.bestLaps.get(car.id);
     if (car.ghost) {
       // ghosts stay off the board except for a dim "Ghost (best …)" entry
-      const t = typeof best === "number" ? best : car.last_lap_time;
+      const lapT = typeof best === "number" ? best : car.last_lap_time;
       // car.label carries the record's provenance ("best 14.2s · universal")
       const text =
-        typeof t === "number" && isFinite(t)
-          ? `Ghost (${car.label || `best ${fmtLap(t)}`})`
+        typeof lapT === "number" && isFinite(lapT)
+          ? t("lap.ghost_paren", {
+            label: car.label ? carLabel(car.label) : t("car.ghost_best", { time: fmtLap(lapT) }),
+          })
           : car.label
-            ? `Ghost — ${car.label}`
-            : "Ghost";
+            ? t("lap.ghost_dash", { label: carLabel(car.label) })
+            : t("lap.ghost");
       return `<div class="lap-row ghost">
         <span class="dot ghost-dot"></span>
         <span class="lap-kind">${text}</span>
@@ -285,13 +348,13 @@ function renderLapboard(cars) {
     }
     const evo = state.mode === "evolution" && car.label;
     const color = evo ? renderer.stageColor(car.label) : KIND_COLORS[car.kind] || "#ccc";
-    const name = evo ? car.label : KIND_NAMES[car.kind] || car.kind;
+    const name = evo ? carLabel(car.label) : kindName(car.kind);
     return `<div class="lap-row${car.off_track ? " off" : ""}">
       <span class="dot" style="background:${color}"></span>
       <span class="lap-kind">${name}</span>
-      <span class="lap-cell">Lap <b>${car.lap}</b></span>
-      <span class="lap-cell">Last <b>${fmtLap(car.last_lap_time)}</b></span>
-      <span class="lap-cell">Best <b>${fmtLap(best)}</b></span>
+      <span class="lap-cell">${t("lap.lap")} <b>${car.lap}</b></span>
+      <span class="lap-cell">${t("lap.last")} <b>${fmtLap(car.last_lap_time)}</b></span>
+      <span class="lap-cell">${t("lap.best")} <b>${fmtLap(best)}</b></span>
     </div>`;
   });
   board.innerHTML = rows.join("");
@@ -315,12 +378,12 @@ function updateCarLegend(cars) {
   el.innerHTML = labeled
     .map((c) => {
       if (c.ghost) {
-        return `<div class="legend-row ghost"><span class="dot ghost-dot"></span>${c.label}</div>`;
+        return `<div class="legend-row ghost"><span class="dot ghost-dot"></span>${carLabel(c.label)}</div>`;
       }
       const evo = state.mode === "evolution";
       const color = evo ? renderer.stageColor(c.label) : KIND_COLORS[c.kind] || "#ccc";
       const num = evo ? `<b style="color:${color}">${renderer.stageNumber(c.label)}</b> ` : "";
-      return `<div class="legend-row"><span class="dot" style="background:${color}"></span>${num}${c.label}</div>`;
+      return `<div class="legend-row"><span class="dot" style="background:${color}"></span>${num}${carLabel(c.label)}</div>`;
     })
     .join("");
 }
@@ -341,13 +404,13 @@ function renderEpisodeOverlay() {
   el.innerHTML = [...episodeByAgent.entries()]
     .map(
       ([agent, ep]) =>
-        `<div class="ep-line" style="color:${KIND_COLORS[agent] || "#e6e9ef"}">ep ${ep}</div>`,
+        `<div class="ep-line" style="color:${KIND_COLORS[agent] || "#e6e9ef"}">${t("train.ep_n", { n: ep })}</div>`,
     )
     .join("");
 }
 
 function showBestBanner(lapTime) {
-  showBanner(`NEW BEST LAP ${lapTime.toFixed(2)}s`);
+  showBanner(t("banner.best_lap", { time: `${lapTime.toFixed(2)}s` }));
 }
 
 function showBanner(text) {
@@ -369,12 +432,12 @@ function showBanner(text) {
 // easy to miss from a booth's distance); it clears on reconnect.
 let disconnectTimer = null;
 net.on("_open", () => {
-  setStatus("connected", "pill-ok");
+  setStatus("status.connected", "pill-ok");
   clearTimeout(disconnectTimer);
   $("#disconnect-overlay").hidden = true;
 });
 net.on("_close", () => {
-  setStatus("reconnecting…", "pill-off");
+  setStatus("status.reconnecting", "pill-off");
   clearTimeout(disconnectTimer);
   disconnectTimer = setTimeout(() => {
     $("#disconnect-overlay").hidden = false;
@@ -382,11 +445,17 @@ net.on("_close", () => {
 });
 
 net.on("welcome", (msg) => {
+  state.welcome = msg;
+  if (msg.ui) {
+    // the booth's default language; a visitor's own choice wins
+    state.boothLang = msg.ui.language === "de" ? "de" : "en";
+    if (!storedLang()) setLang(state.boothLang, { persist: false });
+  }
   state.tracks = msg.tracks || [];
   const sel = $("#track-select");
   const randomOpt = document.createElement("option");
   randomOpt.value = "random";
-  randomOpt.textContent = "🎲 random";
+  randomOpt.textContent = `🎲 ${t("track.random")}`;
   sel.replaceChildren(
     ...state.tracks.map((name) => {
       const opt = document.createElement("option");
@@ -423,25 +492,30 @@ net.on("track", (msg) => {
  *  untrained size would leave Watch with no car). */
 function applyQubitOptions(options) {
   if (!Array.isArray(options)) return;
+  state.qubitOptions = options;
   for (const opt of $("#qubit-select").options) {
     const ok = options.includes(Number(opt.value));
     opt.disabled = !ok;
-    opt.textContent = ok ? opt.value : `${opt.value} (no driver for this track)`;
+    opt.textContent = ok ? opt.value : t("qubits.no_driver", { n: opt.value });
   }
 }
 
 // Leaderboard: ranked named human laps + unranked AI reference rows.
 const isOperator = () => document.body.classList.contains("operator");
 
-net.on("leaderboard", (msg) => {
-  $("#board-track").textContent = TRACK_NAMES[msg.track] || msg.track;
+net.on("leaderboard", renderLeaderboard);
+
+function renderLeaderboard(msg) {
+  state.leaderboard = msg;
+  $("#board-track").textContent = trackLabel(msg.track);
   state.boardTrack = msg.track;
   const entries = $("#board-entries");
   // #operator: a ✕ per entry and the clear buttons (the server takes them
   // from the booth machine only)
   const remove = (e) => isOperator()
     ? `<button type="button" class="board-remove" data-name="${escapeHtml(e.name)}"
-        data-lap="${e.lap_s}" title="Remove this entry" aria-label="Remove ${escapeHtml(e.name)}">✕</button>`
+        data-lap="${e.lap_s}" title="${escapeHtml(t("board.remove_title"))}"
+        aria-label="${escapeHtml(t("board.remove_aria", { name: e.name }))}">✕</button>`
     : "";
   entries.innerHTML = msg.entries
     .map((e) => `<li><span class="board-name">${escapeHtml(e.name)}</span>
@@ -452,12 +526,12 @@ net.on("leaderboard", (msg) => {
   $("#board-references").innerHTML = msg.references
     .map((r) => `<div class="board-ref">
       <span class="dot" style="background:${KIND_COLORS[r.kind] || "#ccc"}"></span>
-      <span>${KIND_NAMES[r.kind] || r.kind}</span>
+      <span>${kindName(r.kind)}</span>
       <span class="board-driver">${escapeHtml(r.driver)}</span>
       <b>${r.lap_s.toFixed(2)}s</b>
     </div>`)
-    .join("") || '<p class="hint">No reference laps on this track yet.</p>';
-});
+    .join("") || `<p class="hint">${t("board.no_refs")}</p>`;
+}
 
 function escapeHtml(text) {
   const div = document.createElement("div");
@@ -470,25 +544,30 @@ function escapeHtml(text) {
 // turns are time-limited only while the line is non-empty.
 net.on("control", (msg) => {
   attract.setDriving(msg.driving);
+  renderControl(msg);
+});
+
+function renderControl(msg) {
+  state.control = msg;
   const pill = $("#control-pill");
   let text = null;
   if (msg.driving) {
     if (msg.turn_ends_in_s != null) {
-      text = `🏎️ your turn · ${msg.turn_ends_in_s}s left · ${msg.waiting} waiting`;
+      text = t("control.your_turn", { s: msg.turn_ends_in_s, waiting: msg.waiting });
     } else if (msg.watchers > 0) {
-      text = `🏎️ you have the wheel · ${msg.watchers} watching`;
+      text = t("control.wheel", { watchers: msg.watchers });
     }
   } else if (msg.queue_pos != null) {
     const ahead = msg.queue_pos - 1;
     text = ahead === 0
-      ? `⏳ you're next · your turn in ~${msg.turn_ends_in_s ?? "?"}s`
-      : `⏳ in line — ${ahead} ahead of you`;
+      ? t("control.next", { s: msg.turn_ends_in_s ?? "?" })
+      : t("control.in_line", { ahead });
   } else if (msg.locked) {
-    text = "👀 spectating — press any control to get in line";
+    text = t("control.spectating");
   }
   pill.hidden = text === null;
   if (text !== null) pill.textContent = text;
-});
+}
 
 // -- race feedback: countdown, HUD, off-track, lap result ------------------------
 
@@ -512,7 +591,7 @@ function renderRaceOverlays(msg) {
   } else if (now < goShownUntil) {
     cd.hidden = false;
     cd.classList.add("go");
-    cd.textContent = "GO!";
+    cd.textContent = t("race.go");
   } else {
     cd.hidden = true;
   }
@@ -522,7 +601,7 @@ function renderRaceOverlays(msg) {
   if (!me) return;
   const best = state.bestLaps.get(me.id);
   hud.innerHTML = `<div class="hud-time">${fmtLap(me.lap_t ?? 0)}</div>
-    <div class="hud-meta">Lap ${me.lap + 1} · last ${fmtLap(me.last_lap_time)} · best ${fmtLap(best)}</div>`;
+    <div class="hud-meta">${t("race.hud", { lap: me.lap + 1, last: fmtLap(me.last_lap_time), best: fmtLap(best) })}</div>`;
   $("#offtrack-banner").hidden = !me.off_track;
 }
 
@@ -531,16 +610,16 @@ function showLapResult(msg) {
   let rank = "";
   let note = "";
   if (!msg.clean) {
-    note = "You left the track this lap, so it doesn't count. Next one!";
+    note = t("result.off_track");
   } else if (msg.named && msg.rank) {
-    rank = `#${msg.rank} on the board`;
+    rank = t("result.rank", { rank: msg.rank });
   } else if (msg.rank) {
-    rank = `That's #${msg.rank} on the board`;
-    note = "Type your name next to Start to get on it.";
+    rank = t("result.rank_anon", { rank: msg.rank });
+    note = t("result.name_hint");
   } else {
-    note = msg.named ? "Not on the board this time — keep going!" : "";
+    note = msg.named ? t("result.not_on_board") : "";
   }
-  el.innerHTML = `<div class="lr-note">Your lap</div>
+  el.innerHTML = `<div class="lr-note">${t("result.your_lap")}</div>
     <div class="lr-time">${fmtLap(msg.lap_time)}</div>
     ${rank ? `<div class="lr-rank">${rank}</div>` : ""}
     ${note ? `<div class="lr-note">${note}</div>` : ""}`;
@@ -620,7 +699,8 @@ net.on("event", (msg) => {
       state.training = false;
       attract.setHold("train", null);
       $("#train-start").disabled = false;
-      toast(`Training done${msg.agent ? ` (${msg.agent})` : ""}`, false);
+      toast(msg.agent ? t("toast.training_done_agent", { agent: kindName(msg.agent) })
+        : t("toast.training_done"), false);
       break;
   }
 });
@@ -629,16 +709,17 @@ net.on("event", (msg) => {
 // kiosk shows visitors a plain line and keeps the detail in the console
 // (#operator shows it).
 net.on("error", (msg) => {
-  const detail = msg.message || "server error";
+  const detail = msg.message || t("toast.server_error");
   if (msg.field === "name") {
     $("#race-name").value = "";
     studioPanel.clearName();
   }
   if (msg.visitor) {
-    toast(detail); // written for visitors
+    // written for visitors; `key` names the same text in the string tables
+    toast(msg.key && has(msg.key) ? t(msg.key) : detail);
   } else if (document.body.classList.contains("kiosk") && !isOperator()) {
     console.warn("racetraQ:", detail);
-    toast("That isn't available right now — try another track or mode.");
+    toast(t("toast.unavailable"));
   } else {
     toast(detail);
   }
@@ -709,6 +790,11 @@ function resetBoothUI() {
   $("#race-opponent").value = "quantum";
   setCamera("top");
   studioPanel.reset();
+  // a kiosk's next visitor reads the booth's language again
+  if (document.body.classList.contains("kiosk")) {
+    clearStoredLang();
+    setLang(state.boothLang, { persist: false });
+  }
 }
 $("#race-reset").addEventListener("click", () => {
   state.bestLaps.clear();
@@ -717,10 +803,9 @@ $("#race-reset").addEventListener("click", () => {
 
 // Camera for the human driver: button or C cycles top / chase / cockpit; the
 // choice is remembered in this browser.
-const CAMERA_LABELS = { top: "Top", chase: "Chase", cockpit: "Cockpit" };
 function setCamera(view) {
   renderer.setCamera(view);
-  $("#race-camera").textContent = `📷 ${CAMERA_LABELS[renderer.camera]}`;
+  $("#race-camera").textContent = `📷 ${t(`camera.${renderer.camera}`)}`;
   try {
     localStorage.setItem("racetraq-camera", renderer.camera);
   } catch {
@@ -776,17 +861,21 @@ const trainStats = new Map(); // agent -> latest telemetry
 
 function updateTrainStats(msg) {
   trainStats.set(msg.agent, msg);
+  $("#train-stats").innerHTML = trainStatsHtml();
+}
+
+function trainStatsHtml() {
   const rows = [...trainStats.values()].map(
     (m) => `<div class="stat-row">
       <span class="dot" style="background:${KIND_COLORS[m.agent] || "#ccc"}"></span>
-      <span>${KIND_NAMES[m.agent] || m.agent}</span>
-      <span>ep <b>${m.episode}</b></span>
-      <span>ret <b>${m.mean_return.toFixed(1)}</b></span>
+      <span>${kindName(m.agent)}</span>
+      <span>${t("train.stat_ep")} <b>${m.episode}</b></span>
+      <span>${t("train.stat_ret")} <b>${m.mean_return.toFixed(1)}</b></span>
       <span>ε <b>${m.epsilon.toFixed(2)}</b></span>
-      <span>loss <b>${m.loss == null ? "—" : m.loss.toFixed(3)}</b></span>
+      <span>${t("train.stat_loss")} <b>${m.loss == null ? "—" : m.loss.toFixed(3)}</b></span>
     </div>`,
   );
-  $("#train-stats").innerHTML = rows.join("");
+  return rows.join("");
 }
 
 // -- draw-a-track ----------------------------------------------------------------
@@ -847,16 +936,74 @@ $("#board-clear").addEventListener("click", (ev) => {
   if (btn.dataset.armed === "1") {
     net.boardCmd("clear", { track: state.boardTrack });
     btn.dataset.armed = "";
-    btn.textContent = "Clear the board";
+    btn.textContent = t("board.clear");
     return;
   }
   btn.dataset.armed = "1";
-  btn.textContent = "Click again to clear";
+  btn.textContent = t("board.clear_armed");
   setTimeout(() => {
     btn.dataset.armed = "";
-    btn.textContent = "Clear the board";
+    btn.textContent = t("board.clear");
   }, 3000);
 });
+
+// -- language ------------------------------------------------------------------
+
+// EN/DE toggle in the header (kiosk too): the visitor's choice is kept in
+// this browser and wins over the booth default.
+function renderLangToggle() {
+  for (const el of document.querySelectorAll("#lang-toggle [data-lang]")) {
+    el.classList.toggle("active", el.dataset.lang === lang());
+  }
+}
+$("#lang-toggle").addEventListener("click", (ev) => {
+  setLang(lang() === "de" ? "en" : "de");
+  ev.currentTarget.blur(); // keep Space/Enter for the race
+});
+
+/** Everything built from state, again in the new language. */
+function rerenderAll() {
+  applyDom();
+  renderer.youLabel = t("race.you");
+  renderLangToggle();
+  setStatus(...state.status);
+  setCamera(renderer.camera);
+  const w = state.welcome;
+  if (w) {
+    for (const opt of $("#track-select").options) {
+      if (opt.value in TRACK_NAMES) opt.textContent = TRACK_NAMES[opt.value];
+    }
+    if (w.circuit_spec) {
+      renderCircuit(w.circuit_spec, $("#circuit-diagram"), $("#circuit-legend"));
+      renderVisibility(w.circuit_spec, w.obs_labels, $("#light-cone"));
+      applyCircuitSize(w.circuit_spec, w.obs_labels);
+    } else {
+      initExplain($("#panel-explain"));
+    }
+    applyObsLabels(w.obs_labels);
+    applyDrivers(w.drivers, $("#driver-select").value || w.driver);
+  } else {
+    initExplain($("#panel-explain"));
+  }
+  if (state.qubitOptions) applyQubitOptions(state.qubitOptions);
+  applyTrackLabels();
+  quantumPanel.relabel();
+  attract.refresh();
+  if (state.leaderboard) renderLeaderboard(state.leaderboard);
+  if (state.control) renderControl(state.control);
+  studioPanel.rerender();
+  hardwarePanel.rerender();
+  chart.draw();
+  lapChart.draw();
+  evoLegendKey = "";
+  if (state.lastState) {
+    renderLapboard(state.lastState.cars || [], true);
+    updateCarLegend(state.lastState.cars || []);
+  }
+  renderEpisodeOverlay();
+  if (trainStats.size) $("#train-stats").innerHTML = trainStatsHtml();
+}
+onLangChange(rerenderAll);
 
 // -- boot --------------------------------------------------------------------
 
@@ -865,6 +1012,7 @@ $("#board-clear").addEventListener("click", (ev) => {
 document.body.classList.toggle("operator", window.location.hash.includes("operator"));
 
 initTooltips();
-setStatus("connecting…", "pill-off");
+renderLangToggle();
+setStatus("status.connecting", "pill-off");
 applyMode("attract");
 net.connect();

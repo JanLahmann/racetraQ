@@ -227,6 +227,10 @@ time_limit_s = 300
 [ui]
 attract_idle_seconds = 45
 kiosk = false
+# Interface language the page starts in: "en" or "de" (exhibition booths in
+# Germany set "de"). The EN/DE switch in the header overrides it for that
+# browser; on a kiosk the next visitor (idle reset) gets this language again.
+language = "en"
 
 [leaderboard]
 # Extra words a board name may not contain, on top of the packaged list

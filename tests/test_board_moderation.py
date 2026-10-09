@@ -44,6 +44,7 @@ def test_blocked_name_is_refused(session):
     assert session.racer_name == ""
     (err,) = [m for m in session.drain_outbox() if m["type"] == "error"]
     assert err["visitor"] is True and err["field"] == "name"
+    assert err["key"] == "error.name_blocked"  # the page shows it in its own language
     P.parse_server(err)
 
 
