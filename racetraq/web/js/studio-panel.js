@@ -54,7 +54,8 @@ export function studyLine(combo, limitS) {
 }
 
 export function initStudioPanel({ root, send, setName, onPhase, onStart }) {
-  const sel = { track: null, qubits: 4, sensors: "lidar", actions: 4, warm: false };
+  const DEFAULT_SEL = { track: null, qubits: 4, sensors: "lidar", actions: 4, warm: false };
+  const sel = { ...DEFAULT_SEL };
   let catalog = null;
   let last = null;
   let phase = "setup";
@@ -252,6 +253,14 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart }) {
   return {
     get phase() {
       return phase;
+    },
+    /** Booth idle: the next visitor gets the default choices and no name. */
+    reset() {
+      Object.assign(sel, DEFAULT_SEL);
+      if (last) last = { ...last, name: null };
+      const name = root.querySelector("#studio-name");
+      if (name) name.value = "";
+      render();
     },
     setTrack(name) {
       if (catalog && catalog.tracks.some((t) => t.id === name) && phase === "setup") {

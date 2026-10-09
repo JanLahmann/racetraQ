@@ -207,11 +207,27 @@ class Hub:
 
 async def control_ticker(hub: Hub, session: Any, interval: float = 1.0) -> None:
     """Turn/idle expiry loop: hands the wheel to the next in line and keeps
-    everyone's countdowns fresh (deduplicated, so quiet when nothing runs)."""
+    everyone's countdowns fresh (deduplicated, so quiet when nothing runs).
+
+    It also owns the booth's idle return when nobody holds the wheel (the
+    driver left or was released): after the session's idle time it resets
+    the booth for the next visitor. While someone drives, their browser runs
+    the idle timer — watchers never do, so a phone that only watches cannot
+    send the booth back to attract mode."""
+    free_since: float | None = None
     while True:
         await asyncio.sleep(interval)
         if hub.lock.tick():
             session.set_input(0)  # new (or no) driver: drop held keys
+        now = time.monotonic()
+        if hub.lock.locked or session.mode == "attract":
+            free_since = None
+        else:
+            free_since = now if free_since is None else free_since
+            idle_s = session.idle_seconds()
+            if idle_s and now - free_since >= idle_s:
+                session.idle_reset()
+                free_since = None
         await hub.send_control_states()
 
 

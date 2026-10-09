@@ -16,6 +16,18 @@ Requires Python ≥ 3.11. Everything (training included) runs locally on CPU.
 Pass server flags straight through, e.g. `./run.sh --port 8010`
 (set `RACETRAQ_PORT=8010` too so the auto-opened browser URL matches).
 
+For a booth, install once at home with the Hardware-mode extra (step 5 of
+the demo needs it), then start without network at the venue:
+
+```sh
+RACETRAQ_EXTRAS=hardware ./run.sh   # at home: venv + racetraq + qiskit-ibm-runtime
+RACETRAQ_OFFLINE=1 ./run.sh         # at the venue: no install step
+```
+
+Plain `./run.sh` also starts offline: when the install step fails but
+racetraq is already installed, it says so and launches the installed
+version.
+
 ### Raspberry Pi (QuBins)
 
 The demo runs on a Pi 4 or Pi 5 — e.g. on [QuBins](https://qubins.org) images,
@@ -55,9 +67,16 @@ The `exhibition` profile (`racetraq/config/exhibition.toml`):
 
 - binds `0.0.0.0` — the UI is reachable from other devices on the LAN
   (visitors' phones can watch);
-- `attract_idle_seconds = 20` — the client returns to attract mode after 20 s
-  without keyboard/mouse activity, so the exhibit never sits on a stale
-  screen (default is 45 s; set `0` to disable);
+- `attract_idle_seconds = 20` — after 20 s without keyboard, mouse or
+  gamepad activity the booth returns to attract mode and resets for the
+  next visitor: the leaderboard name is cleared, the Race opponent and
+  camera go back to their defaults, the Studio forgets the last model, and
+  (kiosk only) the startup track, qubit count and driver come back. Default
+  is 45 s; `0` disables it. Running demos are never cut off: training, a
+  Hardware job and its replay, the Evolution show and a Studio run hold the
+  timer, and a visitor reading their Studio result gets 90 s. Only the
+  browser that holds the wheel runs the timer — a phone that only watches
+  cannot reset the booth; when nobody holds the wheel the server does it;
 - `kiosk = true` — larger captions, hidden mouse cursor.
 
 Profiles stack with an extra overlay via `--config <file.toml>`, and any
@@ -65,6 +84,27 @@ Profiles stack with an extra overlay via `--config <file.toml>`, and any
 of the same name — so a Pi kiosk is `./run.sh --profile pi5 --config
 racetraq/config/exhibition.toml`. Run the browser fullscreen, e.g.
 `chromium-browser --kiosk http://localhost:8000`.
+
+### Pre-event checklist
+
+1. At home: `RACETRAQ_EXTRAS=hardware ./run.sh` (or pull the container) on
+   the machine you will take, and run the 5-minute demo once end to end.
+2. `pytest -q` passes, or at least `curl http://127.0.0.1:8000/health`
+   answers.
+3. Hardware step: `python -m racetraq.hardware lap --track oval --fake`
+   completes; save its transcript in case you want to show it.
+4. Clear the boards you don't want to show: stop the server, delete
+   `racetraq/data/leaderboard/<track>.json` and, for the ghosts,
+   `racetraq/data/ghosts/<track>.json`.
+5. Pick the profile: `--profile exhibition` (plus `--config` for a Pi or
+   q6), and the default track in a `./config/exhibition.toml` if not gp.
+6. Browser fullscreen in kiosk mode; check the gamepad pill lights up.
+7. Disable sleep and screen blanking; plug in the power supply.
+8. At the venue: `RACETRAQ_OFFLINE=1 ./run.sh --profile exhibition`.
+9. Phones on the venue Wi-Fi can watch at `http://<laptop-ip>:8000`; check
+   the venue allows it, or leave it.
+10. Fallback if the laptop dies: https://racetraq.org runs the same
+    drivers in any browser, no install.
 
 ### The 6-qubit variant
 
@@ -103,9 +143,9 @@ gain on six runs per depth. It did not make the car faster: six
 qubits is where this circuit does best, and a small classical network with
 the same sensors is still ahead of it."* The numbers behind that are six to
 eight training runs per size (SCIENCE.md, "Scaling and the light cone"). At
-10 qubits only the oval has been re-measured — six runs each with four and
-with six layers, neither better than six qubits. Do not quote a 10-qubit
-chicane result: those runs are not analysed yet.
+10 qubits the oval and chicane were re-measured with six runs each at four
+and at six layers: six layers helped a little on the oval, made no
+difference on chicane, and neither beat six qubits.
 `python -m racetraq.agents.quantum.lightcone --qubits 8` prints the map if
 a physicist asks.
 
@@ -201,8 +241,10 @@ show a minimap, and the browser remembers the choice.
    oval and in 3 of 12 on chicane; the 8- and 10-qubit drivers were not
    measured.
    Do not say "with a token this runs on a real quantum computer" as if it
-   were routine: the code path exists, but a full lap on a physical device
-   is ~140 queued jobs and this documentation reports none. What you are
+   were routine: the code path exists, and on 2026-10-03 the oval driver
+   completed one full lap on IBM's `ibm_marrakesh` (141 decisions, 27
+   minutes of queueing, SCIENCE.md "Hardware") — one lap on one day, not a
+   reliability number, and far too slow for a booth. What you are
    showing is a calibration snapshot of a real device, simulated.
    A lap is about 140 decisions: ~20–30 s wall-clock on an idle laptop
    (0.1–0.2 s per decision), and a minute or more when the CPU is busy
@@ -408,8 +450,9 @@ busy). What to expect:
   the simulated Nighthawk.
 - **Do not promise a lap.** The drivers of step 1 lap on a *simulated*
   Nighthawk snapshot at 12 two-qubit gates (17 at 6 qubits). A real Heron
-  runs more gates, drifts, and has not been tried: nothing here says what
-  it will do.
+  runs more gates (27 CZ for the oval) and drifts. One full oval lap on
+  `ibm_marrakesh` exists (2026-10-03, SCIENCE.md "Hardware"); one lap on
+  one day says little about the next.
 
 For a booth: run the simulated device live and describe the real path
 truthfully, or pre-run the CLI and show the transcript:
@@ -462,8 +505,10 @@ runs are blocked while a job is live.
 
 **Resetting ghosts:** the best-lap ghost per track lives in
 `racetraq/data/ghosts/<track>.json` and is overwritten whenever anyone —
-including a talented visitor — beats it with a clean lap. To reset to the
-bundled records in a git checkout: `git checkout -- racetraq/data/ghosts/`.
+including a talented visitor — beats it with a clean lap. These files are
+per installation (not in git): to reset a track, stop the server and
+delete its file; the next clean lap records a new ghost. The leaderboards
+in `racetraq/data/leaderboard/` reset the same way.
 To simply clear one: delete the file and restart (no ghost is shown until a
 new clean lap is driven). In a container, ghosts reset with the container.
 

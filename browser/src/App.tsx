@@ -47,6 +47,17 @@ function evalLine(d: DriverInfo | undefined): string | null {
   return `Tested on ${e.episodes} fresh episodes: lapped in ${laps}/${e.episodes}, mean lap ${fmtLap(e.mean_lap)}.`;
 }
 
+const ABOUT_SEEN_KEY = 'racetraq-about-seen';
+
+/** First visit in this browser: open "What is this?" once on its own. */
+function firstVisit(): boolean {
+  try {
+    return !localStorage.getItem(ABOUT_SEEN_KEY);
+  } catch {
+    return false; // storage blocked: don't pop the explainer on every load
+  }
+}
+
 const CAMERA_LABELS: Record<CameraView, string> = { top: 'Top', chase: 'Chase', cockpit: 'Cockpit' };
 const CAMERA_KEY = 'racetraq-camera';
 
@@ -76,11 +87,24 @@ export function App() {
   const [speed, setSpeed] = useState(1);
   const [showRays, setShowRays] = useState(true);
   const [camera, setCamera] = useState<CameraView>(loadCamera);
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(firstVisit);
   const [wideCircuit, setWideCircuit] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
   const [, setTick] = useState(0);
   const keys = useRef({ left: false, right: false, gas: false, brake: false });
+
+  const closeAbout = () => {
+    setAboutOpen(false);
+    try {
+      localStorage.setItem(ABOUT_SEEN_KEY, '1');
+    } catch {
+      // storage blocked: the explainer opens again next visit
+    }
+  };
+  const openAbout = () => {
+    track('about open');
+    setAboutOpen(true);
+  };
 
   const cycleCamera = () => {
     const next = CAMERA_VIEWS[(CAMERA_VIEWS.indexOf(camera) + 1) % CAMERA_VIEWS.length];
@@ -255,13 +279,16 @@ export function App() {
             </button>
           ))}
         </nav>
-        <button type="button" className="about-button" onClick={() => {
-            track('about open');
-            setAboutOpen(true);
-          }}>
+        <button type="button" className="about-button" onClick={openAbout}>
           What is this?
         </button>
       </header>
+      <p className="pitch">
+        A tiny quantum circuit learned to drive this car. Watch it lap, then race it yourself.{' '}
+        <button type="button" className="link" onClick={openAbout}>
+          How does it work?
+        </button>
+      </p>
 
       <main>
         <div className="left">
@@ -463,7 +490,7 @@ export function App() {
         </a>
       </footer>
 
-      {aboutOpen && <About manifest={manifest} onClose={() => setAboutOpen(false)} />}
+      {aboutOpen && <About manifest={manifest} onClose={closeAbout} />}
     </div>
   );
 }

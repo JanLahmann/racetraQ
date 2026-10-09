@@ -94,6 +94,21 @@ class StudioController:
             self.s._apply_profile(self.s.n_qubits)
             self.config_changed = False
 
+    def reset(self) -> None:
+        """Forget the last visitor's model and result (the booth went idle):
+        the next visitor opening the studio starts at the setup."""
+        if self.phase == "training":
+            self.s.stop_training()
+        self.phase = "setup"
+        self.spec = None
+        self.model = None
+        self.result = None
+        self.rank = None
+        self.best_test = None
+        self.stop_reason = None
+        self.started_at = self.stopped_at = None
+        self.emit(full=True)
+
     def handle(self, msg: protocol.Studio) -> None:
         action = msg.action
         if action == "start":

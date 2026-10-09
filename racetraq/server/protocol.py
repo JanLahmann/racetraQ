@@ -65,6 +65,15 @@ class SetMode:
 
 
 @dataclass(frozen=True)
+class IdleReset:
+    """The booth went idle: back to attract mode with the booth defaults
+    (name cleared, studio back to setup; a kiosk also restores the startup
+    track, circuit size and driver) for the next visitor."""
+
+    TYPE: ClassVar[str] = "idle_reset"
+
+
+@dataclass(frozen=True)
 class SetTrack:
     """``seed`` and ``length`` are only meaningful with ``track == "random"``:
     ``seed`` makes the generated track reproducible (omitted -> the server
@@ -445,6 +454,11 @@ def _parse_hello(d: dict) -> Hello:
     return Hello()
 
 
+def _parse_idle_reset(d: dict) -> IdleReset:
+    _check_extra(d, set())
+    return IdleReset()
+
+
 def _clamped_float(d: dict, key: str, lo: float, hi: float) -> float | None:
     """Optional analog axis: validated as a number, then clamped to [lo, hi]."""
     if d.get(key) is None:
@@ -555,6 +569,7 @@ _CLIENT_PARSERS = {
     Hello.TYPE: _parse_hello,
     Input.TYPE: _parse_input,
     SetMode.TYPE: _parse_set_mode,
+    IdleReset.TYPE: _parse_idle_reset,
     SetTrack.TYPE: _parse_set_track,
     SetName.TYPE: _parse_set_name,
     DrawTrack.TYPE: _parse_draw_track,
@@ -569,8 +584,8 @@ _CLIENT_PARSERS = {
 
 def parse_client(
     data: Any,
-) -> (Hello | Input | SetMode | SetTrack | SetName | DrawTrack | Train | Race
-      | Qubits | SetDriver | HardwareMsg | Studio):
+) -> (Hello | Input | SetMode | IdleReset | SetTrack | SetName | DrawTrack | Train
+      | Race | Qubits | SetDriver | HardwareMsg | Studio):
     """Strictly parse a client -> server dict; raises ProtocolError on anything off."""
     if not isinstance(data, dict):
         raise ProtocolError("message must be a JSON object")

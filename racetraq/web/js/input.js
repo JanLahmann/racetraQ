@@ -39,10 +39,18 @@ function push() {
   }
 }
 
+/** True while the visitor types into a form field (the race name, a track
+ *  seed): their letters and arrow keys belong to the field, not the car. */
+export function isTypingTarget(target) {
+  if (!target || typeof target.closest !== "function") return false;
+  return Boolean(target.closest("input, select, textarea, [contenteditable]"));
+}
+
 function handleKey(ev, down) {
   const bit = KEYMAP[ev.code];
   if (bit === undefined) return;
   if (onActivity) onActivity();
+  if (down && isTypingTarget(ev.target)) return; // keyup still releases a held key
   if (!active) return;
   ev.preventDefault();
   const next = down ? mask | bit : mask & ~bit;

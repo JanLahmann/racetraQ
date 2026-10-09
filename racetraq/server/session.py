@@ -494,6 +494,8 @@ class DemoSession:
             self.set_input(msg.keys, analog)
         elif isinstance(msg, protocol.SetMode):
             self._set_mode(msg.mode)
+        elif isinstance(msg, protocol.IdleReset):
+            self.idle_reset()
         elif isinstance(msg, protocol.SetTrack):
             self._set_track(msg.track, msg.seed, msg.length)
         elif isinstance(msg, protocol.SetName):
@@ -649,6 +651,7 @@ class DemoSession:
         if mode == "studio":
             self.studio.enter()
         elif mode == "attract":
+            self.racer_name = ""  # Watch is between visitors: the next one starts anonymous
             self._enter_attract()
         elif mode == "race":
             self._enter_race("quantum")
@@ -824,6 +827,55 @@ class DemoSession:
         self._last_quantum_emit.clear()
         if broadcast:
             self._outbox.append(self.welcome_payload())
+
+    def idle_hold(self) -> str | None:
+        """How a running demo holds off the idle return: "hold" while
+        training, a hardware job (or its replay), the evolution show or a
+        studio run is on; "linger" while a visitor reads their studio result;
+        None otherwise."""
+        if (self._training_alive() or self._hardware_alive() or self._hw_replay is not None
+                or self.mode == "evolution"
+                or (self.mode == "studio" and self.studio.phase == "training")):
+            return "hold"
+        if self.mode == "studio" and self.studio.phase == "done":
+            return "linger"
+        return None
+
+    def idle_seconds(self) -> float:
+        """Inactivity before the booth returns to attract mode (0: never);
+        a visitor reading a studio result gets longer."""
+        base = float(self.config["ui"].get("attract_idle_seconds", 45) or 0)
+        hold = self.idle_hold()
+        if not base or hold == "hold":
+            return 0.0
+        return max(3 * base, 90.0) if hold == "linger" else base
+
+    def idle_reset(self) -> None:
+        """Nobody touched the booth for the idle time: back to attract mode
+        with the booth defaults for the next visitor — no leaderboard name,
+        the studio back to setup, and on a kiosk the startup track, circuit
+        size and driver. A running demo (see ``idle_hold``) is left alone."""
+        if self.idle_hold() == "hold":
+            return
+        self.racer_name = ""
+        self._leave_studio()
+        self.studio.reset()
+        self.mode = "attract"
+        if self.config["ui"].get("kiosk"):
+            startup_n = int(self._startup_config.get("circuit", {}).get("n_qubits", 4))
+            startup_track = str(self._startup_config["track"]["default"])
+            welcome = False
+            if self.n_qubits != startup_n:
+                self._apply_profile(startup_n, broadcast=False)
+                welcome = True
+            if self.driver != "auto":
+                self.driver = "auto"
+                welcome = True
+            if self.track_is_random or self.track_name != startup_track:
+                self._set_track(startup_track)  # re-enters attract with the new track
+            if welcome:
+                self._outbox.append(self.welcome_payload())
+        self._enter_attract()
 
     def _leave_studio(self) -> None:
         """Any other mode or setting takes over: wind the studio down."""

@@ -3,6 +3,10 @@
 **A quantum reinforcement learning racing demo.** Watch a variational
 quantum circuit learn to race — then grab the keyboard and try to beat it.
 
+**▶ Play it in your browser: [racetraq.org](https://racetraq.org/)** — no
+install, works on a phone. New here? Start with
+[racetraQ in plain words](docs/EXPLAINER.md).
+
 ![racetraQ demo: the 4-qubit quantum driver laps the gp track, with its live qubit readout, Q-values and circuit](docs/racetraq-hero.gif)
 
 - Quantum Deep Q-Learning (4 qubits / 56 trainable parameters by default; a
