@@ -79,6 +79,9 @@ bootstrap_truncation = true
 # tau = 0.005                   # soft target rate: target <- (1 - tau) * target + tau * online
 # grad_clip = 0.0               # > 0: clip the gradient's global L2 norm to this value
 # reward_scale = 1.0            # multiplies rewards as stored in replay only (reported returns stay unscaled)
+# snapshot_rank = "reliability" # which greedy eval becomes the saved snapshot: "reliability" = most lapped episodes, then mean lap;
+#                               # "pace" = at least snapshot_floor of the eval episodes lapped, then the fastest mean lap
+# snapshot_floor = 0.75         # "pace" only: fraction of eval episodes that must lap
 # Hardware robustness (quantum agent; default off). act_noise: rollouts and snapshot evals pick actions from NOISY readout
 # expectations, <Z> -> attenuation * <Z> + bias + shot noise of `shots` shots (attenuation / bias: one number or one per readout);
 # TD targets and gradients stay exact, and the saved snapshot is the one that drives best under the noise.
@@ -114,6 +117,12 @@ gamma = 0.99
 #   On 10 seeds the MLP tends to do worse with the 0.30 floor (a consistent
 #   trend, not a supported difference), hence per agent; the 10-qubit
 #   feature-observation circuit fails under it too (see docs/SCIENCE.md).
+# Device-noise levers (action_gap + act_noise) on oval and chicane only:
+#   2026-10-09, 8 seeds, simulated device: either lever alone helps a little,
+#   both together lap 95 of 96 device episodes on each track (73 and 48 with
+#   neither). On gp they hurt learning (best snapshots lap 0.99 -> 0.05 with
+#   both), so gp and combo train without them (docs/SCIENCE.md, "Follow-ups
+#   to the audit").
 [training_presets_quantum.oval]
 action_gap = 0.8
 act_noise = { attenuation = 0.95, shots = 1024 }
