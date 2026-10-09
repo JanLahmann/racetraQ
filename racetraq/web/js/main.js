@@ -44,6 +44,7 @@ const state = {
 // -- components --------------------------------------------------------------
 
 const renderer = new RaceRenderer($("#race-canvas"));
+renderer.youLabel = t("race.you");
 renderer.start();
 
 const quantumPanel = new QuantumPanel({
@@ -963,6 +964,7 @@ $("#lang-toggle").addEventListener("click", (ev) => {
 /** Everything built from state, again in the new language. */
 function rerenderAll() {
   applyDom();
+  renderer.youLabel = t("race.you");
   renderLangToggle();
   setStatus(...state.status);
   setCamera(renderer.camera);
