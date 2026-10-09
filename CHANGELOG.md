@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `CITATION.cff` and the README carry the Zenodo DOI
+  ([10.5281/zenodo.23270600](https://doi.org/10.5281/zenodo.23270600), all
+  versions).
+
 ## 0.3.1 — 2026-10-09
 
 - `train_headless` without `--out` writes a new `runs/<agent>_<track>_<time>/`

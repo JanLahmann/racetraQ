@@ -9,6 +9,14 @@ type: software
 authors:
   - family-names: Lahmann
     given-names: Jan
+doi: 10.5281/zenodo.23270600
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23270600
+    description: "All versions (resolves to the latest)"
+  - type: doi
+    value: 10.5281/zenodo.23270601
+    description: "v0.3.1"
 repository-code: "https://github.com/JanLahmann/racetraQ"
 url: "https://racetraq.org"
 license: Apache-2.0

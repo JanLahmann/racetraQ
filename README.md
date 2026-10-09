@@ -1,5 +1,7 @@
 # racetraQ 🏎️
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23270600.svg)](https://doi.org/10.5281/zenodo.23270600)
+
 **A quantum reinforcement learning racing demo.** Watch a variational
 quantum circuit learn to race — then grab the keyboard and try to beat it.
 
