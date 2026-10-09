@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 — 2026-10-09
 
 - `train_headless` without `--out` writes a new `runs/<agent>_<track>_<time>/`
   folder instead of replacing the shipped weights; `--out bundled` does that
   on purpose.
+- First release archived on Zenodo, which gives racetraQ a DOI for citing.
 
 ## 0.3.0 — 2026-10-09
 
