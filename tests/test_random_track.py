@@ -46,6 +46,12 @@ def set_random_track(session, seed):
     return tracks[0]["track"]
 
 
+def skip_countdown(session):
+    """Tick through the race start's "3, 2, 1" (cars hold on the grid)."""
+    while session.race_countdown() is not None:
+        session.tick()
+
+
 # ------------------------------------------------------------------- protocol
 
 
@@ -213,6 +219,7 @@ def test_human_race_on_random_track(tmp_path):
                                   track=session.track_name))
     assert session.mode == "race"
     assert {c.kind for c in session.cars} == {"human", "quantum"}
+    skip_countdown(session)
     session.handle_message(P.Input(keys=P.KEY_THROTTLE))
     for _ in range(12):
         session.tick()

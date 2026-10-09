@@ -63,6 +63,9 @@ from racetraq.server.studio import StudioController
 _log = logging.getLogger(__name__)
 
 HUMAN_RESPAWN_DELAY_S = 1.0
+RACE_COUNTDOWN_S = 3.0  # cars hold on the grid for "3, 2, 1, GO" at a race start
+GRID_OFFSET = 0.4  # start-grid lateral offset (share of the half width): side by side
+RECOVER_BACKOFF = 4.0  # an off-track human resumes this far (world units) behind
 QUANTUM_MSG_MIN_INTERVAL_S = 0.099  # <= 10 Hz
 LAP_TIMES_KEEP = 50  # telemetry keeps the last N (episode, lap_s) pairs
 GHOST_TRAJ_MAX_POINTS = 20_000  # ~33 min at 10 Hz; laps beyond this are not recorded
@@ -153,6 +156,7 @@ class _Car:
     controls: tuple[float, float, float] = (0.0, 0.0, 0.0)
     rays: list | None = None
     respawn_at: float | None = None  # sim time to respawn a frozen (crashed) human
+    grid: float = 0.0  # start-grid lateral offset, share of the half width (+ = left)
     label: str | None = None  # shown next to the car (e.g. "ep 250" in evolution mode)
     controller: Any = None  # continuous-control policy (the hero racing-line driver)
     traj: list = field(default_factory=list)  # (x, y, theta) at decision rate, this lap
@@ -301,6 +305,8 @@ class DemoSession:
         self.track = load_track(config, self.track_name)
         self._ghost: dict | None = load_ghost(self.track_name, self._ghosts_dir)
         self.racer_name = ""  # leaderboard display name; empty = don't record
+        self._race_go_t: float | None = None  # race countdown: cars hold until this time
+        self._ghost_t0 = 0  # substep the ghost's lap starts at (a race's GO)
         self._board = load_leaderboard(self.track_name, self._leaderboard_dir)
         self.cars: list[_Car] = []
         self.jobs: dict[str, TrainingJob] = {}
@@ -924,10 +930,27 @@ class DemoSession:
     def _enter_race(self, opponent: str) -> None:
         self._sync_to_weights(use_weights=opponent == "quantum")
         x, y, theta = self.track.start_pose()
-        human = _Car(id="human", kind="human", state=np.array([x, y, theta, 0.0]))
+        human = _Car(id="human", kind="human", state=np.array([x, y, theta, 0.0]),
+                     grid=-GRID_OFFSET)  # side by side: the visitor on the right
         self._respawn(human)
         agent = self._try_make_agent_car(opponent)
+        if agent is not None:
+            agent.grid = GRID_OFFSET
+            self._respawn(agent)
         self.cars = [human] + ([agent] if agent is not None else [])
+        self._start_countdown()
+
+    def _start_countdown(self) -> None:
+        """Hold the race cars on the grid for RACE_COUNTDOWN_S; the ghost's
+        lap starts at GO too, so it is a real opponent from the line."""
+        self._race_go_t = self.t + RACE_COUNTDOWN_S
+        self._ghost_t0 = self._substep + round(RACE_COUNTDOWN_S / self.dt)
+
+    def race_countdown(self) -> float | None:
+        """Seconds until GO while a race start is counting down, else None."""
+        if self.mode != "race" or self._race_go_t is None:
+            return None
+        return max(0.0, self._race_go_t - self.t)
 
     def _make_agent_car(self, kind: str) -> _Car:
         driver = self.driver if kind == "quantum" else ""
@@ -991,6 +1014,7 @@ class DemoSession:
         elif self.mode == "race":  # reset
             for car in self.cars:
                 self._respawn(car)
+            self._start_countdown()
         else:
             self._error("race reset only applies in race mode")
 
@@ -1377,7 +1401,13 @@ class DemoSession:
             self.studio.tick()
         elif self.mode == "hardware" and self._hw_replay is None:
             pass  # idle car waits at the start line until a replay begins
+        elif self.race_countdown() is not None and self.t < self._race_go_t:
+            pass  # "3, 2, 1": the cars hold on the grid
         else:
+            if self.mode == "race" and self._race_go_t is not None:  # GO
+                self._race_go_t = None
+                for car in self.cars:
+                    car.lap_start_t = self.t
             if (self._substep - 1) % self.substeps_per_decision == 0:
                 self._decide()
             self._step_cars()
@@ -1438,7 +1468,7 @@ class DemoSession:
         """One physics substep for every unfrozen car, then progress/lap/crash logic."""
         for car in self.cars:  # thaw crashed humans whose freeze expired
             if car.respawn_at is not None and self.t >= car.respawn_at:
-                self._respawn(car)
+                self._recover(car)
         active = [car for car in self.cars if car.respawn_at is None]
         if not active:
             return
@@ -1471,6 +1501,8 @@ class DemoSession:
                     self._event("clean_lap", car_id=car.id, lap_time=lap_time)
                     self._maybe_record_ghost(car, lap_time)
                     self._record_leaderboard(car, lap_time)
+                if car.kind == "human" and self.mode == "race":
+                    self._lap_result(car, lap_time)
                 car.lap_dirty = False
                 car.traj.clear()
                 car.traj_full = True
@@ -1486,6 +1518,10 @@ class DemoSession:
 
     def _respawn(self, car: _Car) -> None:
         x, y, theta = self.track.start_pose()
+        if car.grid:
+            nx, ny = self.track.normals[0]
+            x += nx * car.grid * self.track.half_width
+            y += ny * car.grid * self.track.half_width
         car.state = np.array([x, y, theta, 0.0])
         s_vals, _ = self.track.project(car.state[None, :2])
         car.s = float(s_vals[0])
@@ -1502,6 +1538,26 @@ class DemoSession:
         car.rays = None
         car.traj.clear()
         car.traj_full = True
+
+    def _recover(self, car: _Car) -> None:
+        """Put an off-track human back on the centerline a little behind
+        where they left it, standing, facing along the track. The lap goes
+        on (it is marked dirty, so it is not recorded): a beginner still
+        finishes laps instead of restarting at the line every time."""
+        track = self.track
+        n = len(track.centerline)
+        ds = track.total_length / n
+        idx = int(round((car.s - RECOVER_BACKOFF) / ds)) % n
+        x, y = (float(c) for c in track.centerline[idx])
+        theta = float(math.atan2(track.tangents[idx, 1], track.tangents[idx, 0]))
+        car.state = np.array([x, y, theta, 0.0])
+        s_vals, _ = track.project(car.state[None, :2])
+        total = track.total_length
+        car.progress += float((s_vals[0] - car.s + 0.5 * total) % total - 0.5 * total)
+        car.s = float(s_vals[0])
+        car.off_track = False
+        car.respawn_at = None
+        car.controls = (0.0, 0.0, 0.0)
 
     # ------------------------------------------------------------- ghost laps
 
@@ -1577,6 +1633,23 @@ class DemoSession:
             save_leaderboard(self.track_name, self._board, self._leaderboard_dir)
         self._outbox.append(self.leaderboard_payload())
 
+    def _lap_result(self, car: _Car, lap_time: float) -> None:
+        """Tell the visitor how their lap went: clean or not, and its place
+        on the board — the rank it took (named) or would take (unnamed)."""
+        clean = not car.lap_dirty
+        rank = None
+        entries = self._board["entries"]
+        if clean:
+            t = round(float(lap_time), 3)
+            if self.racer_name:
+                rank = next((i + 1 for i, e in enumerate(entries)
+                             if e["lap_s"] == t and e["name"] == self.racer_name), None)
+            else:
+                faster = sum(1 for e in entries if e["lap_s"] < t)
+                rank = faster + 1 if faster < LEADERBOARD_MAX_ENTRIES else None
+        self._event("lap_result", car_id=car.id, lap_time=float(lap_time), clean=clean,
+                    rank=rank, named=bool(self.racer_name), board_size=len(entries))
+
     def _maybe_record_ghost(self, car: _Car, lap_time: float) -> None:
         """Persist a clean lap as the track's best-lap ghost when it beats the record."""
         if self.track_is_random:  # ephemeral tracks: never write ghosts_dir/random*.json
@@ -1603,7 +1676,8 @@ class DemoSession:
         ghost = self._ghost
         points = ghost["points"]
         n = len(points)
-        phase = self._substep / self.substeps_per_decision  # trajectory index at 60 Hz
+        # trajectory index at 60 Hz, from the race's GO (held on the line before)
+        phase = max(0, self._substep - self._ghost_t0) / self.substeps_per_decision
         frac = phase - math.floor(phase)
         i0 = int(math.floor(phase)) % n
         p0, p1 = points[i0], points[(i0 + 1) % n]
@@ -1636,7 +1710,11 @@ class DemoSession:
                 cars.append(self._ghost_payload())
             if self._hw_replay is not None and self.mode == "hardware":
                 cars.append(self._hw_replay_payload())
-        self._outbox.append({"type": "state", "t": self.t, "mode": self.mode, "cars": cars})
+        msg = {"type": "state", "t": self.t, "mode": self.mode, "cars": cars}
+        countdown = self.race_countdown()
+        if countdown is not None:
+            msg["countdown"] = round(countdown, 2)
+        self._outbox.append(msg)
 
     def _car_payload(self, car: _Car) -> dict:
         x, y, theta, v = (float(c) for c in car.state)
@@ -1648,6 +1726,8 @@ class DemoSession:
             "progress": float(car.progress),
             "last_lap_time": car.last_lap_time,
             "off_track": bool(car.off_track),
+            # running time of the current lap (0 while a race start counts down)
+            "lap_t": round(max(0.0, self.t - max(car.lap_start_t, self._race_go_t or 0.0)), 2),
         }
         if car.rays is not None:
             payload["rays"] = car.rays

@@ -12,11 +12,11 @@
 
     <nav class="modes" id="mode-buttons" aria-label="Mode">
       <button data-mode="attract" class="mode-btn" data-tip="Attract mode: the trained quantum circuit drives on its own — watch the gauges and Q-values decide every tenth of a second.">Watch</button>
-      <button data-mode="train" class="mode-btn" data-tip="Train a fresh (or warm-started) agent live with double DQN and watch the learning curve grow.">Train</button>
+      <button data-mode="train" class="mode-btn operator-only" data-tip="Train a fresh (or warm-started) agent live with double DQN and watch the learning curve grow.">Train</button>
       <button data-mode="evolution" class="mode-btn" data-tip="Four snapshots of the same circuit at increasing training ages race each other — see what training buys.">Evolution</button>
       <button data-mode="race" class="mode-btn" data-tip="Grab the wheel yourself (arrow keys / WASD / gamepad) and race the AI. Named clean laps enter the leaderboard.">Race</button>
       <button data-mode="studio" class="mode-btn" data-tip="Training studio: pick track, qubits, sensors and actions, train your own quantum driver live (5 minutes max), compare it with our studies, then race it.">Studio</button>
-      <button data-mode="hardware" class="mode-btn" data-tip="Run the trained circuit on an IBM Quantum backend — a local noisy simulation, or the real machine (queue times apply).">Hardware</button>
+      <button data-mode="hardware" class="mode-btn operator-only" data-tip="Run the trained circuit on an IBM Quantum backend — a local noisy simulation, or the real machine (queue times apply).">Hardware</button>
     </nav>
 
     <label class="track-picker">
@@ -37,13 +37,13 @@
       <option value="long">long</option>
     </select>
 
-    <label class="driver-picker" id="driver-picker" hidden
+    <label class="driver-picker operator-only" id="driver-picker" hidden
            title="Which training the quantum driver uses — try the gp-trained driver on another track">
       <span>Driver</span>
       <select id="driver-select" aria-label="Quantum driver"></select>
     </label>
 
-    <label class="qubit-picker">
+    <label class="qubit-picker operator-only">
       <span>Qubits</span>
       <select id="qubit-select" aria-label="Qubits" data-tip="Circuit size: more qubits = more sensors (lidar rays) and parameters, and more compute per decision. At a fixed depth a larger circuit can leave actions blind to some sensors — see Who sees what in the Quantum tab.">
         <option value="4">4</option>
@@ -79,6 +79,14 @@
       <canvas id="race-canvas"></canvas>
       <div id="episode-overlay" hidden></div>
       <div id="best-banner" hidden></div>
+      <div id="attract-headline" hidden>
+        <div class="headline">A quantum circuit is driving this car</div>
+        <div class="subline">Press an arrow key or a controller button to race it</div>
+      </div>
+      <div id="race-hud" hidden aria-live="off"></div>
+      <div id="race-countdown" hidden aria-live="assertive"></div>
+      <div id="offtrack-banner" hidden>Off track — back on the road in a moment</div>
+      <div id="lap-result" hidden aria-live="polite"></div>
       <div id="evo-legend" hidden></div>
       <div id="toast" hidden></div>
       <button id="race-camera" hidden data-tip="Camera (C): top-down, chase (turns with your car, heading up) or cockpit (closer, more road ahead). The rotating views add a minimap.">📷 Top</button>
@@ -92,7 +100,7 @@
         <button data-tab="training" class="tab-btn">Training</button>
         <button data-tab="studio" class="tab-btn">Studio</button>
         <button data-tab="board" class="tab-btn">🏆</button>
-        <button data-tab="hardware" class="tab-btn">Hardware</button>
+        <button data-tab="hardware" class="tab-btn operator-only">Hardware</button>
         <button data-tab="explain" class="tab-btn">Explain</button>
       </nav>
 

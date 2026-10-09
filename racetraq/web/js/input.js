@@ -28,6 +28,8 @@ let mask = 0;
 let active = false;
 let keepaliveId = null;
 let onActivity = null;
+let onWake = null; // a driving key or pad button while not driving (attract: "press to race")
+let padWakeHeld = false;
 
 function push() {
   sendInput(mask);
@@ -51,7 +53,10 @@ function handleKey(ev, down) {
   if (bit === undefined) return;
   if (onActivity) onActivity();
   if (down && isTypingTarget(ev.target)) return; // keyup still releases a held key
-  if (!active) return;
+  if (!active) {
+    if (down && !ev.repeat && onWake) onWake();
+    return;
+  }
   ev.preventDefault();
   const next = down ? mask | bit : mask & ~bit;
   if (next !== mask) {
@@ -122,6 +127,16 @@ function pollPad() {
     updatePadState(); // pad vanished without a disconnect event
     return;
   }
+  if (!active) {
+    // not driving: watch for a button press (A, B, X, Y, Start) to wake the race
+    const pressed = [0, 1, 2, 3, 9].some((b) => pad.buttons[b] && pad.buttons[b].pressed);
+    if (pressed && !padWakeHeld) {
+      if (onActivity) onActivity();
+      if (onWake) onWake();
+    }
+    padWakeHeld = pressed;
+    return;
+  }
   const a = readAnalog(pad);
   const changed =
     Math.abs(a.steer - lastAnalog.steer) > PAD_EPS ||
@@ -143,26 +158,32 @@ function updatePadState() {
     padConnected = connected;
     if (onGamepadChange) onGamepadChange(connected);
   }
-  const shouldPoll = connected && active;
+  const shouldPoll = connected && (active || onWake !== null);
   if (shouldPoll && padPollId === null) {
     padPollId = setInterval(pollPad, PAD_POLL_MS);
   } else if (!shouldPoll && padPollId !== null) {
     clearInterval(padPollId);
     padPollId = null;
-    // release the analog controls so the car doesn't keep driving
-    if (lastAnalog.steer !== 0 || lastAnalog.throttle !== 0 || lastAnalog.brake !== 0) {
-      sendInput(0, { steer: 0, throttle: 0, brake: 0 });
-    }
-    lastAnalog = { steer: 0, throttle: 0, brake: 0 };
+    releaseAnalog();
   }
+}
+
+/** Release the analog controls so the car doesn't keep driving. */
+function releaseAnalog() {
+  if (lastAnalog.steer !== 0 || lastAnalog.throttle !== 0 || lastAnalog.brake !== 0) {
+    sendInput(0, { steer: 0, throttle: 0, brake: 0 });
+  }
+  lastAnalog = { steer: 0, throttle: 0, brake: 0 };
 }
 
 /** Install listeners once. `activityCb` is called on any mapped keypress or
  *  significant gamepad input. `opts.onGamepadChange(connected)` fires when a
- *  controller connects/disconnects. */
+ *  controller connects/disconnects. `opts.onWake()` fires on a driving key or
+ *  a pad button press while input is inactive (attract: "press to race"). */
 export function initInput(activityCb, opts = {}) {
   onActivity = activityCb || null;
   onGamepadChange = opts.onGamepadChange || null;
+  onWake = opts.onWake || null;
   window.addEventListener("keydown", (ev) => handleKey(ev, true));
   window.addEventListener("keyup", (ev) => handleKey(ev, false));
   window.addEventListener("blur", () => {
@@ -187,5 +208,6 @@ export function setInputActive(enabled) {
     mask = 0;
     push();
   }
+  if (!enabled) releaseAnalog(); // the pad may keep polling (wake), not driving
   updatePadState();
 }

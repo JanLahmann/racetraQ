@@ -77,7 +77,11 @@ The `exhibition` profile (`racetraq/config/exhibition.toml`):
   timer, and a visitor reading their Studio result gets 90 s. Only the
   browser that holds the wheel runs the timer — a phone that only watches
   cannot reset the booth; when nobody holds the wheel the server does it;
-- `kiosk = true` — larger captions, hidden mouse cursor.
+- `kiosk = true` — the visitor's view: the operator controls (Train and
+  Hardware modes, the Qubits and Driver pickers, the Hardware tab) are
+  hidden and the panel text is larger. Open `http://…:8000/#operator` to
+  get them back for setting up. In Watch, an arrow key or any controller
+  button starts a race against the quantum driver.
 
 Profiles stack with an extra overlay via `--config <file.toml>`, and any
 `./config/<name>.toml` in the working directory shadows the packaged profile
