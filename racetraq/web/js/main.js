@@ -52,6 +52,13 @@ const studioPanel = initStudioPanel({
   root: $("#panel-studio"),
   send: net.studioCmd,
   moderate: (opts) => net.boardCmd("remove", { board: "studio", ...opts }),
+  stage: $("#studio-stage"),
+  onTrack: (name) => {
+    if (name !== state.trackName) net.setTrack(name); // the stage shows the chosen track
+  },
+  onFirstLap: (episode) => showBanner(`FIRST LAP · episode ${episode}`),
+  laps: () => ({ human: state.bestLaps.get("human"), model: state.bestLaps.get("studio") }),
+  active: () => state.mode === "studio",
   setName: (name) => {
     net.setName(name);
     $("#race-name").value = name;
@@ -121,6 +128,7 @@ function applyMode(mode) {
   $("#race-camera").hidden = !humanDriving();
   $("#driver-picker").hidden = mode !== "attract";
   setInputActive(mode === "race" || (mode === "studio" && studioPanel.phase === "race"));
+  studioPanel.syncStage();
   attract.setHold("evolution", mode === "evolution" ? "hold" : null);
   if (mode !== "train") attract.setHold("train", null);
   if (mode !== "hardware") attract.setHold("hardware", null);
@@ -323,8 +331,8 @@ const episodeByAgent = new Map(); // agent -> latest episode
 
 function renderEpisodeOverlay() {
   const el = $("#episode-overlay");
-  const training = state.mode === "train" ||
-    (state.mode === "studio" && studioPanel.phase === "training");
+  // (the studio's own ticker on the stage carries the episode count)
+  const training = state.mode === "train";
   if (!training || episodeByAgent.size === 0) {
     el.hidden = true;
     return;
@@ -339,8 +347,12 @@ function renderEpisodeOverlay() {
 }
 
 function showBestBanner(lapTime) {
+  showBanner(`NEW BEST LAP ${lapTime.toFixed(2)}s`);
+}
+
+function showBanner(text) {
   const el = $("#best-banner");
-  el.textContent = `NEW BEST LAP ${lapTime.toFixed(2)}s`;
+  el.textContent = text;
   el.hidden = false;
   el.classList.remove("banner-in");
   void el.offsetWidth; // retrigger the animation
@@ -576,6 +588,7 @@ net.on("event", (msg) => {
   switch (msg.kind) {
     case "lap":
     case "clean_lap":
+      if (msg.car_id && state.mode === "studio") setTimeout(() => studioPanel.refresh(), 0);
       if (msg.car_id) {
         renderer.addEffect("lap", msg.car_id);
         if (typeof msg.lap_time === "number") {

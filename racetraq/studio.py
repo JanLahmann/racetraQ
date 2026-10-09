@@ -30,21 +30,22 @@ BOARD_MAX_ENTRIES = 20
 # (the engineered corner_speed_ratio feature) — no study covers it.
 SENSOR_PRESETS = {
     "lidar": {
-        "label": "Lidar + speed",
-        "blurb": "lidar rays fanned over ±60° plus the car's speed — what every "
-                 "bundled driver senses",
+        "label": "Distance + speed",
+        "blurb": "distance sensors (lidar rays fanned over ±60°) plus the car's "
+                 "speed — what every bundled driver senses",
     },
     "corner": {
-        "label": "Lidar + corner speed",
-        "blurb": "lidar rays fanned over ±60° plus, instead of raw speed, the speed "
-                 "relative to the safe speed for the next corner (experimental)",
+        "label": "Distance + corner warning",
+        "blurb": "distance sensors (lidar rays fanned over ±60°) plus, instead of "
+                 "the speed, how fast the car is compared with the safe speed for "
+                 "the next corner (experimental)",
     },
 }
 
 ACTION_BLURBS = {
     4: "right, straight, left, brake",
-    6: "adds trail braking: brake while steering (experimental)",
-    8: "adds half steer at full throttle (experimental)",
+    6: "adds braking while steering (experimental)",
+    8: "adds a gentle steer at full throttle (experimental)",
 }
 
 TRACK_NOTES = {
@@ -119,29 +120,66 @@ def stats_key(track: str, n_qubits: int) -> str:
     return f"{track}_q{n_qubits}"
 
 
-def estimate_seconds(stats: dict, track: str, n_qubits: int) -> float | None:
-    """Expected seconds to the study's median first lap at the measured live
-    training speed of this circuit size, or None without data."""
+def estimate_seconds(stats: dict, track: str, n_qubits: int,
+                     local_speed: dict | None = None) -> float | None:
+    """Expected seconds to the study's median first lap at the live training
+    speed of this circuit size — measured on this machine by an earlier
+    studio run when there was one (``local_speed``), else the exporter's
+    laptop speed — or None without data."""
     cell = stats.get("cells", {}).get(stats_key(track, n_qubits))
-    speed = stats.get("speed", {}).get(str(n_qubits))
-    if not cell or not speed or cell.get("first_lap") is None:
+    s_per_episode = (local_speed or {}).get(str(n_qubits))
+    if s_per_episode is None:
+        speed = stats.get("speed", {}).get(str(n_qubits))
+        s_per_episode = speed["s_per_episode"] if speed else None
+    if not cell or s_per_episode is None or cell.get("first_lap") is None:
         return None
-    return float(cell["first_lap"]["median"]) * float(speed["s_per_episode"])
+    return float(cell["first_lap"]["median"]) * float(s_per_episode)
 
 
-def catalog(stats: dict, warm_available: dict, time_limit_s: float) -> dict:
+SPEED_FILE = "studio_speed.json"  # per installation, next to the boards
+SPEED_MIN_EPISODES = 20  # shorter runs say too little about the speed
+
+
+def load_local_speed(board_dir: Path) -> dict:
+    """Seconds per training episode per circuit size measured by this
+    machine's own studio runs: {"4": 0.21, ...} (empty before the first run)."""
+    try:
+        data = json.loads((Path(board_dir) / SPEED_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {str(k): float(v) for k, v in data.items()
+            if isinstance(v, (int, float)) and v > 0}
+
+
+def record_local_speed(board_dir: Path, n_qubits: int, episodes: int, seconds: float) -> None:
+    """Remember this machine's training speed for ``n_qubits`` (the latest run
+    wins; the setup screen's estimates use it from then on)."""
+    if episodes < SPEED_MIN_EPISODES or seconds <= 0:
+        return
+    speed = load_local_speed(board_dir)
+    speed[str(int(n_qubits))] = round(seconds / episodes, 4)
+    path = Path(board_dir) / SPEED_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(speed, indent=1) + "\n", encoding="utf-8")
+
+
+def catalog(stats: dict, warm_available: dict, time_limit_s: float,
+            local_speed: dict | None = None) -> dict:
     """Everything the studio setup screen shows: tracks, sizes, sensors,
     action sets and, per (track, qubits), the study numbers and a time
-    estimate. ``warm_available`` maps "<track>_q<n>" to bool."""
+    estimate (``estimate_here``: measured on this machine, not on the
+    exporter's laptop). ``warm_available`` maps "<track>_q<n>" to bool."""
     cells = stats.get("cells", {})
+    local_speed = local_speed or {}
     combos = {}
     for track in STUDIO_TRACKS:
         for n in STUDIO_QUBITS:
             key = stats_key(track, n)
-            seconds = estimate_seconds(stats, track, n)
+            seconds = estimate_seconds(stats, track, n, local_speed)
             combos[key] = {
                 "study": cells.get(key),
                 "estimate_s": None if seconds is None else round(seconds, 1),
+                "estimate_here": str(n) in local_speed,
                 "fits": None if seconds is None else bool(seconds <= time_limit_s),
                 "warm": bool(warm_available.get(key, False)),
             }

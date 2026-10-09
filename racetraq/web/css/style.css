@@ -284,6 +284,80 @@ input[type="number"],
   }
 }
 
+/* the studio on the stage: setup summary with a big Start, then a ticker */
+#studio-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+#studio-stage .studio-stage-card {
+  pointer-events: auto;
+  max-width: min(92%, 560px);
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(22, 26, 34, 0.92);
+  text-align: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+#studio-stage .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--quantum);
+}
+
+#studio-stage .headline {
+  font-size: clamp(18px, 2.4vw, 28px);
+  font-weight: 800;
+}
+
+#studio-stage p {
+  margin: 0;
+  color: var(--muted);
+}
+
+#studio-stage .accent-btn {
+  font-size: 18px;
+  padding: 8px 22px;
+}
+
+#studio-stage .studio-stage-ticker {
+  align-self: end;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: baseline;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: rgba(16, 18, 24, 0.82);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#studio-stage .studio-stage-ticker .big {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.studio-tests rect.t-lap {
+  fill: var(--quantum);
+}
+
+.studio-tests rect.t-none {
+  fill: var(--border);
+}
+
 #race-hud {
   position: absolute;
   top: 12px;
