@@ -294,3 +294,23 @@ def test_switch_rejected_while_training_runs(tmp_path):
         release.set()
         job.thread.join(timeout=5.0)
         session.jobs.clear()
+
+
+def test_qubit_options_only_list_trained_sizes(tmp_path):
+    """The qubit picker offers only sizes with a driver for the current track
+    (an untrained size would leave Watch without a car)."""
+    from racetraq.server.session import QUBIT_SIZES
+
+    session = DemoSession(load_config(), ghosts_dir=tmp_path)
+    welcome = session.welcome_payload()
+    expected = [n for n in QUBIT_SIZES
+                if quantum_weights_path(session.track_name, n).is_file()]
+    assert welcome["qubit_options"] == expected
+    assert 4 in expected
+    P.parse_server(welcome)
+    session.drain_outbox()
+    session.handle_message(P.parse_client({"type": "set_track", "track": "combo"}))
+    (track_msg,) = [m for m in session.drain_outbox() if m["type"] == "track"]
+    assert track_msg["qubit_options"] == [
+        n for n in QUBIT_SIZES if quantum_weights_path("combo", n).is_file()]
+    P.parse_server(track_msg)

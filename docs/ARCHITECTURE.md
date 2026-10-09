@@ -413,7 +413,8 @@ previous one's):
 driver, drivers}`. `driver` is the active `set_driver` selection (`"auto"`
 default) and `drivers` the currently valid choices (`"auto"`, each bundled
 training at the active qubit count, `"hero"`, and `"pro"` when
-`mlp_pro.npz` is bundled).
+`mlp_pro.npz` is bundled). `qubit_options` lists the circuit sizes with a
+trained quantum driver for the current track (the UI greys out the rest).
 `circuit_spec` is the JSON gate-by-gate description of the active driver's
 circuit (the profile's while training or without a quantum driver) from
 `agents/quantum/circuit.circuit_spec` (qubit/layer/gate list, parameter
@@ -448,7 +449,8 @@ running countdown. Protects public deployments and exhibit screens from
 visitors' phones fighting over the demo — and turns contention into an
 arcade-style rotation.
 
-**`track`** — `{track: TrackPayload}` after a successful track switch.
+**`track`** — `{track: TrackPayload, qubit_options: [int]}` after a successful
+track switch.
 
 *TrackPayload* (built in `runtime.track_payload`): `name`, `half_width`,
 `total_length`, `checkpoints` (fractions of a lap), `theme` (free-form dict

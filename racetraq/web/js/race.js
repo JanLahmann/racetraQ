@@ -3,7 +3,7 @@
 
 export const KIND_COLORS = {
   quantum: "#7a5cff",
-  mlp: "#2fbf71",
+  mlp: "#56b4e9", // sky blue, not green: orange vs green is a colour-blind confusion pair
   human: "#ff9f1c",
   hero: "#22d3ee", // expert-menu racing-line controller
   pro: "#5eead4", // expert-menu big DQN-trained MLP

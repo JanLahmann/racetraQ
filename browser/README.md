@@ -26,7 +26,7 @@ model and no hardware path.
   of a decision in IBM Quantum Composer.
 - **Race** — you (arrow keys / WASD / on-screen pedals) against the quantum car;
   **C** or the 📷 button switches between top-down, chase and cockpit cameras.
-- **Learning** — the evolution mode: four snapshots of one training run.
+- **Evolution** — four snapshots of one training run racing each other (the same mode as at the booth).
 
 ## How it relates to the Python project
 

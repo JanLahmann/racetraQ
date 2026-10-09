@@ -14,7 +14,7 @@ import { CAMERA_VIEWS, type CameraView } from '@demo/race.js';
 const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: 'watch', label: 'Watch', hint: 'a quantum driver races; see every decision' },
   { id: 'race', label: 'Race', hint: 'you against the quantum driver' },
-  { id: 'evolution', label: 'Learning', hint: 'four snapshots from one training run' },
+  { id: 'evolution', label: 'Evolution', hint: 'four snapshots from one training run: watch it learn' },
 ];
 const SPEEDS = [0.25, 0.5, 1, 2, 4];
 const KEYMAP: Record<string, 'left' | 'right' | 'gas' | 'brake'> = {
@@ -61,13 +61,21 @@ function firstVisit(): boolean {
 const CAMERA_LABELS: Record<CameraView, string> = { top: 'Top', chase: 'Chase', cockpit: 'Cockpit' };
 const CAMERA_KEY = 'racetraq-camera';
 
-/** The camera view this browser used last (top-down when unknown). */
+/** Without a saved choice: the chase camera on touch screens, where the
+ *  top-down car is a few pixels long, unless the visitor asked for reduced
+ *  motion (the chase view turns with the car). */
+function defaultCamera(): CameraView {
+  const query = (q: string) => typeof window.matchMedia === 'function' && window.matchMedia(q).matches;
+  return query('(pointer: coarse)') && !query('(prefers-reduced-motion: reduce)') ? 'chase' : 'top';
+}
+
+/** The camera view this browser used last (the default when unknown). */
 function loadCamera(): CameraView {
   try {
     const saved = localStorage.getItem(CAMERA_KEY) as CameraView | null;
-    return saved && CAMERA_VIEWS.includes(saved) ? saved : 'top';
+    return saved && CAMERA_VIEWS.includes(saved) ? saved : defaultCamera();
   } catch {
-    return 'top';
+    return defaultCamera();
   }
 }
 
