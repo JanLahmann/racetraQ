@@ -613,6 +613,30 @@ export class RaceRenderer {
       ctx.textBaseline = "alphabetic";
     }
     for (const car of cars) {
+      if (car.kind !== "human" || car.ghost) continue;
+      // "YOU" tag above the visitor's car: which one is mine, at a glance
+      const p = this._toScreen(car.x, car.y);
+      ctx.font = `800 ${11 * dpr}px system-ui, sans-serif`;
+      const tw = ctx.measureText("YOU").width;
+      const padX = 5 * dpr;
+      const th = 15 * dpr;
+      const ty = p.y - s * 2.2 - th;
+      ctx.beginPath();
+      ctx.roundRect(p.x - tw / 2 - padX, ty, tw + 2 * padX, th, 4 * dpr);
+      ctx.fillStyle = this._carColor(car);
+      ctx.fill();
+      ctx.beginPath(); // pointer down to the car
+      ctx.moveTo(p.x - 4 * dpr, ty + th);
+      ctx.lineTo(p.x + 4 * dpr, ty + th);
+      ctx.lineTo(p.x, ty + th + 4 * dpr);
+      ctx.fill();
+      ctx.fillStyle = "#101218";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("YOU", p.x, ty + th / 2 + 0.5 * dpr);
+      ctx.textBaseline = "alphabetic";
+    }
+    for (const car of cars) {
       if (car.ghost) continue;
       const braking = car.v > 2 && car.dvdt < -BRAKE_DECEL;
       const w = 34 * dpr;

@@ -33,6 +33,12 @@ def make_config(**sections):
     return config
 
 
+def skip_countdown(session):
+    """Tick through the race start's "3, 2, 1" (cars hold on the grid)."""
+    while session.race_countdown() is not None:
+        session.tick()
+
+
 # ------------------------------------------------------------------- runtime
 
 
@@ -196,6 +202,7 @@ def test_race_mode_human_input_drives_car(tmp_path):
     session.handle_message(P.Race(action="start", opponent="mlp"))
     assert session.mode == "race"
     assert {car.kind for car in session.cars} == {"human", "mlp"}
+    skip_countdown(session)
 
     session.handle_message(P.Input(keys=P.KEY_THROTTLE))
     for _ in range(12):
@@ -214,6 +221,7 @@ def test_race_mode_human_input_drives_car(tmp_path):
 def test_analog_input_overrides_keys(tmp_path):
     session = DemoSession(load_config(), ghosts_dir=tmp_path)
     session.handle_message(P.Race(action="start", opponent="quantum"))
+    skip_countdown(session)
 
     # any analog field present -> keys bitmask ignored (brake bit set but not used)
     session.handle_message(P.Input(keys=P.KEY_BRAKE, steer=-0.5, throttle=0.7))

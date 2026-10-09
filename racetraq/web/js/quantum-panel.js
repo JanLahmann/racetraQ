@@ -61,8 +61,13 @@ export class QuantumPanel {
       label.className = "qgauge-label";
       label.textContent = `Z${i}`;
       if (i < this.nReadout) {
-        // the first nReadout qubits are the action readout the output head uses
+        // the first nReadout qubits are the action readout the output head
+        // uses: name the action each one scores, not just the qubit
         row.classList.add("qgauge-readout");
+        const action = document.createElement("span");
+        action.className = "qgauge-action";
+        action.textContent = this.actionLabels[i] ?? `A${i}`;
+        label.append(" ", action);
         label.title = `readout qubit — this ⟨Z⟩ becomes one of the ${this.nReadout} Q-values`;
       }
       const track = document.createElement("div");

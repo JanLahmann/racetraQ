@@ -18,7 +18,8 @@ OPPONENTS = ("quantum", "mlp")
 TRAIN_ACTIONS = ("start", "stop")
 RACE_ACTIONS = ("start", "reset")
 CAR_KINDS = ("human", "quantum", "mlp", "hero", "pro")  # +expert reference drivers
-EVENT_KINDS = ("lap", "crash", "clean_lap", "timeout", "training_done", "new_best_lap")
+EVENT_KINDS = ("lap", "crash", "clean_lap", "timeout", "training_done", "new_best_lap",
+               "lap_result")
 HARDWARE_ACTIONS = ("lap", "sprint", "abort")
 STUDIO_ACTIONS = ("start", "stop", "race", "watch", "result", "setup")
 STUDIO_SENSORS = ("lidar", "corner")
@@ -198,6 +199,7 @@ class CarState:
     rays: list | None = None
     label: str | None = None  # e.g. "ep 150" (evolution) or "best 19.8s" (ghost)
     ghost: bool | None = None  # True for the best-lap replay car
+    lap_t: float | None = None  # running time of the current lap
 
 
 @dataclass(frozen=True)
@@ -224,6 +226,7 @@ class State:
     t: float
     mode: str
     cars: list  # of CarState
+    countdown: float | None = None  # seconds to GO while a race start counts down
     TYPE: ClassVar[str] = "state"
 
 
@@ -251,10 +254,18 @@ class Telemetry:
 
 @dataclass(frozen=True)
 class Event:
+    """``lap_result`` (a visitor's race lap) adds ``clean``, ``rank`` (place
+    on the board it took, or would take without a name; None for a dirty lap
+    or off the board), ``named`` and ``board_size``."""
+
     kind: str
     car_id: str | None = None
     lap_time: float | None = None
     agent: str | None = None
+    clean: bool | None = None
+    rank: int | None = None
+    named: bool | None = None
+    board_size: int | None = None
     TYPE: ClassVar[str] = "event"
 
 
@@ -620,6 +631,7 @@ def _parse_car(d: Any) -> CarState:
         rays=_num_list(d["rays"], "rays") if d.get("rays") is not None else None,
         label=_str(d["label"], "label") if d.get("label") is not None else None,
         ghost=_bool(d["ghost"], "ghost") if d.get("ghost") is not None else None,
+        lap_t=_opt_float(d, "lap_t"),
     )
 
 
@@ -647,6 +659,7 @@ def _parse_state(d: dict) -> State:
         t=_float(_req(d, "t"), "t"),
         mode=_enum(_req(d, "mode"), "mode", MODES),
         cars=[_parse_car(c) for c in _req(d, "cars")],
+        countdown=_opt_float(d, "countdown"),
     )
 
 
@@ -679,6 +692,11 @@ def _parse_event(d: dict) -> Event:
         car_id=_str(d["car_id"], "car_id") if d.get("car_id") is not None else None,
         lap_time=_opt_float(d, "lap_time"),
         agent=_enum(d["agent"], "agent", OPPONENTS) if d.get("agent") is not None else None,
+        clean=_bool(d["clean"], "clean") if d.get("clean") is not None else None,
+        rank=_int(d["rank"], "rank", 1) if d.get("rank") is not None else None,
+        named=_bool(d["named"], "named") if d.get("named") is not None else None,
+        board_size=(_int(d["board_size"], "board_size", 0)
+                    if d.get("board_size") is not None else None),
     )
 
 

@@ -74,6 +74,12 @@ initInput(() => attract.notifyActivity(), {
   onGamepadChange: (connected) => {
     $("#gamepad-pill").hidden = !connected;
   },
+  // attract mode: a driving key or a pad button starts a race ("press to race")
+  onWake: () => {
+    if (state.mode !== "attract") return;
+    startRace();
+    applyMode("race"); // optimistic; the server's state confirms
+  },
 });
 
 // -- helpers -----------------------------------------------------------------
@@ -118,6 +124,8 @@ function applyMode(mode) {
   attract.setMode(mode);
   renderer.setMode(mode);
   $("#evo-caption").hidden = mode !== "evolution";
+  $("#attract-headline").hidden = mode !== "attract";
+  if (mode !== "race") hideRaceOverlays();
   $("#evo-legend").hidden = true; // refilled from the next state broadcast
   evoLegendKey = "";
   renderEpisodeOverlay();
@@ -428,8 +436,70 @@ net.on("control", (msg) => {
   if (text !== null) pill.textContent = text;
 });
 
+// -- race feedback: countdown, HUD, off-track, lap result ------------------------
+
+let goShownUntil = 0;
+
+function hideRaceOverlays() {
+  for (const id of ["#race-hud", "#race-countdown", "#offtrack-banner", "#lap-result"]) {
+    $(id).hidden = true;
+  }
+}
+
+function renderRaceOverlays(msg) {
+  if (msg.mode !== "race") return;
+  const cd = $("#race-countdown");
+  const now = performance.now();
+  if (typeof msg.countdown === "number") {
+    cd.hidden = false;
+    cd.classList.remove("go");
+    cd.textContent = String(Math.max(1, Math.ceil(msg.countdown)));
+    goShownUntil = now + 700; // "GO!" right after the last count
+  } else if (now < goShownUntil) {
+    cd.hidden = false;
+    cd.classList.add("go");
+    cd.textContent = "GO!";
+  } else {
+    cd.hidden = true;
+  }
+  const me = (msg.cars || []).find((c) => c.kind === "human" && !c.ghost);
+  const hud = $("#race-hud");
+  hud.hidden = !me;
+  if (!me) return;
+  const best = state.bestLaps.get(me.id);
+  hud.innerHTML = `<div class="hud-time">${fmtLap(me.lap_t ?? 0)}</div>
+    <div class="hud-meta">Lap ${me.lap + 1} · last ${fmtLap(me.last_lap_time)} · best ${fmtLap(best)}</div>`;
+  $("#offtrack-banner").hidden = !me.off_track;
+}
+
+function showLapResult(msg) {
+  const el = $("#lap-result");
+  let rank = "";
+  let note = "";
+  if (!msg.clean) {
+    note = "You left the track this lap, so it doesn't count. Next one!";
+  } else if (msg.named && msg.rank) {
+    rank = `#${msg.rank} on the board`;
+  } else if (msg.rank) {
+    rank = `That's #${msg.rank} on the board`;
+    note = "Type your name next to Start to get on it.";
+  } else {
+    note = msg.named ? "Not on the board this time — keep going!" : "";
+  }
+  el.innerHTML = `<div class="lr-note">Your lap</div>
+    <div class="lr-time">${fmtLap(msg.lap_time)}</div>
+    ${rank ? `<div class="lr-rank">${rank}</div>` : ""}
+    ${note ? `<div class="lr-note">${note}</div>` : ""}`;
+  el.hidden = false;
+  clearTimeout(showLapResult._id);
+  showLapResult._id = setTimeout(() => {
+    el.hidden = true;
+  }, 5000);
+}
+
 net.on("state", (msg) => {
   state.lastState = msg;
+  renderRaceOverlays(msg);
   renderer.pushState(msg);
   renderLapboard(msg.cars || []);
   updateCarLegend(msg.cars || []);
@@ -473,6 +543,9 @@ net.on("event", (msg) => {
           }
         }
       }
+      break;
+    case "lap_result":
+      showLapResult(msg);
       break;
     case "crash":
       if (msg.car_id) renderer.addEffect("crash", msg.car_id);
@@ -686,6 +759,10 @@ initDraw({
 }
 
 // -- boot --------------------------------------------------------------------
+
+// #operator: a kiosk shows its operator controls (Train, Hardware, Qubits,
+// Driver) again — for setting up the booth, not for visitors.
+document.body.classList.toggle("operator", window.location.hash.includes("operator"));
 
 initTooltips();
 setStatus("connecting…", "pill-off");

@@ -455,7 +455,11 @@ arcade-style rotation.
 from the track JSON), `start: {x, y, theta}`, and polylines `centerline`,
 `left`, `right` as `[[x, y], ...]`.
 
-**`state`** — `{t: float, mode, cars: [CarState]}` at the broadcast rate.
+**`state`** — `{t: float, mode, cars: [CarState]}` at the broadcast rate,
+plus `countdown: float` (seconds to GO) while a race start counts down:
+`race start` and `race reset` hold every car on the grid for 3 s (visitor
+on the right, opponent on the left), the lap clocks and the ghost's lap
+start at GO.
 
 *CarState:*
 
@@ -471,6 +475,7 @@ from the track JSON), `start: {x, y, theta}`, and polylines `centerline`,
 | `rays` | [float] | *omitted-if-null*; normalized lidar distances (agent cars) |
 | `label` | str | *omitted-if-null*; e.g. `"ep 250"` (evolution), `"best 14.4s"` (ghost), `"hardware lap"`, `"driver: gp-trained generalist"` (random track) |
 | `ghost` | bool | *omitted-if-null*; true for replay cars |
+| `lap_t` | float | running time of the current lap (0 during a race countdown) |
 
 **`quantum`** — live circuit introspection for a quantum car, throttled to
 ≤ 10 Hz per car: `{car_id, expectations: [float], q_values: [float],
@@ -482,8 +487,13 @@ returns_tail: [float]}` (last ≤ 100 episode returns), plus *omitted-if-null*
 `best_lap_s: float` and `lap_times: [[episode, lap_s], ...]` (last ≤ 50).
 
 **`event`** — `{kind, car_id?, lap_time?, agent?}` with `kind` ∈
-`lap | crash | clean_lap | timeout | training_done | new_best_lap` (optional fields
-*omitted-if-null*; `new_best_lap` carries `agent` during training and
+`lap | crash | clean_lap | timeout | training_done | new_best_lap | lap_result`
+(optional fields *omitted-if-null*; `lap_result` ends each lap of the
+visitor in Race mode and adds `clean: bool`, `rank: int` — the board place
+the lap took, or would take without a name; null for a lap that left the
+track or misses the board — `named: bool` and `board_size: int`. A visitor
+who leaves the track is put back on the centerline a few metres behind
+after 1 s and the lap goes on, marked dirty; `new_best_lap` carries `agent` during training and
 `car_id` for ghost records). `timeout`: an agent car went `[reward] max_decisions`
 decisions (60 s) without finishing a lap — the training env's episode cap — and
 was respawned at the start line.
