@@ -16,7 +16,7 @@ const CAPTIONS = [
   "Ten times a second, the car measures the qubits and picks a move.",
   "Each qubit votes for one move: steer right, go straight, steer left or brake.",
   "The car's sensor readings are fed into the circuit again and again, layer by layer.",
-  "Purple is the quantum driver, green a small classical network. Same game, same rules.",
+  "Purple is the quantum driver, blue a small classical network. Same game, same rules.",
   "Nobody programmed the driving: both learned by trial and error, lap after lap.",
   "Three distance sensors and its speed — that's all the car can sense.",
   "Press an arrow key or a controller button to race it yourself.",

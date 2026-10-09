@@ -212,12 +212,14 @@ class Welcome:
     obs_labels: list | None = None  # display names of the observation features
     driver: str = "auto"  # active quantum driver selection (see SetDriver)
     drivers: tuple = ("auto",)  # driver choices bundled at this qubit count
+    qubit_options: tuple = ()  # circuit sizes with a trained driver for this track
     TYPE: ClassVar[str] = "welcome"
 
 
 @dataclass(frozen=True)
 class TrackMsg:
     track: dict
+    qubit_options: tuple = ()  # circuit sizes with a trained driver for this track
     TYPE: ClassVar[str] = "track"
 
 
@@ -647,11 +649,17 @@ def _parse_welcome(d: dict) -> Welcome:
         driver=_str(d["driver"], "driver") if d.get("driver") is not None else "auto",
         drivers=tuple(_str(x, "drivers[]") for x in d["drivers"])
         if d.get("drivers") is not None else ("auto",),
+        qubit_options=tuple(_int(x, "qubit_options[]", 1) for x in d["qubit_options"])
+        if d.get("qubit_options") is not None else (),
     )
 
 
 def _parse_track_msg(d: dict) -> TrackMsg:
-    return TrackMsg(track=dict(_req(d, "track")))
+    return TrackMsg(
+        track=dict(_req(d, "track")),
+        qubit_options=tuple(_int(x, "qubit_options[]", 1) for x in d["qubit_options"])
+        if d.get("qubit_options") is not None else (),
+    )
 
 
 def _parse_state(d: dict) -> State:

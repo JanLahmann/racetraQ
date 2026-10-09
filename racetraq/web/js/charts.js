@@ -2,7 +2,7 @@
 // (quantum vs mlp) plus epsilon on a secondary 0..1 axis, and a lap-time
 // vs episode scatter fed from telemetry.lap_times / best_lap_s.
 
-const SERIES_COLORS = { quantum: "#7a5cff", mlp: "#2fbf71" };
+const SERIES_COLORS = { quantum: "#7a5cff", mlp: "#56b4e9" };
 const EPS_COLOR = "rgba(160,168,186,0.7)";
 const PAD = { l: 40, r: 34, t: 10, b: 22 };
 

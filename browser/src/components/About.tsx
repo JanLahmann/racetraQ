@@ -66,7 +66,7 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
             car.
           </li>
           <li>
-            <strong>Learning</strong> — four snapshots of one training run racing each other.
+            <strong>Evolution</strong> — four snapshots of one training run racing each other: how the driver learned.
           </li>
         </ul>
         <p className="hint">

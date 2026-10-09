@@ -84,6 +84,9 @@ initInput(() => attract.notifyActivity(), {
 
 // -- helpers -----------------------------------------------------------------
 
+// the names racetraq.org uses too (track ids stay the short file names)
+const TRACK_NAMES = { oval: "Oval", chicane: "Chicane", gp: "Grand Prix", combo: "Combo" };
+
 const KIND_NAMES = { quantum: "Quantum", mlp: "MLP", human: "You", hero: "Hero", pro: "Pro" };
 
 function fmtLap(t) {
@@ -349,8 +352,21 @@ function showBestBanner(lapTime) {
 
 // -- websocket handlers ------------------------------------------------------
 
-net.on("_open", () => setStatus("connected", "pill-ok"));
-net.on("_close", () => setStatus("reconnecting…", "pill-off"));
+// Lost server: after a short grace a stage overlay says so (a 12 px pill is
+// easy to miss from a booth's distance); it clears on reconnect.
+let disconnectTimer = null;
+net.on("_open", () => {
+  setStatus("connected", "pill-ok");
+  clearTimeout(disconnectTimer);
+  $("#disconnect-overlay").hidden = true;
+});
+net.on("_close", () => {
+  setStatus("reconnecting…", "pill-off");
+  clearTimeout(disconnectTimer);
+  disconnectTimer = setTimeout(() => {
+    $("#disconnect-overlay").hidden = false;
+  }, 2500);
+});
 
 net.on("welcome", (msg) => {
   state.tracks = msg.tracks || [];
@@ -362,7 +378,7 @@ net.on("welcome", (msg) => {
     ...state.tracks.map((name) => {
       const opt = document.createElement("option");
       opt.value = name;
-      opt.textContent = name;
+      opt.textContent = TRACK_NAMES[name] || name;
       return opt;
     }),
     randomOpt,
@@ -376,6 +392,7 @@ net.on("welcome", (msg) => {
   }
   applyObsLabels(msg.obs_labels);
   applyDrivers(msg.drivers, msg.driver);
+  applyQubitOptions(msg.qubit_options);
   if (msg.ui) {
     attract.setIdleSeconds(msg.ui.attract_idle_seconds || 45);
     document.body.classList.toggle("kiosk", Boolean(msg.ui.kiosk));
@@ -384,11 +401,25 @@ net.on("welcome", (msg) => {
   applyMode(msg.mode || "attract");
 });
 
-net.on("track", (msg) => applyTrack(msg.track));
+net.on("track", (msg) => {
+  applyTrack(msg.track);
+  applyQubitOptions(msg.qubit_options);
+});
+
+/** Grey out circuit sizes without a trained driver for this track (an
+ *  untrained size would leave Watch with no car). */
+function applyQubitOptions(options) {
+  if (!Array.isArray(options)) return;
+  for (const opt of $("#qubit-select").options) {
+    const ok = options.includes(Number(opt.value));
+    opt.disabled = !ok;
+    opt.textContent = ok ? opt.value : `${opt.value} (no driver for this track)`;
+  }
+}
 
 // Leaderboard: ranked named human laps + unranked AI reference rows.
 net.on("leaderboard", (msg) => {
-  $("#board-track").textContent = msg.track;
+  $("#board-track").textContent = TRACK_NAMES[msg.track] || msg.track;
   const entries = $("#board-entries");
   entries.innerHTML = msg.entries
     .map((e) => `<li><span class="board-name">${escapeHtml(e.name)}</span>
@@ -570,7 +601,18 @@ net.on("event", (msg) => {
   }
 });
 
-net.on("error", (msg) => toast(msg.message || "server error"));
+// Server errors are written for operators ("bundled mlp weights use …"): a
+// kiosk shows visitors a plain line and keeps the detail in the console
+// (#operator shows it).
+net.on("error", (msg) => {
+  const detail = msg.message || "server error";
+  if (document.body.classList.contains("kiosk") && !document.body.classList.contains("operator")) {
+    console.warn("racetraQ:", detail);
+    toast("That isn't available right now — try another track or mode.");
+  } else {
+    toast(detail);
+  }
+});
 
 // -- UI wiring ---------------------------------------------------------------
 

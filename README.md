@@ -9,6 +9,37 @@ install, works on a phone. New here? Start with
 
 ![racetraQ demo: the 4-qubit quantum driver laps the gp track, with its live qubit readout, Q-values and circuit](docs/racetraq-hero.gif)
 
+## Try it
+
+- **In your browser:** [racetraq.org](https://racetraq.org/) — watch the
+  trained drivers, race them, and see every decision of the circuit. No
+  install, phone included.
+- **The full demo** (live training, the Studio, hardware mode), on a laptop
+  or a Raspberry Pi:
+
+  ```sh
+  ./run.sh                    # venv + install + launch, opens http://127.0.0.1:8000
+  ./run.sh --profile pi5      # Raspberry Pi 5 profile
+  ./run.sh --profile q6       # 6-qubit circuit: 5 lidar rays, 80 parameters
+  docker run --rm -p 8000:8000 ghcr.io/janlahmann/racetraq   # multi-arch, works on a Pi
+  ```
+
+  At a booth, follow the [exhibition runbook](docs/EXHIBITION.md).
+- **Learn how it works:** [racetraQ in plain words](docs/EXPLAINER.md), then
+  the seven [notebooks](#notebooks), which build the whole stack from
+  scratch and run in the browser on Binder.
+
+## What it is
+
+A small race car whose driver is a 4-qubit variational quantum circuit. Ten
+times a second the car's sensors (three distance rays and its speed) are
+written into the qubits as rotation angles, the circuit runs, and measuring
+each qubit scores one move: steer right, go straight, steer left, brake. The
+circuit's 56 numbers were learned by reinforcement learning (double deep
+Q-learning), lap after lap, next to a classical neural network trained the
+same way. And honestly: the classical network learns faster and more
+reliably here. Under the hood:
+
 - Quantum Deep Q-Learning (4 qubits / 56 trainable parameters by default; a
   trained 6-qubit / 80-parameter variant ships behind `--profile q6`) built on
   [Qiskit](https://www.ibm.com/quantum/qiskit) and
@@ -36,64 +67,51 @@ install, works on a phone. New here? Start with
 - Runs on a laptop or a Raspberry Pi; environments based on
   [QuBins](https://qubins.org) images.
 
-## Quick start
+## Modes
 
-```sh
-./run.sh                    # venv + install + launch, opens http://127.0.0.1:8000
-./run.sh --profile pi5      # Raspberry Pi 5 profile
-./run.sh --profile q6       # 6-qubit circuit: 5 lidar rays, 80 parameters
-```
-
-Or with Docker (multi-arch, works on a Pi):
-
-```sh
-docker run --rm -p 8000:8000 ghcr.io/janlahmann/racetraq
-```
-
-Beyond the UI, from a source checkout:
-
-```sh
-# Train a driver (recipe: [training], the track's preset, then the agent's
-# preset for that track). Without --out the bundled weights are overwritten.
-python -m racetraq.train_headless --agent quantum --track gp --seed 0 --out runs/gp
-# Any config value can be overridden; --save-final keeps the end-of-training
-# parameters next to the best snapshot, --preset none skips the presets.
-python -m racetraq.train_headless --agent quantum --track gp --out runs/gp-huber \
-    --set training.loss=huber --set training.target_update=soft --save-final
-
-# One run is an anecdote: a (variant x seed) study with interval statistics.
-python tools/study.py run --out runs/study-gp --track gp --seeds 0-9 --jobs 4 \
-    --variant base --variant 'huber:training.loss="huber"'
-python tools/study.py report runs/study-gp
-# From a study to a bundled driver: rank the seeds, re-evaluate the best on
-# fresh episodes, write weights + sidecar (--dry-run: only report).
-python tools/bundle_driver.py --study runs/study-gp --list
-python tools/bundle_driver.py --study runs/study-gp --variant base --name quantum_gp --dry-run
-# A committable summary of the study (report + per-seed eval logs).
-python tools/export_study.py runs/study-gp --name my_gp_study --out runs/summaries
-
-# What can each action's readout see at this size and depth?
-python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4
-
-# A lap on a simulated IBM device (pip install -e ".[hardware]").
-python -m racetraq.hardware lap --track oval --profile q6 --fake
-python -m racetraq.hardware lap --track chicane --fake-name fake_fez --resilience 1
-python -m racetraq.hardware lap --track oval --profile q6 --fake --no-prune
-# The same lap with a per-readout rescale (one extra calibration job), and a
-# guarded SPSA sprint on the output head.
-python -m racetraq.hardware lap --track oval --profile q6 --fake --rescale readout
-python -m racetraq.hardware sprint --track oval --fake --iterations 10
-
-# On oval and chicane the quantum recipe trains for device noise (wider
-# action gaps, acting under emulated noise). Count laps under noise:
-# emulated, and on the simulated device.
-python -m racetraq.train_headless --agent quantum --track oval --seed 0 --episodes 800 --out runs/oval
-python tools/hw_reliability.py --weights runs/oval/quantum_oval.npz --track oval \
-    --shots 1024 --rescale off --resilience 0 --device-episodes 12
-
-# Every bundled driver on every track, 36 fresh episodes per cell.
-python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
-```
+- **Watch** (attract): the trained 4-qubit agent drives; live ⟨Z⟩ gauges, Q-values,
+  and the circuit diagram update as it decides. A driver picker swaps in any
+  bundled training — watch the gp-trained specialist lap the oval zero-shot, or
+  the **universal** driver (trained on all four tracks at once) take on any of
+  them.
+- **Surprise tracks**: pick 🎲 random in the track menu for a procedurally
+  generated track with real hairpins and chicanes — fresh every roll, or type a
+  seed to reload a favourite, with short/medium/long size presets. The car
+  defaults to the universal driver, which lapped every generated track we
+  tested (see above), as does the **gp** specialist in the driver menu.
+- **Draw your own**: hit ✏️ and sketch a loop right on the race view — the
+  server smooths it into a drivable track and the agent takes it on (same
+  driver default, same advice: pick **gp**). Impossible drawings (open
+  strokes, crossings, razor hairpins) come back with a hint about what to
+  fix; just draw again.
+- **Train**: watch quantum and classical agents learn side-by-side (warm
+  start continues from a snapshot of the bundled driver's own training
+  run that does not lap yet).
+- **Race**: arrow keys / WASD or a gamepad (analog steering, trigger
+  throttle/brake) — race the quantum agent. **C** (or the 📷 button) switches
+  the camera: top-down, chase (turns with your car, heading up) or cockpit
+  (closer); the rotating views add a minimap.
+- **Studio**: build and train your own quantum driver — pick the track, 4–10
+  qubits, the sensors (lidar + speed, or lidar + corner speed) and 4, 6 or 8
+  actions, optionally warm-start, and train it live for at most 5 minutes
+  (sooner once it passes every test drive and stops improving). The result
+  shows when it first lapped and how its best test compares with the study
+  runs of the same track and size; then race it or watch it drive, and named
+  runs that lap enter a per-track booth board. Estimates on the setup screen
+  come from the studies and the measured training speed: up to 8 qubits a
+  first lap fits in the 5 minutes on a laptop, 10 qubits (~9 min) does not.
+- **Evolution**: training snapshots of the same quantum agent race each other
+  (three mid-training checkpoints plus the shipped best driver) — watch the
+  policy improve across checkpoints.
+- **Hardware**: run a lap or a bounded, guarded SPSA sprint on a simulated
+  IBM device (local, no account) or a real IBM Quantum backend, with live
+  status — backend, execution mode, two-qubit gate count — then replay the
+  run as a ghost next to a simulator car on the same weights. Needs the
+  `[hardware]` extra; a real backend also needs a saved IBM Quantum account.
+  The 4-qubit oval and chicane drivers and the 6-qubit oval driver complete
+  their laps on the simulated device; the other bundled drivers were not
+  trained for device noise — see the
+  [exhibition runbook](docs/EXHIBITION.md) for what to expect.
 
 ## Notebooks
 
@@ -271,52 +289,6 @@ light-cone pruning; 37 and 27 when routed onto a heavy-hex Heron).
 `--fake-name` selects any other fake, including the retired Falcons;
 `--no-prune` runs the full circuit.
 
-## Modes
-
-- **Watch** (attract): the trained 4-qubit agent drives; live ⟨Z⟩ gauges, Q-values,
-  and the circuit diagram update as it decides. A driver picker swaps in any
-  bundled training — watch the gp-trained specialist lap the oval zero-shot, or
-  the **universal** driver (trained on all four tracks at once) take on any of
-  them.
-- **Surprise tracks**: pick 🎲 random in the track menu for a procedurally
-  generated track with real hairpins and chicanes — fresh every roll, or type a
-  seed to reload a favourite, with short/medium/long size presets. The car
-  defaults to the universal driver, which lapped every generated track we
-  tested (see above), as does the **gp** specialist in the driver menu.
-- **Draw your own**: hit ✏️ and sketch a loop right on the race view — the
-  server smooths it into a drivable track and the agent takes it on (same
-  driver default, same advice: pick **gp**). Impossible drawings (open
-  strokes, crossings, razor hairpins) come back with a hint about what to
-  fix; just draw again.
-- **Train**: watch quantum and classical agents learn side-by-side (warm
-  start continues from a snapshot of the bundled driver's own training
-  run that does not lap yet).
-- **Race**: arrow keys / WASD or a gamepad (analog steering, trigger
-  throttle/brake) — race the quantum agent. **C** (or the 📷 button) switches
-  the camera: top-down, chase (turns with your car, heading up) or cockpit
-  (closer); the rotating views add a minimap.
-- **Studio**: build and train your own quantum driver — pick the track, 4–10
-  qubits, the sensors (lidar + speed, or lidar + corner speed) and 4, 6 or 8
-  actions, optionally warm-start, and train it live for at most 5 minutes
-  (sooner once it passes every test drive and stops improving). The result
-  shows when it first lapped and how its best test compares with the study
-  runs of the same track and size; then race it or watch it drive, and named
-  runs that lap enter a per-track booth board. Estimates on the setup screen
-  come from the studies and the measured training speed: up to 8 qubits a
-  first lap fits in the 5 minutes on a laptop, 10 qubits (~9 min) does not.
-- **Evolution**: training snapshots of the same quantum agent race each other
-  (three mid-training checkpoints plus the shipped best driver) — watch the
-  policy improve across checkpoints.
-- **Hardware**: run a lap or a bounded, guarded SPSA sprint on a simulated
-  IBM device (local, no account) or a real IBM Quantum backend, with live
-  status — backend, execution mode, two-qubit gate count — then replay the
-  run as a ghost next to a simulator car on the same weights. Needs the
-  `[hardware]` extra; a real backend also needs a saved IBM Quantum account.
-  The 4-qubit oval and chicane drivers and the 6-qubit oval driver complete
-  their laps on the simulated device; the other bundled drivers were not
-  trained for device noise — see the
-  [exhibition runbook](docs/EXHIBITION.md) for what to expect.
-
 ## Browser edition
 
 [`browser/`](browser/) is a static, server-less version for the web: the
@@ -324,10 +296,58 @@ bundled drivers race in the browser, the circuit runs on
 [QAMPoser](https://qamposer.org)'s in-browser state-vector simulator, and the
 side panel shows every decision — sensors, the live circuit, ⟨Z⟩ of each qubit,
 the Q-values — with a one-click handoff of any decision's circuit to IBM Quantum
-Composer. Inference only (watch, race, learning snapshots; no training, noise
+Composer. Inference only (watch, race, evolution snapshots; no training, noise
 or hardware), checked action for action against the Python implementation.
 Live at **https://racetraq.org/** — see
 [browser/README.md](browser/README.md).
+
+## Developer quick reference
+
+Beyond the UI, from a source checkout (tests: `pip install -e ".[dev]"` and
+`pytest`; see [CONTRIBUTING](CONTRIBUTING.md)):
+
+```sh
+# Train a driver (recipe: [training], the track's preset, then the agent's
+# preset for that track). Without --out the bundled weights are overwritten.
+python -m racetraq.train_headless --agent quantum --track gp --seed 0 --out runs/gp
+# Any config value can be overridden; --save-final keeps the end-of-training
+# parameters next to the best snapshot, --preset none skips the presets.
+python -m racetraq.train_headless --agent quantum --track gp --out runs/gp-huber \
+    --set training.loss=huber --set training.target_update=soft --save-final
+
+# One run is an anecdote: a (variant x seed) study with interval statistics.
+python tools/study.py run --out runs/study-gp --track gp --seeds 0-9 --jobs 4 \
+    --variant base --variant 'huber:training.loss="huber"'
+python tools/study.py report runs/study-gp
+# From a study to a bundled driver: rank the seeds, re-evaluate the best on
+# fresh episodes, write weights + sidecar (--dry-run: only report).
+python tools/bundle_driver.py --study runs/study-gp --list
+python tools/bundle_driver.py --study runs/study-gp --variant base --name quantum_gp --dry-run
+# A committable summary of the study (report + per-seed eval logs).
+python tools/export_study.py runs/study-gp --name my_gp_study --out runs/summaries
+
+# What can each action's readout see at this size and depth?
+python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4
+
+# A lap on a simulated IBM device (pip install -e ".[hardware]").
+python -m racetraq.hardware lap --track oval --profile q6 --fake
+python -m racetraq.hardware lap --track chicane --fake-name fake_fez --resilience 1
+python -m racetraq.hardware lap --track oval --profile q6 --fake --no-prune
+# The same lap with a per-readout rescale (one extra calibration job), and a
+# guarded SPSA sprint on the output head.
+python -m racetraq.hardware lap --track oval --profile q6 --fake --rescale readout
+python -m racetraq.hardware sprint --track oval --fake --iterations 10
+
+# On oval and chicane the quantum recipe trains for device noise (wider
+# action gaps, acting under emulated noise). Count laps under noise:
+# emulated, and on the simulated device.
+python -m racetraq.train_headless --agent quantum --track oval --seed 0 --episodes 800 --out runs/oval
+python tools/hw_reliability.py --weights runs/oval/quantum_oval.npz --track oval \
+    --shots 1024 --rescale off --resilience 0 --device-episodes 12
+
+# Every bundled driver on every track, 36 fresh episodes per cell.
+python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
+```
 
 ## Documentation
 
@@ -357,6 +377,12 @@ This project is part of [**Fun with Quantum**](https://fun-with-quantum.org), a 
 
 *God does play dice. Come play, build, learn.*
 <!-- FWQ-FAMILY:END -->
+
+## Contributing and citing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) (setup, tests, the browser build) and
+[CHANGELOG.md](CHANGELOG.md). To cite racetraQ, use
+[CITATION.cff](CITATION.cff) (GitHub's "Cite this repository").
 
 ## License
 
