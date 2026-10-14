@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 — 2026-10-14
 
 - **New 10-qubit gp driver**: `quantum_gp_q10` is now a 6-block circuit
   with 6 actions, chosen by rule from an 8-seed study. It laps 72 of 72
@@ -12,6 +12,8 @@
 - `tools/study.py`: a cell no longer fails when the study already runs at
   the lowest priority.
 - The browser edition serves `sitemap.xml` and `robots.txt`.
+- The image build no longer pulls anything from Docker Hub (its anonymous
+  rate limit had failed the 0.3.1 publish).
 - `CITATION.cff` and the README carry the Zenodo DOI
   ([10.5281/zenodo.23270600](https://doi.org/10.5281/zenodo.23270600), all
   versions).

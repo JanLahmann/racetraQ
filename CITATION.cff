@@ -20,8 +20,8 @@ identifiers:
 repository-code: "https://github.com/JanLahmann/racetraQ"
 url: "https://racetraq.org"
 license: Apache-2.0
-version: 0.3.1
-date-released: "2026-10-09"
+version: 0.3.2
+date-released: "2026-10-14"
 keywords:
   - quantum machine learning
   - quantum reinforcement learning
