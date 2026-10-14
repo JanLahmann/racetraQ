@@ -248,10 +248,13 @@ end-of-training lapped, 13.1 vs 13.6 s), and neither depth is as stable as
 the 6-qubit circuit. The `q10` profile therefore runs 6 blocks (full
 visibility costs nothing measurable) and its bundled oval and chicane
 drivers are 6-block files (72 of 72 test episodes, 13.3 s and 12.6 s).
-`quantum_gp_q10` is still the July file: a single 4-block run on an
-engineered-feature observation that laps gp in 24 of 36 test episodes at
-22.2 s; under the recipe that now ships for 4-qubit gp neither depth learns
-the track at 10 qubits.
+`quantum_gp_q10` (since 2026-10-14) is a 6-block, 6-action circuit on an
+engineered-feature observation, chosen by rule from an 8-seed study: it laps
+gp in 72 of 72 fresh test episodes at 18.9 s, the fastest learned gp driver
+in `data/records.md` (not a matched comparison: the MLP drives four actions
+on a different observation). Under the recipe that ships for 4-qubit gp
+neither depth learns the track at 10 qubits; under the July recipe 6 of 8
+seeds do.
 The mechanisms an earlier campaign added for larger registers remain in the
 code and were not re-measured: engineered observation features
 (`[observation] features`), a qubit-scaled action readout (`--actions 6|8`)

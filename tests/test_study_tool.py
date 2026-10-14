@@ -344,6 +344,15 @@ def test_cell_evaluates_best_snapshot_and_final_params_separately(tmp_path, monk
         "quantum_oval.npz", "quantum_oval.final.npz")
 
 
+def test_cell_runs_when_it_cannot_be_niced_further(monkeypatch):
+    # a study reniced to 20 gets EPERM from os.nice in every new cell
+    def refuse(increment):
+        raise PermissionError(1, "Operation not permitted")
+
+    monkeypatch.setattr(study.os, "nice", refuse)
+    study._lower_priority()
+
+
 # --------------------------------------------------- report on made-up cells
 
 

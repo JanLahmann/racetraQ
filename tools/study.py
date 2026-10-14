@@ -488,12 +488,20 @@ def greedy_eval(qfunc: Any, env: Any, max_steps: int) -> dict:
     }
 
 
+def _lower_priority() -> None:
+    """Nice the cell by ``NICENESS``. A study started (or reniced) near the
+    ceiling of 20 cannot go further: macOS then refuses with EPERM, which must
+    not fail the cell (on 2026-10-10 it failed 17 of 24)."""
+    if hasattr(os, "nice"):
+        with contextlib.suppress(OSError):
+            os.nice(NICENESS)
+
+
 def run_cell(cell: Path) -> None:
     """Worker, one subprocess per cell: train, then greedy-eval the best
     snapshot and the final params, and write ``result.json``."""
     spec = json.loads((cell / SPEC_NAME).read_text(encoding="utf-8"))
-    if hasattr(os, "nice"):
-        os.nice(NICENESS)
+    _lower_priority()
     _find_racetraq()
     from racetraq.config import parse_override
     from racetraq.train_headless import build_qfunc, train

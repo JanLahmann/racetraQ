@@ -1,12 +1,175 @@
 {
   "agent": "quantum",
   "track": "gp",
-  "config_hash": "3bfd52418c09",
-  "episodes": 3000,
-  "observation": {
-    "ray_angles_deg": [-60.0, -30.0, 0.0, 30.0, 60.0],
-    "features": ["rays", "speed", "curvature_ahead", "lateral_offset", "heading_error", "corner_speed_ratio"]
+  "config_hash": "842834a9e0f0",
+  "episodes": 1500,
+  "circuit": {
+    "n_qubits": 10,
+    "n_layers": 6,
+    "n_actions": 6
   },
-  "provenance": "campaign-D recipe transplant (3000 episodes, epsilon_decay 2000, gamma 0.99, seed 42); 36-episode reliability eval: laps in 25/36 episodes, best 20.0 s, mean 22.3 s (bundled 4q gp: 29/36, best 20.4 s, mean 23.9 s)",
-  "date": "2026-07-12"
+  "observation": {
+    "ray_angles_deg": [
+      -60.0,
+      -30.0,
+      0.0,
+      30.0,
+      60.0
+    ],
+    "features": [
+      "rays",
+      "speed",
+      "curvature_ahead",
+      "lateral_offset",
+      "heading_error",
+      "corner_speed_ratio"
+    ],
+    "lookahead_m": 15.0
+  },
+  "actions": {
+    "n_actions": 6
+  },
+  "date": "2026-10-14",
+  "training": {
+    "algo": "double_dqn",
+    "backend": "fastsim",
+    "episodes": 1500,
+    "replay_size": 10000,
+    "batch_size": 32,
+    "gamma": 0.99,
+    "lr": 0.01,
+    "target_sync_every": 200,
+    "epsilon_start": 0.3,
+    "epsilon_end": 0.05,
+    "epsilon_decay_episodes": 1000,
+    "n_parallel_envs": 8,
+    "seed": 3,
+    "warm_start": false,
+    "bootstrap_truncation": false
+  },
+  "provenance": "best snapshot of seed 3, chosen from the 8-seed study gp_q10_widen variant w6 (quantum on gp, 1500 episodes, warm-started from quantum_gp_q10.npz, circuit.n_qubits=10, observation.ray_angles_deg=[-60.0,-30.0,0.0,30.0,60.0], observation.features=[\"rays\",\"speed\",\"curvature_ahead\",\"lateral_offset\",\"heading_error\",\"corner_speed_ratio\"], training.bootstrap_truncation=false, training.epsilon_end=0.05, training.epsilon_start=0.3, training.epsilon_decay_episodes=1000); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 17.8 s, mean 18.9 s; the recipe across its 8 seeds (IQM [95% CI]): best snapshot laps in 0.83 [0.49, 0.97] of the study's eval episodes, final params in 0.01 [0.00, 0.12], stability 0.09 [0.05, 0.17]; 6/8 seeds lap in at least half; init: each seed's best snapshot of the 6-layer variant of gp_q10_july (data/studies/gp_q10feat_8seeds), not the July file bundled under this name before",
+  "selection": {
+    "study": "gp_q10_widen",
+    "variant": "w6",
+    "profile": null,
+    "overrides": [
+      "circuit.n_qubits=10",
+      "observation.ray_angles_deg=[-60.0,-30.0,0.0,30.0,60.0]",
+      "observation.features=[\"rays\",\"speed\",\"curvature_ahead\",\"lateral_offset\",\"heading_error\",\"corner_speed_ratio\"]",
+      "training.bootstrap_truncation=false",
+      "training.epsilon_end=0.05",
+      "training.epsilon_start=0.3",
+      "training.epsilon_decay_episodes=1000"
+    ],
+    "chosen_seed": 3,
+    "n_seeds": 8,
+    "rank_by": "fresh",
+    "rule": "seeds ranked by the study's 36-episode reliability eval of the best snapshot (lapped fraction, then mean lap); the top 3 re-evaluated on 72 fresh distinct greedy episodes (env seed 31000) and the driver chosen by that result (tracks lapped in >= 90% of the episodes over the bundled and 10 generated tracks (trackgen seeds 100-109, difficulty 0.65, 12 episodes each), then lapped fraction on both); the fresh numbers are the ones recorded (they also picked among the 3 candidates, so a small selection effect remains in them)",
+    "study_eval": {
+      "episodes": 36,
+      "eval_seed": 20000
+    },
+    "source": "cells/w6/seed3/quantum_gp_q10.npz",
+    "weights_sha256": "31451b42a9959957894e49f2ae63de2ea4ae770873411cd54f668c4ec7ed74eb",
+    "candidates": [
+      {
+        "seed": 3,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 18.844,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 18.881,
+        "fresh_best_lap": 17.8,
+        "unseen_lapped": 85,
+        "unseen_episodes": 120,
+        "unseen_tracks_reliable": 2
+      },
+      {
+        "seed": 5,
+        "study_lapped": 36,
+        "study_episodes": 36,
+        "study_mean_lap": 30.443,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 72,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 30.606,
+        "fresh_best_lap": 28.5,
+        "unseen_lapped": 10,
+        "unseen_episodes": 120,
+        "unseen_tracks_reliable": 0
+      },
+      {
+        "seed": 4,
+        "study_lapped": 34,
+        "study_episodes": 36,
+        "study_mean_lap": 18.711,
+        "study_eval_reproduced": true,
+        "fresh_lapped": 62,
+        "fresh_episodes": 72,
+        "fresh_mean_lap": 18.655,
+        "fresh_best_lap": 17.6,
+        "unseen_lapped": 1,
+        "unseen_episodes": 120,
+        "unseen_tracks_reliable": 0
+      }
+    ],
+    "seed_spread": {
+      "n_seeds": 8,
+      "best_snapshot_lapped": {
+        "iqm": 0.8264,
+        "ci_low": 0.4861,
+        "ci_high": 0.9722,
+        "median": 0.8889,
+        "n": 8
+      },
+      "final_params_lapped": {
+        "iqm": 0.0069,
+        "ci_low": 0.0,
+        "ci_high": 0.125,
+        "median": 0.0,
+        "n": 8
+      },
+      "stability": {
+        "iqm": 0.0854,
+        "ci_low": 0.0477,
+        "ci_high": 0.1712,
+        "median": 0.0733,
+        "n": 8
+      },
+      "seeds_lapping_half": 6,
+      "interval": "95% percentile bootstrap of the IQM over seeds, 2000 resamples, RNG seed 0"
+    },
+    "fresh_eval": {
+      "episodes": 72,
+      "eval_seed": 31000,
+      "lapped": 72,
+      "lapped_fraction": 1.0,
+      "laps": 216,
+      "mean_lap": 18.881,
+      "best_lap": 17.8
+    },
+    "init": "quantum_gp_q10.npz",
+    "actions": 6,
+    "study_commits": [
+      "6556e70dadfc63d6b8c2805ed0d9edc86ab5d40e"
+    ],
+    "unseen_eval": {
+      "trackgen_seeds": [
+        100,
+        109
+      ],
+      "difficulty": 0.65,
+      "episodes_per_track": 12,
+      "eval_seed": 31000,
+      "episodes": 120,
+      "lapped": 85,
+      "lapped_fraction": 0.7083,
+      "mean_lap": 24.105,
+      "best_lap": 20.3,
+      "tracks_reliable": 2
+    },
+    "note": "init: each seed's best snapshot of the 6-layer variant of gp_q10_july (data/studies/gp_q10feat_8seeds), not the July file bundled under this name before"
+  }
 }
