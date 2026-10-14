@@ -590,16 +590,21 @@
    "track": "gp",
    "kind": "driver",
    "stage": null,
-   "episodes": 3000,
-   "n_params": 128,
-   "n_actions": 4,
+   "episodes": 1500,
+   "n_params": 192,
+   "n_actions": 6,
    "circuit": {
     "n_qubits": 10,
-    "n_layers": 4,
-    "n_actions": 4
+    "n_layers": 6,
+    "n_actions": 6
    },
-   "provenance": "campaign-D recipe transplant (3000 episodes, epsilon_decay 2000, gamma 0.99, seed 42); 36-episode reliability eval: laps in 25/36 episodes, best 20.0 s, mean 22.3 s (bundled 4q gp: 29/36, best 20.4 s, mean 23.9 s)",
-   "fresh_eval": null,
+   "provenance": "best snapshot of seed 3, chosen from the 8-seed study gp_q10_widen variant w6 (quantum on gp, 1500 episodes, warm-started from quantum_gp_q10.npz, circuit.n_qubits=10, observation.ray_angles_deg=[-60.0,-30.0,0.0,30.0,60.0], observation.features=[\"rays\",\"speed\",\"curvature_ahead\",\"lateral_offset\",\"heading_error\",\"corner_speed_ratio\"], training.bootstrap_truncation=false, training.epsilon_end=0.05, training.epsilon_start=0.3, training.epsilon_decay_episodes=1000); seeds ranked by the study's 36-episode reliability eval, the top 3 re-evaluated on fresh episodes and chosen by that result; 72-episode fresh greedy eval (env seed 31000): laps in 72/72 episodes, best 17.8 s, mean 18.9 s; the recipe across its 8 seeds (IQM [95% CI]): best snapshot laps in 0.83 [0.49, 0.97] of the study's eval episodes, final params in 0.01 [0.00, 0.12], stability 0.09 [0.05, 0.17]; 6/8 seeds lap in at least half; init: each seed's best snapshot of the 6-layer variant of gp_q10_july (data/studies/gp_q10feat_8seeds), not the July file bundled under this name before",
+   "fresh_eval": {
+    "episodes": 72,
+    "lapped_fraction": 1.0,
+    "mean_lap": 18.881,
+    "best_lap": 17.8
+   },
    "features": [
     "rays",
     "speed",

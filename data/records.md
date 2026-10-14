@@ -8,9 +8,10 @@ episodes per cell from the env seed 47000 (an episode set no driver selection
 used), each episode ending at the first crash or at the decision budget.
 "Laps" counts every lap in the 36 episodes; "best" and "mean" are over those
 laps, the first lap from standstill included. The 10-qubit oval and chicane
-drivers are the 6-block files bundled on 2026-10-03 and `quantum_gp_q10` is
-still the July 2026 file; every other driver was re-selected on 2026-10-02 (see
-each `racetraq/weights/<name>.meta.json`). Rows are sorted by best lap.
+drivers are the 6-block files bundled on 2026-10-03; `quantum_gp_q10` (a
+6-block, 6-action file bundled on 2026-10-14) was re-run on 2026-10-14 under the
+same command; every other driver was re-selected on 2026-10-02 (see each
+`racetraq/weights/<name>.meta.json`). Rows are sorted by best lap.
 
 ### chicane
 
@@ -28,12 +29,12 @@ each `racetraq/weights/<name>.meta.json`). Rows are sorted by best lap.
 | mlp_chicane | mlp | — | 12.80 s | 13.31 s | 144 | 36/36 |
 | quantum_oval_q10 | quantum | 10 | 12.90 s | 13.76 s | 24 | 11/36 |
 | quantum_oval_q8 | quantum | 8 | 12.90 s | 13.45 s | 144 | 36/36 |
+| quantum_gp_q10 | quantum | 10 | 13.60 s | 14.27 s | 144 | 36/36 |
 | mlp_gp | mlp | — | 17.00 s | 17.93 s | 108 | 36/36 |
 | quantum_gp | quantum | 4 | 21.50 s | 22.77 s | 72 | 36/36 |
 | quantum_combo | quantum | 4 | 25.80 s | 26.80 s | 72 | 36/36 |
 | quantum_universal | quantum | 4 | 26.20 s | 27.37 s | 72 | 36/36 |
 | mlp_combo | mlp | — | 31.30 s | 32.03 s | 26 | 26/36 |
-| quantum_gp_q10 | quantum | 10 | — | — | 0 | 0/36 |
 
 ### combo
 
@@ -64,7 +65,7 @@ each `racetraq/weights/<name>.meta.json`). Rows are sorted by best lap.
 |---|---|---|---|---|---|---|
 | hero | hero | — | 16.40 s | 17.03 s | 108 | 36/36 |
 | pro | pro | — | 16.50 s | 17.76 s | 108 | 36/36 |
-| quantum_gp_q10 | quantum | 10 | 19.70 s | 22.23 s | 44 | 24/36 |
+| quantum_gp_q10 | quantum | 10 | 17.80 s | 18.88 s | 108 | 36/36 |
 | mlp_gp | mlp | — | 21.40 s | 22.47 s | 71 | 36/36 |
 | quantum_gp | quantum | 4 | 26.60 s | 27.93 s | 72 | 36/36 |
 | mlp_combo | mlp | — | 32.00 s | 33.08 s | 36 | 36/36 |
@@ -97,10 +98,10 @@ each `racetraq/weights/<name>.meta.json`). Rows are sorted by best lap.
 | mlp_chicane | mlp | — | 12.60 s | 13.10 s | 144 | 36/36 |
 | quantum_oval_q10 | quantum | 10 | 12.80 s | 13.30 s | 144 | 36/36 |
 | quantum_oval_q8 | quantum | 8 | 12.80 s | 13.35 s | 144 | 36/36 |
+| quantum_gp_q10 | quantum | 10 | 13.50 s | 14.05 s | 144 | 36/36 |
 | mlp_gp | mlp | — | 16.50 s | 17.30 s | 108 | 36/36 |
 | quantum_gp | quantum | 4 | 21.40 s | 22.23 s | 72 | 36/36 |
 | quantum_combo | quantum | 4 | 25.90 s | 26.65 s | 72 | 36/36 |
 | quantum_universal | quantum | 4 | 26.20 s | 27.64 s | 72 | 36/36 |
 | mlp_combo | mlp | — | 30.60 s | 31.06 s | 36 | 36/36 |
-| quantum_gp_q10 | quantum | 10 | — | — | 0 | 0/36 |
 

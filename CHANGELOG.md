@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **New 10-qubit gp driver**: `quantum_gp_q10` is now a 6-block circuit
+  with 6 actions, chosen by rule from an 8-seed study. It laps 72 of 72
+  fresh gp episodes at 18.9 s (the July file: 49 of 72 at 22.3 s), has no
+  light-cone blind spots, and also laps oval and chicane.
+- **10-qubit gp follow-ups** in SCIENCE.md and REPORT: plain rays, a pace
+  phase and wider action sets at 8 seeds each (`data/studies/gp_q10feat_*`);
+  `data/records` re-run for the new driver.
+- `tools/study.py`: a cell no longer fails when the study already runs at
+  the lowest priority.
+- The browser edition serves `sitemap.xml` and `robots.txt`.
 - `CITATION.cff` and the README carry the Zenodo DOI
   ([10.5281/zenodo.23270600](https://doi.org/10.5281/zenodo.23270600), all
   versions).

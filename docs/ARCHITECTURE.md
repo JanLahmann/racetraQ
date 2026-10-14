@@ -100,7 +100,7 @@ exactly that pair of config values, and `q8` the circuit depth as well:
 - `--profile q8` / `q10` — 8/10 qubits, 7/9 rays (and, at `q8`, 5
   re-uploading blocks); oval and chicane weights are bundled at both sizes,
   plus `quantum_gp_q10.npz` (trained on an engineered-feature observation
-  recorded in its sidecar). On a track
+  with 6 actions, both recorded in its sidecar). On a track
   without weights at the active size, the modes that need them stay
   unavailable until you train, e.g.
   `python -m racetraq.train_headless --agent quantum --profile q8 --track gp --out bundled`.
@@ -118,8 +118,7 @@ on the oval 6 blocks pointed the same way as the fifth block at 8 qubits
 without the difference being supported, on chicane the depths are
 indistinguishable — `data/studies/oval_q10`, `chicane_q10`), and its
 bundled oval and chicane drivers are 6-block, 188-parameter files;
-`quantum_gp_q10` is still a 4-block file, which the loaders read from its
-parameter count.
+`quantum_gp_q10` is a 6-block, 6-action, 192-parameter file.
 `circuit_spec` reports the visibility, and `train_headless` warns before
 training a circuit with blind spots (live training writes the same warning
 to the server log). To train with full visibility at 10 qubits: `--set
@@ -247,8 +246,10 @@ Differences from bundled tracks:
   chicane (36 of 36 each) and combo (16–22 of 36) — SCIENCE.md, "One driver,
   every track". Until the universal driver is re-selected, `set_driver
   {driver: "gp"}` is the working choice on generated and drawn tracks. At
-  10 qubits there is no universal file and the fallback is the July
-  `quantum_gp_q10`, which laps neither oval nor chicane (0 of 36 each).
+  10 qubits there is no universal file and the fallback is
+  `quantum_gp_q10`, which laps oval and chicane in 36 of 36 and 85 of 120
+  generated-track episodes (2026-10-14; the July file it replaced lapped
+  neither oval nor chicane).
 - **No ghost persistence** — best-lap ghosts are never written for random
   tracks (`ghosts_dir` only ever holds bundled-track files).
 - **Graceful rejections** — hardware mode needs a bundled track name (the

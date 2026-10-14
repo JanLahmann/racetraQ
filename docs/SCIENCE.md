@@ -14,7 +14,8 @@ code; this page is the condensed reference.
 > instrumented for all of it. On 2026-10-02/03 every bundled driver was
 > retrained and re-selected from multi-seed studies ("Measured results"
 > reports those studies; their per-seed summaries are in `data/studies/`),
-> except `quantum_gp_q10`, which stays a July single run. The headline
+> except `quantum_gp_q10`, re-selected on 2026-10-14 from a 10-qubit
+> study with six actions ("Follow-ups to the audit"). The headline
 > changed with them: under 8–10 seeds the matched classical baseline is
 > ahead of the circuit on most metrics ("Honest claims"). The universal
 > driver is now selected by a rule that includes unseen tracks ("Follow-ups
@@ -102,7 +103,8 @@ the feature order:
 - `q10`, 9 rays + speed (`quantum_oval_q10`, `quantum_chicane_q10` — still
   the July files): Right misses rays 0°/+15°/+30°, Straight +15°/+30°/+45°,
   Left +30°/+45°/+60°, Brake rays +45°/+60° and speed.
-- `quantum_gp_q10` (also still the July file), 5 rays + speed + four
+- the July `quantum_gp_q10` (replaced on 2026-10-14 by a 6-block file that
+  sees everything), 5 rays + speed + four
   engineered features: Right misses ray +60°, speed and curvature ahead;
   Straight speed, curvature ahead and lateral offset; Left curvature ahead,
   lateral offset and heading error; **Brake lateral offset, heading error
@@ -157,8 +159,10 @@ under "Scaling and the light cone"):
   full visibility costs nothing measurable and helped on the oval — and the
   bundled 10-qubit oval and chicane drivers are 6-block files re-selected
   from these studies (72 of 72 fresh episodes each, 13.3 s and 12.6 s).
-  `quantum_gp_q10` stays the July 4-block file: under the recipe that now
-  ships for 4-qubit gp neither depth learns the track (above).
+  `quantum_gp_q10` stayed the July 4-block file at the time: under the
+  recipe that ships for 4-qubit gp neither depth learns the track (above);
+  since 2026-10-14 it is a 6-block, 6-action file ("Follow-ups to the
+  audit").
 
 The stack now shows the light cone instead of hiding it: `circuit_spec()`
 carries `visibility`, `dead_params`, `dead_gates`,
@@ -451,7 +455,8 @@ over the first 2000 episodes, gamma 0.99, the time limit a terminal state.
   (`data/studies/gp_q10feat`), where single July-recipe runs of the same
   circuit — two seeds per depth — lapped in 6 to 24 of 36
   (`data/studies/gp_q10feat_july_recipe`).
-  The bundled `quantum_gp_q10` therefore stays the July driver. What the
+  The bundled `quantum_gp_q10` therefore stayed the July driver (until a
+  July-recipe study replaced it; "Follow-ups to the audit"). What the
   0.30 floor fixes is specific to the 4-qubit circuit on its 4-feature
   observation.
 - *Capacity is not the lever either.* Deeper 4-qubit circuits lap gp faster
@@ -867,7 +872,8 @@ One seed each (`racetraq/weights/<name>.meta.json`, block `selection`).
 "Fresh" is the 72-episode evaluation that chose among the shortlisted
 seeds; "re-check" is 36 episodes on an env seed no selection used
 (`python -m racetraq.records --episodes 36 --seed 47000`, run on
-2026-10-02; the 10-qubit rows on 2026-10-08). Lapped episodes, then mean lap:
+2026-10-02; the 10-qubit oval and chicane rows on 2026-10-08, `quantum_gp_q10`
+on 2026-10-14). Lapped episodes, then mean lap:
 
 | Driver | Qubits × blocks | Seeds in its study | Fresh (72 episodes) | Re-check (36 episodes) |
 |---|---|---|---|---|
@@ -881,6 +887,7 @@ seeds; "re-check" is 36 episodes on an env seed no selection used
 | `quantum_chicane_q8` | 8 × 5 | 6 | 72, 12.6 s | 36, 12.6 s |
 | `quantum_oval_q10` | 10 × 6 | 6 | 72, 13.3 s | 36, 13.3 s |
 | `quantum_chicane_q10` | 10 × 6 | 6 | 72, 12.6 s | 35, 12.6 s |
+| `quantum_gp_q10` (6 actions) | 10 × 6 | 8 | 72, 18.9 s | 36, 18.9 s |
 | `mlp_oval` | — | 8 | 72, 12.6 s | 36, 12.6 s |
 | `mlp_chicane` | — | 8 | 72, 13.3 s | 36, 13.3 s |
 | `mlp_gp` | — | 10 | 72, 22.5 s | 36, 22.5 s |
@@ -916,9 +923,11 @@ The two 6-block 10-qubit drivers were bundled after that re-check
 (`data/studies/oval_q10` and `chicane_q10`, variant `L6`, seed 2 in both);
 their rows come from the records run of 2026-10-08. On the further seeds
 61000 and 88000 both lap in all 36 episodes, mean laps within 0.01 s.
-Not re-selected: `quantum_gp_q10` is still the July file (4 blocks, chosen
-under the old protocol). On the same 36 re-check episodes it laps in 24
-(22.2 s, best 19.7 s), on the second re-check seed in 26, on the third in 25.
+`quantum_gp_q10` was re-selected on 2026-10-14 (`data/studies/gp_q10feat_widen`,
+variant `w6`, seed 3; "Follow-ups to the audit"): on the 36 re-check
+episodes it laps in 36 (18.9 s, best 17.8 s) and also laps oval and chicane
+in 36 of 36. The July file it replaced (4 blocks, chosen under the old
+protocol) lapped in 24 (22.2 s, best 19.7 s), and neither oval nor chicane.
 
 ### Scaling and the light cone
 
@@ -990,11 +999,12 @@ options), next to an MLP on the same observation:
 - **gp above 4 qubits.** The plain 6-qubit profile does not learn gp under
   the July recipe (0 of 6 seeds, `data/studies/gp_4q`, variant `q6`), and
   the 10-qubit feature circuit does not learn it under the new one
-  ("Training stability"). The bundled `quantum_gp_q10` is a July single
-  run with a Brake readout that cannot see corner speed; it laps in 24 of
-  36 re-check episodes at 22.2 s — faster than the bundled 4-qubit gp
-  driver (27.9 s), level with the bundled MLP (22.5 s), and the least
-  reliable of the three.
+  ("Training stability"). Under the July recipe it does, on 3 to 6 of 8
+  seeds ("Follow-ups to the audit"). The bundled `quantum_gp_q10`, chosen
+  by rule from the 6-action variant, laps in 36 of 36 re-check episodes at
+  18.9 s — faster than the bundled 4-qubit gp driver (27.9 s) and the
+  bundled MLP (22.5 s), which drive a different observation and four
+  actions, so this is not a matched comparison.
 - **Ten qubits on the oval: no gain, at either depth.** With 4 blocks —
   every action blind to three inputs — the circuit is less stable than the
   4-qubit one (0.42 [0.27, 0.50] against 0.69 [0.57, 0.75]; P 0.07
@@ -1243,11 +1253,48 @@ seeds each, with exploration falling to 0.05 as in July
 Under this recipe the circuit does learn gp at 10 qubits, where the 0.30
 floor recipe of the 4-qubit gp driver did not (3 seeds per depth); six
 layers drive faster laps and find the first one earlier, neither keeps
-what it learned (final parameters lap almost never). The bundled
-`quantum_gp_q10` (July, 4 layers, 24 of 36 at 22.2 s) stays for now.
-Still running: the plain-ray `q10` profile under the same recipe, a pace
-phase from these snapshots, and scaled action sets (6 and 8 actions, the
-4-action weights widened as the start).
+what it learned (final parameters lap almost never).
+
+**Three follow-ups at 10 qubits on gp (2026-10-09/11).** Same protocol,
+8 seeds per variant:
+
+- *Plain rays instead of features.* The `q10` profile (9 rays and speed,
+  6 layers) under the same July recipe: 1 of 8 seeds reaches a best
+  snapshot that laps in half its test episodes (best-snapshot lapped 0.02
+  [0.00, 0.27]; `data/studies/gp_q10feat_plain/`). On gp at 10 qubits the
+  engineered features matter more than extra rays.
+- *A pace phase* from each seed's best snapshot of the study above (600
+  episodes, `--pace`, with and without the pace selection rule): no gain
+  in reliability (4 layers 0.21 and 0.12 against 0.44 before; 6 layers
+  0.40 and 0.37 against 0.42) and no supported change in lap time
+  (`gp_q10feat_pace_L4`, `gp_q10feat_pace_L6`).
+- *Wider action sets.* Each 6-layer snapshot continued for 1500 episodes
+  (exploration 0.30 falling to 0.05 over 1000) with its 4 readouts kept
+  (`w4`) or widened to 6 or 8 actions (`w6`, `w8`: `widen_actions` gives
+  the new actions a pessimistic bias, so each starts out driving like its
+  4-action snapshot; `gp_q10feat_widen`):
+
+| Actions | Params | Best-snapshot lapped | Seeds ≥ 50 % | Final-params lapped | Mean lap |
+|---|---|---|---|---|---|
+| 4 | 188 | 0.62 [0.29, 0.97] | 4/8 | 0.12 [0.02, 0.26] | 25.9 s [22.4, 30.0] |
+| 6 | 192 | 0.83 [0.49, 0.97] | 6/8 | 0.01 [0.00, 0.12] | 24.2 s [18.8, 33.6] |
+| 8 | 196 | 0.65 [0.16, 0.92] | 5/8 | 0.02 [0.00, 0.11] | 20.7 s [19.0, 23.4] (n=7) |
+
+The continued training alone lifts reliability (0.62 at 4 actions against
+0.42 before it), and the intervals of the three action sets overlap: no
+supported difference in reliability between them. What the wider sets add
+is pace in their best seeds — four of the 6- and 8-action seeds lap at
+18–19 s, no 4-action seed below 20.8 s — and as before, nothing keeps what
+it learned.
+
+`bundle_driver.py --unseen 10` applied to `w6` picks seed 3: on 72 fresh
+gp episodes it laps 72 of 72 at 18.9 s (best 17.8 s), and on the generated
+tracks 85 of 120 (2 of 10 reliable). The July file it replaces, re-run on
+the same episodes, lapped 49 of 72 at 22.3 s and 12 of 120. It is the
+bundled `quantum_gp_q10` since 2026-10-14 — 6 layers (no blind spots) and
+6 actions. Applied to `w8`, the rule picks seed 1, which lapped all 120
+generated-track episodes (10 of 10 tracks reliable) but only 64 of 72 on
+gp, below the 0.9 bundling floor; it was not bundled.
 
 ### July 2026 exploratory results (old protocol)
 
@@ -1314,8 +1361,12 @@ Being honest matters more than being exciting:
   a reliable driver on both easy tracks in 8 of 8 seeds, with chicane laps
   level with the matched MLP's. Every re-selected bundled driver laps in 72
   of 72 fresh episodes, and three of them complete their laps on a
-  simulated IBM device. None of this is an advantage. It is what "it works"
-  means here, with intervals.
+  simulated IBM device. At 10 qubits with engineered features and six
+  actions, the selected gp driver laps at 18.9 s, the fastest learned gp
+  driver in the records; the recipe behind it gives such a seed only
+  sometimes (6 of 8 seeds lap in half their test episodes, 4 at 18–19 s),
+  and no MLP was trained on that observation and action set. None of this
+  is an advantage. It is what "it works" means here, with intervals.
 - **Shipped drivers are selected, and we say how.** On gp and combo the
   end-of-training parameters of either agent almost never lap; the bundled
   driver is the best snapshot of the best of ten seeds. "72 of 72"
