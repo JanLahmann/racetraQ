@@ -272,6 +272,9 @@ class StudioController:
             "seconds": round(seconds, 1),
             "first_lap": first_lap,
             "best_eval": best,
+            # the trainer tests the final circuit once more at the stop; when
+            # that test wins, the best test changes after the live view
+            "final_test_best": bool(best and best.get("episode", 0) > self._evals_seen),
             "stop_reason": self.stop_reason,
             "error": job.error,
             "comparison": (studio.compare(self.stats, self.spec["track"], self.spec["qubits"],

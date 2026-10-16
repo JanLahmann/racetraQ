@@ -14,17 +14,20 @@ const esc = (s) => s.replace(/[&<>"]/g, (c) => ESC[c]);
 const slug = (text) =>
   text.toLowerCase().replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-");
 
-/** Resolve a markdown href: in-doc anchors stay; other .md files become
- *  data-doc links the browser widget intercepts; other relative paths point
- *  at the GitHub repo; absolute URLs pass through (new tab). */
-function linkHtml(text, href) {
+/** Resolve a markdown href: in-doc anchors stay; other .md files (docs/ or
+ *  the README) become data-doc links the browser widget intercepts; other
+ *  relative paths point at the GitHub repo, resolved against `base` (the
+ *  document's folder, "docs/" or "" for the README); absolute URLs pass
+ *  through (new tab). */
+function linkHtml(text, href, base) {
   if (href.startsWith("#")) return `<a href="${esc(href)}">${text}</a>`;
-  const md = href.match(/^(?:\.\/)?(?:docs\/)?([\w-]+)\.md(#[\w-]*)?$/);
+  const md = href.match(/^(?:\.\.?\/)?(?:docs\/)?([\w-]+)\.md(#[\w-]*)?$/);
   if (md) return `<a href="#" data-doc="${esc(md[1])}">${text}</a>`;
   if (/^https?:\/\//.test(href)) {
     return `<a href="${esc(href)}" target="_blank" rel="noopener">${text}</a>`;
   }
-  return `<a href="${esc(GITHUB_BASE + href)}" target="_blank" rel="noopener">${text}</a>`;
+  const url = new URL(href, GITHUB_BASE + base).href;
+  return `<a href="${esc(url)}" target="_blank" rel="noopener">${text}</a>`;
 }
 
 /** Relative image sources come from docs/ (served at /docs-assets). */
@@ -33,7 +36,7 @@ function imgSrc(src) {
   return "/docs-assets/" + src.replace(/^(?:\.\/)?docs\//, "");
 }
 
-function inline(text) {
+function inline(text, base = "") {
   let s = esc(text);
   const codes = [];
   s = s.replace(/`([^`]+)`/g, (_, c) => `\x00${codes.push(c) - 1}\x00`);
@@ -41,7 +44,7 @@ function inline(text) {
     /!\[([^\]]*)\]\(([^)\s]+)\)/g,
     (_, alt, src) => `<img src="${esc(imgSrc(src))}" alt="${alt}" loading="lazy">`,
   );
-  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, txt, href) => linkHtml(txt, href));
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, txt, href) => linkHtml(txt, href, base));
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
   s = s.replace(/\x00(\d+)\x00/g, (_, i) => `<code>${codes[i]}</code>`);
@@ -49,8 +52,9 @@ function inline(text) {
 }
 
 const LIST_RE = /^(\s*)([-*]|\d+\.)\s+(.*)$/;
+const FENCE_RE = /^(\s*)```/;
 
-function renderList(lines, start) {
+function renderList(lines, start, base) {
   // collect the whole list block (list lines + their indented continuations)
   const items = []; // {indent, ordered, text}
   let i = start;
@@ -63,7 +67,7 @@ function renderList(lines, start) {
         text: m[3],
       });
       i++;
-    } else if (/^\s{2,}\S/.test(lines[i]) && items.length) {
+    } else if (/^\s{2,}\S/.test(lines[i]) && !FENCE_RE.test(lines[i]) && items.length) {
       items[items.length - 1].text += " " + lines[i].trim(); // hanging indent
       i++;
     } else {
@@ -79,17 +83,17 @@ function renderList(lines, start) {
     const top = stack[stack.length - 1];
     if (!top || item.indent > top.indent) {
       const tag = item.ordered ? "ol" : "ul";
-      html.push(`<${tag}><li>${inline(item.text)}`);
+      html.push(`<${tag}><li>${inline(item.text, base)}`);
       stack.push({ indent: item.indent, tag });
     } else {
-      html.push(`</li><li>${inline(item.text)}`);
+      html.push(`</li><li>${inline(item.text, base)}`);
     }
   }
   while (stack.length) html.push(`</li></${stack.pop().tag}>`);
   return { html: html.join(""), next: i };
 }
 
-function renderTable(lines, start) {
+function renderTable(lines, start, base) {
   const rows = [];
   let i = start;
   while (i < lines.length && lines[i].trim().startsWith("|")) {
@@ -100,7 +104,7 @@ function renderTable(lines, start) {
   }
   const [head, , ...body] = rows; // row 1 is the |---| separator
   const tr = (cells, tag) =>
-    `<tr>${cells.map((c) => `<${tag}>${inline(c)}</${tag}>`).join("")}</tr>`;
+    `<tr>${cells.map((c) => `<${tag}>${inline(c, base)}</${tag}>`).join("")}</tr>`;
   return {
     html:
       `<div class="md-table-wrap"><table><thead>${tr(head, "th")}</thead>` +
@@ -109,8 +113,9 @@ function renderTable(lines, start) {
   };
 }
 
-/** Render markdown to an HTML string. */
-export function renderMarkdown(md) {
+/** Render markdown to an HTML string; `base` is the document's folder in
+ *  the repo ("docs/", or "" for the README), for its relative links. */
+export function renderMarkdown(md, base = "") {
   // HTML comments (editing markers in the docs) are not content.
   const lines = md.replace(/<!--[\s\S]*?-->/g, "").split("\n");
   const html = [];
@@ -119,46 +124,51 @@ export function renderMarkdown(md) {
     const line = lines[i];
     if (/^\s*$/.test(line)) {
       i++;
-    } else if (line.startsWith("```")) {
+    } else if (FENCE_RE.test(line)) {
+      // a fence may be indented (inside a list item): drop that indent
+      const indent = line.match(FENCE_RE)[1].length;
       const code = [];
       i++;
-      while (i < lines.length && !lines[i].startsWith("```")) code.push(lines[i++]);
+      while (i < lines.length && !FENCE_RE.test(lines[i])) {
+        const l = lines[i++];
+        code.push(l.slice(Math.min(indent, l.length - l.trimStart().length)));
+      }
       i++; // closing fence
       html.push(`<pre><code>${esc(code.join("\n"))}</code></pre>`);
     } else if (/^#{1,6} /.test(line)) {
       const level = line.match(/^#+/)[0].length;
       const text = line.slice(level + 1);
-      html.push(`<h${level} id="${slug(text)}">${inline(text)}</h${level}>`);
+      html.push(`<h${level} id="${slug(text)}">${inline(text, base)}</h${level}>`);
       i++;
     } else if (/^ {0,3}(-{3,}|\*{3,})\s*$/.test(line)) {
       html.push("<hr>");
       i++;
     } else if (LIST_RE.test(line)) {
-      const out = renderList(lines, i);
+      const out = renderList(lines, i, base);
       html.push(out.html);
       i = out.next;
     } else if (
       line.trim().startsWith("|") &&
       /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1] || "")
     ) {
-      const out = renderTable(lines, i);
+      const out = renderTable(lines, i, base);
       html.push(out.html);
       i = out.next;
     } else if (line.startsWith("> ")) {
       const quote = [];
       while (i < lines.length && lines[i].startsWith("> ")) quote.push(lines[i++].slice(2));
-      html.push(`<blockquote>${inline(quote.join(" "))}</blockquote>`);
+      html.push(`<blockquote>${inline(quote.join(" "), base)}</blockquote>`);
     } else {
       const para = [];
       while (
         i < lines.length &&
         !/^\s*$/.test(lines[i]) &&
-        !/^(```|#{1,6} |> )/.test(lines[i]) &&
+        !/^(\s*```|#{1,6} |> )/.test(lines[i]) &&
         !LIST_RE.test(lines[i])
       ) {
         para.push(lines[i++].trim());
       }
-      html.push(`<p>${inline(para.join(" "))}</p>`);
+      html.push(`<p>${inline(para.join(" "), base)}</p>`);
     }
   }
   return html.join("\n");

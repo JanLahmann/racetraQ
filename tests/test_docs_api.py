@@ -1,5 +1,8 @@
 """The /api/docs endpoints that back the in-UI documentation browser."""
 
+import re
+from pathlib import Path
+
 import pytest
 
 fastapi_testclient = pytest.importorskip("fastapi.testclient")
@@ -35,3 +38,22 @@ def test_doc_content_and_404(client):
     assert client.get("/api/docs/nope").status_code == 404
     # path traversal never reaches the filesystem: ids are whitelist-matched
     assert client.get("/api/docs/..%2FREADME").status_code == 404
+
+
+def test_relative_doc_links_point_at_files():
+    """Every relative link and image in docs/*.md names a file or folder in
+    the repo (the in-app viewer sends them to GitHub, resolved like there)."""
+    docs = Path(__file__).resolve().parents[1] / "docs"
+    if not docs.is_dir():
+        pytest.skip("no repo docs")
+    link = re.compile(r"\]\(([^)\s]+)\)")
+    broken = []
+    for md in sorted(docs.glob("*.md")):
+        text = re.sub(r"```.*?```", "", md.read_text(encoding="utf-8"), flags=re.S)
+        for href in link.findall(text):
+            if re.match(r"[a-z]+:", href) or href.startswith("#"):
+                continue
+            target = (md.parent / href.split("#")[0]).resolve()
+            if not target.exists():
+                broken.append(f"{md.name}: {href}")
+    assert broken == []

@@ -654,7 +654,7 @@ def test_web_diagram_and_matrix_render_the_spec():
         assert page["sectionHidden"] is False and page["table"] in page["section"]
         if expected:
             assert page["note"]["kind"] == "warn" and spoken[-1] in page["note"]["text"]
-            assert (f"full visibility needs {spec['min_layers_full_visibility']} layers"
+            assert (f"full visibility needs {spec['min_layers_full_visibility']} blocks"
                     in page["note"]["text"])
         else:
             assert page["note"]["kind"] == "ok"
@@ -682,7 +682,7 @@ def test_web_diagram_and_matrix_render_the_spec():
                 assert steps > layers - 1
                 assert tip.startswith(f"{action} cannot see {names[j]}: ")
                 assert f"qubit {j}, {steps} steps around the ring from readout qubit {a}" in tip
-                assert f"{layers} layers only reach {layers - 1}" in tip
+                assert f"{layers} blocks only reach {layers - 1}" in tip
 
 
 # explain.js imports the documentation browser (fetch + DOM); the probe swaps
@@ -744,10 +744,10 @@ def test_web_explain_light_cone_paragraph_follows_the_spec():
     for page in (q4, q10, q10_deep, rejected):
         assert page["active"] == ["circuit"]  # the open sub-tab survives the rebuild
         assert "<strong>light cone</strong>" in page["body"]
-    assert f"With 4 qubits and 4 layers {full}." in q4["body"] and short not in q4["body"]
-    assert f"With 10 qubits and 4 layers {short}" in q10["body"] and full not in q10["body"]
-    assert "(that would take 6 layers)" in q10["body"] and "Who sees what" in q10["body"]
-    assert f"With 10 qubits and 6 layers {full}." in q10_deep["body"]
+    assert f"With 4 qubits and 4 blocks {full}." in q4["body"] and short not in q4["body"]
+    assert f"With 10 qubits and 4 blocks {short}" in q10["body"] and full not in q10["body"]
+    assert "(that would take 6 blocks)" in q10["body"] and "Who sees what" in q10["body"]
+    assert f"With 10 qubits and 6 blocks {full}." in q10_deep["body"]
     assert full not in rejected["body"] and short not in rejected["body"]
 
 

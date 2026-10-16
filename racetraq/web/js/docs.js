@@ -40,7 +40,7 @@ export async function initDocs(root) {
     try {
       const res = await fetch(`/api/docs/${encodeURIComponent(id)}`);
       const doc = await res.json();
-      content.innerHTML = renderMarkdown(doc.markdown);
+      content.innerHTML = renderMarkdown(doc.markdown, id === "README" ? "" : "docs/");
     } catch {
       content.innerHTML = `<p class="doc-note">${t("docs.failed")}</p>`;
     }
