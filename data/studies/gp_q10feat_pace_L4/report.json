@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp_q10_pace_L4",
+ "directory": "scienceF/gp_q10_pace_L4",
  "baseline": "pace_rel",
  "bootstrap": {
   "resamples": 2000,
@@ -32,7 +32,7 @@
     "preset": "auto",
     "actions": null,
     "pace": true,
-    "init": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp_q10_july/cells/L4/seed{seed}/quantum_gp_q10.npz",
+    "init": "scienceF/gp_q10_july/cells/L4/seed{seed}/quantum_gp_q10.npz",
     "overrides": [
      "circuit.n_qubits=10",
      "observation.ray_angles_deg=[-60.0,-30.0,0.0,30.0,60.0]",
@@ -280,7 +280,7 @@
     "preset": "auto",
     "actions": null,
     "pace": true,
-    "init": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp_q10_july/cells/L4/seed{seed}/quantum_gp_q10.npz",
+    "init": "scienceF/gp_q10_july/cells/L4/seed{seed}/quantum_gp_q10.npz",
     "overrides": [
      "circuit.n_qubits=10",
      "observation.ray_angles_deg=[-60.0,-30.0,0.0,30.0,60.0]",

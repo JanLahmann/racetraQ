@@ -694,6 +694,24 @@ IBM's teaching material [19] set the bar this project does not meet.
   `levers_chicane_4q` and `levers_gp_4q` 32 each), plus six single runs in
   `gp_q10feat_july_recipe/results.json`. Weights and full logs are not in the
   repository; SCIENCE.md's "487 training runs" predates the `chicane_q10` export.
+- Reproducing one table: the circuit's oval row of §4.1 (and of the
+  README's headline table) is `robust_oval_4q`, variant `gap8an`. From a
+  checkout (`pip install -e .`):
+
+  ```sh
+  python tools/study.py run --out runs/robust_oval --agent quantum --track oval \
+      --episodes 800 --seeds 0-9 --jobs 4 \
+      --variant 'gap8an:training.bootstrap_truncation=true,training.action_gap=0.8,training.act_noise={attenuation=0.95,shots=1024}'
+  python tools/study.py report runs/robust_oval
+  ```
+
+  The recipe comes from the study's `report.json` (800 episodes, preset
+  `auto`, 36-episode evals at env seed 20000, the defaults). The committed
+  cells took 3–9 minutes each; the study did not record its commit. Seed 8,
+  re-run on 2026-10-16 at commit 9c528e2 (M1 Max, 144 s), matched its
+  committed cell exactly (eval log, both 36-episode evals, first clean lap
+  414). Compare `runs/robust_oval/report.md` with
+  `data/studies/robust_oval_4q/report.md`.
 - `tools/bundle_driver.py --study DIR --variant V --name N` ranks,
   re-evaluates on 72 fresh episodes (a seed the study used is refused),
   optionally drives candidates on the device path, copies the weights byte for

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/study_chicane",
+ "directory": "auditA/study_chicane",
  "baseline": "base",
  "bootstrap": {
   "resamples": 2000,

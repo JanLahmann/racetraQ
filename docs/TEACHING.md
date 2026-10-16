@@ -21,15 +21,34 @@ measure it honestly, not about a quantum win.
   first launch of an image can take several minutes; ask students to click
   the badge at the start of the session, not when you need it.
 - **Studio laptop** (for the competition). The Studio is part of the full
-  demo, not the browser edition: `./run.sh` on a laptop
+  demo, not of racetraq.org: `./run.sh` on a laptop
   ([README](../README.md#try-it)); `python -m racetraq --host 0.0.0.0`
-  also serves it to other devices on the room's network. Do one training run
-  before the students arrive. Clear old boards by deleting
-  `racetraq/data/leaderboard/studio_<track>.json` while the server is
-  stopped.
+  also serves it to other devices on the room's network. That is one
+  shared session, not one per device: whoever presses a control first
+  holds the wheel, the others queue for it or watch
+  ([EXHIBITION.md](EXHIBITION.md), "Sharing the demo"). So the class trains
+  on the one laptop, one run at a time. Do one training run before the
+  students arrive.
+- **Moderating the boards.** Names pass a small built-in blocklist; add
+  words for your class with `[leaderboard] blocklist = [...]` in a TOML
+  file started with `./run.sh --config class.toml`. To remove a name or
+  clear old results, open `http://127.0.0.1:8000/#operator` on the laptop
+  itself (other devices are refused): the 🏆 tab has **Clear the board**,
+  **Clear today's laps** and a ✕ per entry, and the Studio board shows a ✕
+  per entry. To empty a whole Studio board, stop the server and delete
+  `racetraq/data/leaderboard/studio_<track>.json`.
+- **Language.** [racetraq.org](https://racetraq.org/) and the notebooks
+  are in English only. The German interface is in the local app: the EN/DE
+  switch in its header, or `[ui] language = "de"` in the same TOML file;
+  its "Erklärung" tab is a German reading (what the demo is, how it learns,
+  the circuit, classical against quantum).
 - **Phones.** [racetraq.org](https://racetraq.org/) works on a phone with
   nothing installed: enough for the opening and for anyone whose notebook
   will not start.
+- **What you need for a class:** a projector; a laptop with the repository
+  cloned for the Studio (and for local notebooks if Binder fails); network
+  access for Binder and racetraq.org; a phone or laptop per pair; paper for
+  the predictions.
 - **Exercises.** Each of notebooks 01–04 ends with three exercises. The
   question is in a text cell; the reasoning is in a collapsed "Solution" box
   below it; the code that checks it is in a cell marked `# Solution N`,
@@ -47,7 +66,22 @@ measure it honestly, not about a quantum win.
    changed.
 3. **The browser edition** at [racetraq.org](https://racetraq.org/) for the
    hands-on parts: watch a decision step by step, race the circuit, open a
-   decision's circuit in IBM Quantum Composer.
+   decision's circuit in IBM Quantum Composer (Composer asks for an IBM
+   Quantum login; the decision view itself needs none).
+
+### If something else fails
+
+- **The Studio laptop stops answering:** see
+  [EXHIBITION.md](EXHIBITION.md), "Troubleshooting" (port in use,
+  "reconnecting…"); restart `./run.sh`. The competition can move to the
+  end of the session, or the teams race the bundled drivers on
+  racetraq.org instead.
+- **The room network blocks other devices:** only the laptop's own browser
+  reaches the Studio; run the competition on the projector, teams taking
+  turns at the laptop.
+- **A training cell runs too long:** stop it (■ in JupyterLab) and read
+  that cell's stored output in the notebook on GitHub; the numbers in the
+  [answer key](#answer-key) come from those outputs.
 
 ## 90-minute workshop
 
@@ -56,13 +90,20 @@ Needs: a little Python; no quantum or machine learning background.
 
 | Time | Activity | Material |
 |---|---|---|
-| 0:00–0:10 | **Hook.** On the projector and on phones: watch the quantum driver, pause on one decision (sensors → circuit → four scores), then two volunteers race it. Ask: what does the car know? | [racetraq.org](https://racetraq.org/) |
-| 0:10–0:25 | **Qubits in 15 minutes.** Sections 1–5: RY and $\langle Z\rangle$, shots as coin flips, RZ that the measurement cannot see, CZ. Before each plot: predict the curve. | nb00 |
-| 0:25–0:40 | **The game.** Car physics and the scripted driver. In pairs: exercises 2 and 3 (will the scripted driver lap gp? make it brake). | nb01 |
-| 0:40–1:00 | **Learning from rewards.** Warm-up 1 (Q-table) with exercise 1 by hand on paper; warm-up 2 (a neural network, three learning rates); run the DQN training cell and watch the greedy lap. | nb02 |
-| 1:00–1:10 | **The circuit as a driver.** Section 7 of nb00: one block by hand, and why one block is blind. Then the dead-parameter cell of nb03. | nb00, nb03 |
-| 1:10–1:20 | **Debate:** is this quantum advantage? | [below](#the-10-minute-debate-is-this-quantum-advantage) |
-| 1:20–1:30 | **Checkpoints.** The three questions at the end of nb00–02, in pairs, then the answers. | nb00–02 |
+| 0:00–0:05 | **Launch buffer.** Students click the Launch badges of nb00–02 now, so the Binder images start while you set up the projector. | README badges |
+| 0:05–0:15 | **Hook.** On the projector and on phones: watch the quantum driver, pause on one decision (sensors → circuit → four scores), then two volunteers race it. Ask: what does the car know? | [racetraq.org](https://racetraq.org/) |
+| 0:15–0:30 | **Qubits in 15 minutes.** Sections 1–5: RY and $\langle Z\rangle$, shots as coin flips, RZ that the measurement cannot see, CZ. Before each plot: predict the curve. | nb00 |
+| 0:30–0:45 | **The game.** Car physics and the scripted driver. In pairs: exercises 2 and 3 (will the scripted driver lap gp? make it brake). | nb01 |
+| 0:45–1:10 | **Learning from rewards.** Warm-up 1 (Q-table) with exercise 1 by hand on paper; warm-up 2 (a neural network, three learning rates)*; run the DQN training cell and watch the greedy lap. | nb02 |
+| 1:10–1:15 | **The circuit as a driver.** Section 7 of nb00: one block by hand, and why one block is blind. Then the dead-parameter cell of nb03*. | nb00, nb03 |
+| 1:15–1:25 | **Debate:** is this quantum advantage? | [below](#the-10-minute-debate-is-this-quantum-advantage) |
+| 1:25–1:30 | **Checkpoints.** One question per notebook (nb00–02), in pairs, then the answers. | nb00–02 |
+
+The README gives reading times for a whole notebook worked through alone
+(nb00 15 min, nb01 20 min, nb02 40 min). The plan uses only the parts it
+names, with you reading along on the projector, so it fits in less. If the
+class falls behind, drop the parts marked * first (warm-up 2 of nb02, the
+nb03 cell), then exercise 3 of nb01 (show its answer instead).
 
 Take-home: the rest of nb03 and the student track of the
 [learning path](LEARN.md).

@@ -130,7 +130,7 @@ and the [glossary](docs/GLOSSARY.md) explains the terms.
 
 | Notebook | What it covers | Level · prerequisites | Time: reading · run | Launch |
 |---|---|---|---|---|
-| [00 — Qubits for drivers](notebooks/00_qubits_for_drivers.ipynb) | an optional primer: one qubit, RY and ⟨Z⟩ = P(0) − P(1), shots as coin flips, why RZ alone is invisible, CZ, and one block of the racetraQ circuit built by hand | Beginner · no prerequisites | 15 min · runs in ~15 s | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/00_qubits_for_drivers.ipynb) |
+| [00 — Qubits for drivers](notebooks/00_qubits_for_drivers.ipynb) | an optional primer: one qubit, RY and ⟨Z⟩ = P(0) − P(1), shots as coin flips, why RZ alone is invisible, CZ, and one block of the racetraQ circuit built by hand | Beginner · basic Python and numpy, multiplying a 2×2 matrix by a vector (complex numbers are explained) | 15 min · runs in ~15 s | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/00_qubits_for_drivers.ipynb) |
 | [01 — The racing environment](notebooks/01_the_racing_env.ipynb) | tracks, car physics (why you must brake for hairpins), lidar, reward, a scripted lap | Beginner · basic Python | 20 min · runs in ~20 s | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/01_the_racing_env.ipynb) |
 | [02 — Q-learning from scratch](notebooks/02_q_learning_from_scratch.ipynb) | a Q-table warm-up, a five-minute neural-network primer (neuron, activation, loss, backprop, learning rate), MDPs, double DQN in pure numpy, a 76-parameter MLP learns to lap in seconds | Beginner · after nb01 | 40 min · runs in ~1–1.5 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/02_q_learning_from_scratch.ipynb) |
 | [03 — Quantum circuits as Q-functions](notebooks/03_quantum_circuits_as_q_functions.ipynb) | the data re-uploading VQC, expressivity, fastsim ≡ `EstimatorQNN`, light cones and dead parameters, adjoint vs param-shift, gradient variance against width and depth (the barren-plateau trend) | Intermediate · after nb00, nb02 | 60 min · runs in ~1 min | [![Launch on QuBins](https://qubins.org/badges/launch-qubins-latest-xl.svg)](https://qubins.org/launch/?image=latest-xl&repo=https://github.com/JanLahmann/racetraQ&branch=main&path=notebooks/03_quantum_circuits_as_q_functions.ipynb) |
@@ -345,6 +345,8 @@ python -m racetraq.train_headless --agent quantum --track gp --out runs/gp-huber
 python tools/study.py run --out runs/study-gp --track gp --seeds 0-9 --jobs 4 \
     --variant base --variant 'huber:training.loss="huber"'
 python tools/study.py report runs/study-gp
+# The exact command for one committed table (the oval circuit row):
+# docs/REPORT.md, section 7.
 # From a study to a bundled driver: rank the seeds, re-evaluate the best on
 # fresh episodes, write weights + sidecar (--dry-run: only report).
 python tools/bundle_driver.py --study runs/study-gp --list
@@ -397,7 +399,7 @@ python -m racetraq.records --episodes 36 --seed 47000 --out runs/records.json
 - [Learning path](docs/LEARN.md) — five tracks through the material, from a
   5-minute visit to a research reading list, and the classical and quantum
   models side by side.
-- [Glossary](docs/GLOSSARY.md) — about 70 terms in one plain sentence each,
+- [Glossary](docs/GLOSSARY.md) — about 75 terms in one plain sentence each,
   with where to learn more.
 - [Teaching with racetraQ](docs/TEACHING.md) — a 90-minute and a half-day
   workshop plan, with an answer key for the notebook exercises.

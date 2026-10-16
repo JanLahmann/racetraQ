@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/study_oval",
+ "directory": "auditA/study_oval",
  "baseline": "base",
  "bootstrap": {
   "resamples": 2000,

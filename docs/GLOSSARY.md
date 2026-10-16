@@ -25,6 +25,12 @@ training run, that drove best in the greedy evaluations; this is what a
 weights file holds, not the parameters at the end of training. *More:* nb04,
 Part A.
 
+**Bootstrapping (TD)** — Building a learning target from the agent's own
+current estimate for the next state, $r + \gamma \max_{a'} Q(s', a')$,
+instead of waiting for the real total reward of the episode. Not the same as
+a bootstrap interval (see "Measuring results"). *More:* nb02, "Deep
+Q-learning".
+
 **Checkpoint (track)** — A marker along the track that pays a small bonus
 (+5) when the car passes it during a lap. *More:* nb01, "Tracks".
 
@@ -140,9 +146,20 @@ probability of a measurement outcome is the squared size of its amplitude.
 at the north pole and $|1\rangle$ at the south pole; its height is
 $\langle Z\rangle$. *More:* nb00, sections 1–2.
 
+**Commute** — Two operations commute when their order does not matter. A
+gate that commutes with the measured operator cannot change that readout,
+which is why some angles are dead. *More:* nb03, "A teaching point: the
+provably dead parameters"; nb07, Part A.
+
 **CZ gate** — The two-qubit gate of the racetraQ circuit: it flips the sign of
 the $|11\rangle$ amplitude, which matters only together with rotations after
 it. *More:* nb00, section 5.
+
+**Diagonal gate** — A gate whose matrix has entries only on its diagonal,
+such as CZ and RZ: it changes only the phases of the amplitudes, never a
+probability, so on its own it cannot change what a $Z$ measurement reads.
+*More:* nb00, sections 4–5; nb03, "A teaching point: the provably dead
+parameters".
 
 **Entanglement** — A joint state of several qubits that cannot be written as
 separate states of each; the CZ ring creates it. *More:* nb00, section 5.
@@ -151,8 +168,17 @@ separate states of each; the CZ ring creates it. *More:* nb00, section 5.
 over many measurements, $P(0) - P(1)$, a number in $[-1, 1]$; each action's
 score is read this way. *More:* nb00, section 2.
 
+**Heisenberg picture** — Following the measured operator backwards through
+the circuit, last gate first, instead of the state forwards; the light-cone
+argument works this way. *More:* nb03, "A teaching point: the provably dead
+parameters"; nb07, Part A.
+
 **Measurement** — Reading a qubit, which gives 0 or 1 at random with the
 probabilities its state sets. *More:* nb00, section 1.
+
+**Observable** — The quantity a measurement reads, written as an operator:
+racetraQ reads $Z_a$ on qubit $a$, one per action, and uses its expectation
+value $\langle Z_a\rangle$. *More:* nb03; nb05, section 3.
 
 **Qubit** — The quantum bit: a two-level system whose state is two
 amplitudes, measured as 0 or 1. *More:* nb00.
@@ -253,7 +279,7 @@ qubit connections. *More:* nb05, section 2.
 
 **Bootstrap interval** — An uncertainty range found by resampling the seeds
 with replacement many times and taking the middle 95 % of the recomputed
-statistic. *More:* nb04, Part B.
+statistic. Not the same as bootstrapping in Q-learning. *More:* nb04, Part B.
 
 **Classical surrogate** — A classical model fitted to reproduce a trained
 circuit's outputs; one drives racetraQ's oval as the circuit does. *More:*

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/robust_oval",
+ "directory": "auditA/retrain/robust_oval",
  "baseline": "gap8an",
  "bootstrap": {
   "resamples": 2000,

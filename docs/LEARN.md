@@ -13,16 +13,17 @@ Terms in **bold** are in the [glossary](GLOSSARY.md). Teachers: the
 | Track | You are | Time | You need |
 |---|---|---|---|
 | [1. Curious visitor](#1-curious-visitor) | anyone with a browser | 5 min | nothing |
-| [2. Student](#2-student) | school or first-year university | 1–2 h | a little Python, sine and cosine |
+| [2. Student](#2-student) | school or first-year university | 2–3 h | a little Python and numpy, sine and cosine, a 2×2 matrix times a vector |
 | [3. ML practitioner, new to quantum](#3-ml-practitioner-new-to-quantum) | you know DQN and backprop | 2–3 h | Python, numpy, linear algebra |
 | [4. Physicist, new to ML](#4-physicist-new-to-ml) | you know qubits and Pauli operators | 2–3 h | Python, numpy |
 | [5. Researcher](#5-researcher) | you work on QML or RL | half a day | the literature of your field |
 
 How to run the notebooks: every one has a **Launch** badge in the
 [README](../README.md#notebooks) that opens it on Binder (QuBins images,
-nothing to install). Locally: `pip install -e ".[notebooks]"`, then
-`jupyter lab`. The README's notebook table lists each notebook's level and
-how long it takes to read and to run.
+nothing to install). Locally, from a clone of the repository
+(`git clone https://github.com/JanLahmann/racetraQ`, then `cd racetraQ`):
+`pip install -e ".[notebooks]"`, then `jupyter lab`. The README's notebook
+table lists each notebook's level and how long it takes to read and to run.
 
 ## 1. Curious visitor
 
@@ -44,9 +45,11 @@ learns faster and more reliably here. No quantum advantage is claimed.
 
 ## 2. Student
 
-**Time:** 1–2 hours. **Prerequisites:** basic Python (variables, functions,
-loops), numpy arrays, sine and cosine. No quantum physics and no machine
-learning needed.
+**Time:** 2–3 hours of reading; the exercises take longer.
+**Prerequisites:** basic Python (variables, functions, loops), numpy arrays,
+sine and cosine, and multiplying a 2×2 matrix by a vector (notebook 00 does
+it in numpy; the complex numbers it uses are explained where they appear).
+No quantum physics and no machine learning needed.
 
 1. [racetraQ in plain words](EXPLAINER.md), all of it. (10 min)
 2. [00 — Qubits for drivers](../notebooks/00_qubits_for_drivers.ipynb): one
@@ -57,12 +60,14 @@ learning needed.
    it brake for the hairpin). (20 min)
 4. [02 — Q-learning from scratch](../notebooks/02_q_learning_from_scratch.ipynb):
    a Q-table, a five-minute neural network, then deep Q-learning that laps
-   the oval in seconds. Do exercise 1 (Bellman by hand). (30 min)
+   the oval in seconds. Do exercise 1 (Bellman by hand). (40 min)
 5. [03 — Quantum circuits as Q-functions](../notebooks/03_quantum_circuits_as_q_functions.ipynb)
    up to and including "A teaching point: the provably dead parameters".
    (20 min)
-6. Optional: in the full demo, train your own driver in the **Studio**, or
-   race the circuit at [racetraq.org](https://racetraq.org/). (10 min)
+6. Optional: train your own driver in the **Studio**. The Studio is part
+   of the [full demo](../README.md#try-it) on your own computer (`./run.sh`
+   in the clone), not of racetraq.org. Without it, race the circuit at
+   [racetraq.org](https://racetraq.org/). (10 min)
 
 Answer the checkpoint questions at the end of each notebook before moving
 on.
@@ -195,7 +200,7 @@ an estimate from shots on real hardware, never an exact number.
 
 ## More
 
-- [Glossary](GLOSSARY.md) — about 70 terms in one sentence each.
+- [Glossary](GLOSSARY.md) — about 75 terms in one sentence each.
 - [Teaching with racetraQ](TEACHING.md) — a 90-minute and a half-day
   workshop, with an answer key.
 - [racetraQ in plain words](EXPLAINER.md), [SCIENCE.md](SCIENCE.md),

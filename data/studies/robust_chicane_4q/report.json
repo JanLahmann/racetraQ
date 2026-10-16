@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/robust_chicane",
+ "directory": "auditA/retrain/robust_chicane",
  "baseline": "gap8an",
  "bootstrap": {
   "resamples": 2000,

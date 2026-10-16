@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp_q10_plain",
+ "directory": "scienceF/gp_q10_plain",
  "baseline": "plainL6",
  "bootstrap": {
   "resamples": 2000,

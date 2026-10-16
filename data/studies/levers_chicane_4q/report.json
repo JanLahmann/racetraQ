@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/levers_chicane",
+ "directory": "scienceF/levers_chicane",
  "baseline": "none",
  "bootstrap": {
   "resamples": 2000,
