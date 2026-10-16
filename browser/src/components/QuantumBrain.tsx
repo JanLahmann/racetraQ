@@ -116,13 +116,14 @@ export function QuantumBrain({
             </h3>
             <ul className="qubits">
               {Array.from({ length: quantum.nQubits }, (_, i) => {
-                const z = decision?.expectations?.[i] ?? 1;
+                // before the first decision there is no measurement yet
+                const z = decision?.expectations?.[i];
                 const readout = i < driver.nActions;
                 return (
                   <li key={i} className={readout ? 'readout' : 'spectator'}>
                     <span className="label">q{i}</span>
-                    <Bar value={z} min={-1} max={1} color={readout ? '#b4a3ff' : '#4b5163'} />
-                    <span className="num">{z >= 0 ? '+' : ''}{z.toFixed(2)}</span>
+                    <Bar value={z ?? 0} min={-1} max={1} color={readout ? '#b4a3ff' : '#4b5163'} />
+                    <span className="num">{z === undefined ? '—' : `${z >= 0 ? '+' : ''}${z.toFixed(2)}`}</span>
                     <span className="role">{readout ? `→ ${labels[i]}` : 'no readout'}</span>
                   </li>
                 );
