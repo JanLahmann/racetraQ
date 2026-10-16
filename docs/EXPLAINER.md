@@ -78,7 +78,7 @@ an extra block or two so that every action sees every sensor.
 
 ## What did we find?
 
-In October 2026 everything was re-measured: eight to ten training runs per
+In October 2026 everything was re-measured: five to ten training runs per
 setting instead of one to three, each judged on fresh test episodes it was
 not selected on. The headline changed.
 

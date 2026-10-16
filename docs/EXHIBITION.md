@@ -142,10 +142,10 @@ prerequisites"). 8- and 10-qubit oval/chicane weights ship as well. The
 the oval and 12.6 s on chicane, a lap in 72 of 72 test episodes each. The
 10-qubit oval and chicane drivers are new as well: six layers (every action
 sees every input), 13.3 s and 12.6 s, 72 of 72 test episodes each. At 10
-qubits even **gp** has a bundled driver, still from July: a four-layer
-circuit that senses 5 rays plus four engineered track features (the gauge
-labels change accordingly when it drives) and laps in 24 of 36 test
-episodes at about 22 s.
+qubits even **gp** has a bundled driver (since 2026-10-14): a six-layer,
+6-action circuit that senses 5 rays plus four engineered track features (the
+gauge labels change accordingly when it drives) and laps in 72 of 72 fresh
+test episodes at about 18.9 s.
 
 Talking point — what the audit found, and what the re-measurement says:
 *"With four layers, each action's readout only sees inputs within three
@@ -286,8 +286,8 @@ show a minimap, and the browser remembers the choice.
   training.
 - **Draw your own (✏️):** the crowd-pleaser — let a visitor sketch a loop on
   the race view; the server smooths it into a drivable track and the agent
-  drives it zero-shot. Same advice as for 🎲: keep the Driver dropdown on
-  *gp* (drawn tracks were not measured separately; they use the same
+  drives it zero-shot. Same as for 🎲: the default universal driver or *gp*
+  from the Driver dropdown (drawn tracks were not measured separately; they use the same
   default driver). Impossible drawings come back with a friendly hint (open
   loop, crossing, too-tight corners); drawing again is the adjust flow.
   Talking point: *"this driver was trained on a single track and has never
