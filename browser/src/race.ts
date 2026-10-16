@@ -92,10 +92,12 @@ export async function buildRace(manifest: Manifest, setup: RaceSetup): Promise<B
       const rivalId = setup.rival === 'pro' ? 'mlp_pro' : `mlp_${setup.track}`;
       const info = findDriver(manifest, rivalId);
       if (info) {
+        // the MLP is matched to the 4-qubit circuit (same 3 rays + speed), not to the larger ones
+        const larger = (findDriver(manifest, setup.driver)?.circuit?.n_qubits ?? 4) > 4;
         const label =
           setup.rival === 'pro'
             ? `Classical pro · ${info.n_params.toLocaleString('en')} params`
-            : `Classical MLP · ${info.n_params} params`;
+            : `Classical MLP · ${info.n_params} params${larger ? ` (${info.n_rays} rays, not matched)` : ''}`;
         specs.push(await agentSpec(manifest, track, rivalId, setup.rival, label, setup.rival === 'pro' ? COLORS.pro : COLORS.mlp));
       }
     }

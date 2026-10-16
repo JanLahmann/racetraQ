@@ -61,12 +61,14 @@ function firstVisit(): boolean {
 const CAMERA_LABELS: Record<CameraView, string> = { top: 'Top', chase: 'Chase', cockpit: 'Cockpit' };
 const CAMERA_KEY = 'racetraq-camera';
 
+const query = (q: string) => typeof window.matchMedia === 'function' && window.matchMedia(q).matches;
+const isTouch = () => query('(pointer: coarse)');
+
 /** Without a saved choice: the chase camera on touch screens, where the
  *  top-down car is a few pixels long, unless the visitor asked for reduced
  *  motion (the chase view turns with the car). */
 function defaultCamera(): CameraView {
-  const query = (q: string) => typeof window.matchMedia === 'function' && window.matchMedia(q).matches;
-  return query('(pointer: coarse)') && !query('(prefers-reduced-motion: reduce)') ? 'chase' : 'top';
+  return isTouch() && !query('(prefers-reduced-motion: reduce)') ? 'chase' : 'top';
 }
 
 /** The camera view this browser used last (the default when unknown). */
@@ -217,6 +219,8 @@ export function App() {
   const pickMode = (mode: Mode) => {
     if (mode === setup.mode) return;
     track('mode change', { mode, track: setup.track });
+    // the four snapshots take a moment to load: don't show the old cars and laps meanwhile
+    if (mode === 'evolution') setRace(null);
     update({ mode });
   };
   const pickDriver = (d: DriverInfo) => {
@@ -305,7 +309,7 @@ export function App() {
               world={world}
               track={race.track}
               mode={setup.mode === 'watch' ? 'attract' : setup.mode}
-              paused={paused}
+              paused={paused || (setup.mode === 'race' && aboutOpen)}
               speed={setup.mode === 'race' ? 1 : speed}
               showRays={showRays}
               camera={setup.mode === 'race' ? camera : 'top'}
@@ -451,8 +455,10 @@ export function App() {
             </div>
             {setup.mode === 'race' && (
               <p className="hint">
-                Drive with the arrow keys or WASD (Space brakes) — or the on-screen pedals. C switches the
-                camera: chase and cockpit turn with your car. The quantum car decides 10 times a second.
+                {isTouch()
+                  ? 'Drive with the on-screen pedals. The 📷 button switches the camera: chase and cockpit turn with your car.'
+                  : 'Drive with the arrow keys or WASD (Space brakes) — or the on-screen pedals. C switches the camera: chase and cockpit turn with your car.'}{' '}
+                The quantum car decides 10 times a second.
               </p>
             )}
             {setup.mode === 'evolution' && (
