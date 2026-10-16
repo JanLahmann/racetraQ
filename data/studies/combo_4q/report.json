@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/combo",
+ "directory": "auditA/retrain/combo",
  "baseline": "quantum",
  "bootstrap": {
   "resamples": 2000,

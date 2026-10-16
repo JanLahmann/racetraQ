@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/q8_chicane",
+ "directory": "auditA/retrain/q8_chicane",
  "baseline": "L4",
  "bootstrap": {
   "resamples": 2000,

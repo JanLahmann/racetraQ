@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/levers_gp",
+ "directory": "scienceF/levers_gp",
  "baseline": "none",
  "bootstrap": {
   "resamples": 2000,

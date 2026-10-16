@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/levers_oval",
+ "directory": "scienceF/levers_oval",
  "baseline": "none",
  "bootstrap": {
   "resamples": 2000,

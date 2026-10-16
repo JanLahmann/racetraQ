@@ -1,4 +1,4 @@
-# Study report: /Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp4_pace30
+# Study report: scienceF/gp4_pace30
 
 - 16 finished cells in 2 variants; 0 failed, 0 not run yet.
 - Intervals: 95% stratified percentile bootstrap over seeds, 2000 resamples, RNG seed 0. IQM = mean of the middle 50% of seeds. With fewer than about 10 seeds these intervals understate the uncertainty; a single seed has none ([—]).

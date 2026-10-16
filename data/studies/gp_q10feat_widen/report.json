@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp_q10_widen",
+ "directory": "scienceF/gp_q10_widen",
  "baseline": "w4",
  "bootstrap": {
   "resamples": 2000,

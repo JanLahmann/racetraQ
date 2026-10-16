@@ -10,6 +10,9 @@ too big for the repo.  This writes what the docs and notebooks need to
   log, the 36-episode reliability evals of the best snapshot and of the final
   params, mean return per 100 episodes, wall time
 
+The report's ``directory`` is written relative to the working directory (or
+as the study directory's name), never as an absolute path.
+
 Usage: python tools/export_study.py STUDY_DIR --name gp_4q [--out data/studies]
 """
 
@@ -30,11 +33,25 @@ CELL_KEYS = ("variant", "seed", "agent", "track", "profile", "episodes", "overri
              "returns_by_100", "wall_time_s")
 
 
+def neutral_label(study_dir: Path) -> str:
+    """The study's ``directory`` as committed: relative to the working
+    directory when it lies below it, else only its own name, so no private
+    absolute path ends up in the repository."""
+    path = Path(study_dir).resolve()
+    try:
+        return path.relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
 def export(study_dir: Path, name: str, out: Path, baseline: str | None = None) -> Path:
     """Write the summary of ``study_dir`` to ``out/name``; returns that directory."""
     target = out / name
     target.mkdir(parents=True, exist_ok=True)
     report = study.build_report(study_dir, baseline=baseline)
+    report["directory"] = neutral_label(study_dir)
+    for cell in report["failed_cells"]:
+        cell["error_file"] = Path(cell["error_file"]).relative_to(study_dir).as_posix()
     (target / "report.md").write_text(study.render_markdown(report), encoding="utf-8")
     (target / "report.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     cells = []

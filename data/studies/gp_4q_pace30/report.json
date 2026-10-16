@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp4_pace30",
+ "directory": "scienceF/gp4_pace30",
  "baseline": "rel30",
  "bootstrap": {
   "resamples": 2000,

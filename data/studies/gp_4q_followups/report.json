@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-racetraQ/scienceF/gp4_follow",
+ "directory": "scienceF/gp4_follow",
  "baseline": "feat4",
  "bootstrap": {
   "resamples": 2000,

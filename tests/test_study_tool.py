@@ -638,3 +638,30 @@ def test_failed_cell_writes_error_and_does_not_stop_the_study(tmp_path, capsys):
         "episodes"] == 4
     assert "bad seed 0: FAILED" in out and "DONE 2 cells: 1 ok, 1 failed" in out
     assert (tmp_path / study.DONE_NAME).read_text().strip() == "2 cells: 1 ok, 1 failed"
+
+
+# ------------------------------------------------- tools/export_study.py
+
+
+def test_export_writes_no_absolute_paths(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location(
+        "racetraq_export_study", STUDY_PATH.parent / "export_study.py")
+    export_study = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(export_study)
+    study_dir = tmp_path / "private" / "my_study"
+    _write_fake_study(study_dir, [
+        _fake_result("base", 0, 36, 36, [0, 1.0], first_clean=80, mean_lap=30.0)])
+    failed = study.cell_dir(study_dir, "base", 1)
+    failed.mkdir(parents=True)
+    (failed / study.ERROR_NAME).write_text("exit code 1\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path / "private")
+    target = export_study.export(study_dir, "summary", tmp_path / "out")
+    report = json.loads((target / "report.json").read_text(encoding="utf-8"))
+    assert report["directory"] == "my_study"  # relative to the working directory
+    assert report["failed_cells"][0]["error_file"] == f"cells/base/seed1/{study.ERROR_NAME}"
+    assert (target / "report.md").read_text(encoding="utf-8").startswith(
+        "# Study report: my_study\n")
+    for name in ("report.json", "report.md", "cells.json"):
+        assert str(tmp_path) not in (target / name).read_text(encoding="utf-8")
+    monkeypatch.chdir(tmp_path / "out")  # outside the working directory: its name only
+    assert export_study.neutral_label(study_dir) == "my_study"

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "directory": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/gp_q10feat",
+ "directory": "auditA/retrain/gp_q10feat",
  "baseline": "L4",
  "bootstrap": {
   "resamples": 2000,

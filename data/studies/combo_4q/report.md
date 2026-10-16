@@ -1,4 +1,4 @@
-# Study report: /Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/retrain/combo
+# Study report: auditA/retrain/combo
 
 - 35 finished cells in 4 variants; 0 failed, 5 not run yet.
 - Intervals: 95% stratified percentile bootstrap over seeds, 2000 resamples, RNG seed 0. IQM = mean of the middle 50% of seeds. With fewer than about 10 seeds these intervals understate the uncertainty; a single seed has none ([—]).
