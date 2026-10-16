@@ -83,10 +83,11 @@ reliably here. Under the hood:
   generated track with real hairpins and chicanes — fresh every roll, or type a
   seed to reload a favourite, with short/medium/long size presets. The car
   defaults to the universal driver, which lapped every generated track we
-  tested (see above), as does the **gp** specialist in the driver menu.
+  tested (see "One driver, every track" below), as does the **gp** specialist
+  in the driver menu.
 - **Draw your own**: hit ✏️ and sketch a loop right on the race view — the
   server smooths it into a drivable track and the agent takes it on (same
-  driver default, same advice: pick **gp**). Impossible drawings (open
+  driver default and the same **gp** alternative). Impossible drawings (open
   strokes, crossings, razor hairpins) come back with a hint about what to
   fix; just draw again.
 - **Train**: watch quantum and classical agents learn side-by-side (warm
@@ -151,7 +152,7 @@ then `jupyter lab` and open `notebooks/`.
 ## Measured results (October 2026, multi-seed)
 
 Every number in this section comes from the multi-seed studies of
-2026-10-01/02 (`tools/study.py`, 8–10 seeds per recipe at 4 qubits), run
+2026-10-01 to 2026-10-14 (`tools/study.py`, 8–10 seeds per recipe at 4 qubits), run
 after a soundness audit. `x [a, b]` is an interquartile mean over seeds
 with its 95 % bootstrap interval. Per-seed data: [`data/studies/`](data/studies);
 protocol, all tables and the caveats: [docs/SCIENCE.md](docs/SCIENCE.md).
@@ -251,20 +252,22 @@ drivers are 6-block files (72 of 72 test episodes, 13.3 s and 12.6 s).
 `quantum_gp_q10` (since 2026-10-14) is a 6-block, 6-action circuit on an
 engineered-feature observation, chosen by rule from an 8-seed study: it laps
 gp in 72 of 72 fresh test episodes at 18.9 s, the fastest learned gp driver
-in `data/records.md` (not a matched comparison: the MLP drives four actions
-on a different observation). Under the recipe that ships for 4-qubit gp
-neither depth learns the track at 10 qubits; under the July recipe 6 of 8
-seeds do.
-The mechanisms an earlier campaign added for larger registers remain in the
-code and were not re-measured: engineered observation features
-(`[observation] features`), a qubit-scaled action readout (`--actions 6|8`)
-and a pace fine-tune (`--pace`); see docs/SCIENCE.md, "July 2026
-exploratory results".
+in `data/records.md` after the expert-mode `pro` MLP (best 16.5 s, mean
+17.8 s there; not a matched comparison: the MLPs drive four actions on a
+different observation). Under the recipe that ships for 4-qubit gp
+neither depth learns the track at 10 qubits; under the July recipe 5 of 8
+seeds (4 blocks) and 3 of 8 (6 blocks) do.
+The mechanisms an earlier campaign added for larger registers — engineered
+observation features (`[observation] features`), a qubit-scaled action
+readout (`--actions 6|8`) and a pace fine-tune (`--pace`) — were
+re-measured at 10 qubits on gp in October 2026 (8 seeds per variant); see
+docs/SCIENCE.md, "Follow-ups to the audit".
 
 **One driver, every track — with a catch**: the bundled **universal**
 driver is a single 4-qubit circuit trained from scratch on all four tracks
 round-robin (3000 episodes, 5 seeds). The seed that ranks first on those
-four tracks (144 of 144 fresh episodes at 13.7 / 13.9 / 32.2 / 41.5 s) does
+four tracks (283 of 288 fresh episodes; 144 of 144 at 13.7 / 13.9 / 32.2 /
+41.5 s in the earlier 36-per-track check) does
 **not** generalize beyond them — on ten generated tracks it completes no
 lap (0 of 120 episodes) and in the demo's random-track mode it brakes to a
 stop — so the bundled file is seed 3 instead: it laps every bundled track

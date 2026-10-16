@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@qamposer/react": "github:JanLahmann/qamposer-react#entangible",
+    "@qamposer/react": "file:vendor/qamposer-react-0.2.0-a50cc94.tgz",
     "lz-string": "^1.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

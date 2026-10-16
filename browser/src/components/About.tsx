@@ -3,6 +3,8 @@ import { outbound } from '../analytics';
 import type { Manifest } from '../data';
 
 const REPO = 'https://github.com/JanLahmann/racetraQ';
+/** concept DOI: resolves to the latest release (CITATION.cff) */
+const DOI_URL = 'https://doi.org/10.5281/zenodo.23270600';
 
 export function About({ manifest, onClose }: { manifest: Manifest; onClose: () => void }) {
   useEffect(() => {
@@ -19,13 +21,13 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
         </button>
         <h2>A race car with a quantum circuit for a brain</h2>
         <p>
-          Every tenth of a second the car measures its surroundings: three lidar rays (the purple lines) and its
-          speed. Those numbers are written into qubits as rotation angles, a short quantum circuit entangles the
+          Every tenth of a second the car measures its surroundings: for the 4-qubit driver, three lidar rays (the
+          purple lines) and its speed. Those numbers are written into qubits as rotation angles, a short quantum circuit entangles the
           qubits, and measuring each qubit gives one score per action — steer right, go straight, steer left,
           brake. The car takes the action with the highest score.
         </p>
         <p>
-          The circuit's {manifest.drivers.find((d) => d.id === 'quantum_oval')?.n_params ?? 56} numbers were learned
+          The 4-qubit oval circuit's {manifest.drivers.find((d) => d.id === 'quantum_oval')?.n_params ?? 56} numbers were learned
           by reinforcement learning (double deep Q-learning): thousands of practice laps, rewarded for progress
           along the track and penalised for leaving it. Training happened offline in{' '}
           <a href={REPO} target="_blank" rel="noopener" {...outbound(REPO)}>
@@ -94,6 +96,12 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
             learning path
           </a>{' '}
           suggests where to start, from a 5-minute tour to a research track.
+        </p>
+        <p className="hint">
+          Cite:{' '}
+          <a href={DOI_URL} target="_blank" rel="noopener" {...outbound(DOI_URL)}>
+            doi:10.5281/zenodo.23270600
+          </a>
         </p>
       </div>
     </div>

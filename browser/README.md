@@ -71,6 +71,13 @@ python tools/export_browser.py --check  # what CI runs (tests/test_browser_expor
 [JanLahmann/qamposer-react](https://github.com/JanLahmann/qamposer-react)
 (first-class CZ gates and the exported `simulateStatevector` /
 `expectationZ`), the same branch [Entangible](https://entangible.org) uses.
+It is vendored as a built tarball, `vendor/qamposer-react-0.2.0-a50cc94.tgz`
+(commit a50cc94 of that branch, packed from its `npm install` output): since
+2026-10-16 npm can no longer prepare the git dependency (`Cannot read
+properties of null (reading 'edgesOut')` in the fork's build step), which
+broke CI and the Pages deploy. To update it, build the fork
+(`npm install && npm run build` in a checkout), `npm pack`, replace the
+tarball and point `package.json` at the new file.
 
 ## Hosting and analytics
 
