@@ -14,7 +14,7 @@ import { initTooltips } from "./tooltip.js";
 import { initStudioPanel } from "./studio-panel.js";
 import {
   t, has, lang, setLang, loadI18n, applyDom, onLangChange, storedLang, clearStoredLang,
-  featureLabel,
+  featureLabel, fmtLap,
 } from "./i18n.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -143,7 +143,7 @@ function carDriver(text) {
   if (text === "pro (classical DQN, big MLP)") return t("car.driver_pro");
   if (text === "gp-trained generalist") return t("car.driver_generalist");
   const m = /^(.+)-trained$/.exec(text);
-  return m ? t("car.trained", { track: m[1] }) : text;
+  return m ? t("car.trained", { track: trackLabel(m[1]) }) : text;
 }
 function carLabel(label) {
   for (const [re, fn] of CAR_LABELS) {
@@ -151,11 +151,6 @@ function carLabel(label) {
     if (m) return fn(m);
   }
   return label;
-}
-
-function fmtLap(t) {
-  if (typeof t !== "number" || !isFinite(t)) return "—";
-  return `${t.toFixed(2)}s`;
 }
 
 function toast(message, isError = true) {
@@ -193,6 +188,8 @@ function applyMode(mode) {
   attract.setMode(mode);
   renderer.setMode(mode);
   $("#evo-caption").hidden = mode !== "evolution";
+  // a Studio run owns the training: no second one from the Training tab
+  $("#train-heading").hidden = $("#train-form").hidden = mode === "studio";
   $("#attract-headline").hidden = mode !== "attract";
   if (mode !== "race") hideRaceOverlays();
   $("#evo-legend").hidden = true; // refilled from the next state broadcast
@@ -202,6 +199,8 @@ function applyMode(mode) {
   else if (mode === "studio") selectTab("studio");
   else if (mode === "hardware") selectTab("hardware");
   else if (mode === "attract" || mode === "evolution") selectTab("quantum");
+  // the Studio's duel runs in mode "studio": Race never needs the Studio tab
+  else if (mode === "race" && $("#panel-studio").classList.contains("active")) selectTab("quantum");
 }
 
 function selectTab(name) {
@@ -271,7 +270,7 @@ function applyDrivers(drivers, current) {
     d === "auto" ? t("driver.auto")
     : d === "hero" ? t("driver.hero")
     : d === "pro" ? t("driver.pro")
-    : t("driver.trained", { track: d });
+    : t("driver.trained", { track: trackLabel(d) });
   sel.replaceChildren(
     ...(drivers || ["auto"])
       .filter((d) => EXPERT || (d !== "hero" && d !== "pro"))
@@ -328,6 +327,12 @@ function renderLapboard(cars, force = false) {
   lapboardAt = now;
   const board = $("#lapboard");
   const rows = cars.map((car) => {
+    // training cars and replays send no lap events: their last lap counts too
+    const known = state.bestLaps.get(car.id);
+    if (typeof car.last_lap_time === "number" && isFinite(car.last_lap_time) &&
+        (known === undefined || car.last_lap_time < known)) {
+      state.bestLaps.set(car.id, car.last_lap_time);
+    }
     const best = state.bestLaps.get(car.id);
     if (car.ghost) {
       // ghosts stay off the board except for a dim "Ghost (best …)" entry
@@ -348,7 +353,11 @@ function renderLapboard(cars, force = false) {
     }
     const evo = state.mode === "evolution" && car.label;
     const color = evo ? renderer.stageColor(car.label) : KIND_COLORS[car.kind] || "#ccc";
-    const name = evo ? carLabel(car.label) : kindName(car.kind);
+    // the eight practice cars of a training run ("quantum-0" …) get numbers
+    const practice = /^(?:quantum|mlp)-(\d+)$/.exec(car.id);
+    const name = evo || /^your circuit/.test(car.label || "") ? escapeHtml(carLabel(car.label))
+      : practice ? `${kindName(car.kind)} ${Number(practice[1]) + 1}`
+      : kindName(car.kind);
     return `<div class="lap-row${car.off_track ? " off" : ""}">
       <span class="dot" style="background:${color}"></span>
       <span class="lap-kind">${name}</span>
@@ -410,7 +419,7 @@ function renderEpisodeOverlay() {
 }
 
 function showBestBanner(lapTime) {
-  showBanner(t("banner.best_lap", { time: `${lapTime.toFixed(2)}s` }));
+  showBanner(t("banner.best_lap", { time: fmtLap(lapTime) }));
 }
 
 function showBanner(text) {
@@ -519,7 +528,7 @@ function renderLeaderboard(msg) {
     : "";
   entries.innerHTML = msg.entries
     .map((e) => `<li><span class="board-name">${escapeHtml(e.name)}</span>
-      <b>${e.lap_s.toFixed(2)}s</b><span class="board-date">${e.date || ""}</span>${remove(e)}</li>`)
+      <b>${fmtLap(e.lap_s)}</b><span class="board-date">${e.date || ""}</span>${remove(e)}</li>`)
     .join("");
   $("#board-moderation").hidden = !isOperator();
   $("#board-empty").hidden = msg.entries.length > 0;
@@ -527,8 +536,8 @@ function renderLeaderboard(msg) {
     .map((r) => `<div class="board-ref">
       <span class="dot" style="background:${KIND_COLORS[r.kind] || "#ccc"}"></span>
       <span>${kindName(r.kind)}</span>
-      <span class="board-driver">${escapeHtml(r.driver)}</span>
-      <b>${r.lap_s.toFixed(2)}s</b>
+      <span class="board-driver">${escapeHtml(carDriver(r.driver))}</span>
+      <b>${fmtLap(r.lap_s)}</b>
     </div>`)
     .join("") || `<p class="hint">${t("board.no_refs")}</p>`;
 }

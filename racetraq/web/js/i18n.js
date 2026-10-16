@@ -185,6 +185,18 @@ export function numWord(n, cap = false) {
   return cap ? word.charAt(0).toUpperCase() + word.slice(1) : word;
 }
 
+const lapFormats = {};
+
+/** A lap time in seconds as "12.30 s" / "12,30 s" (no-break space); "—"
+ *  for no time. */
+export function fmtLap(seconds) {
+  if (typeof seconds !== "number" || !isFinite(seconds)) return "—";
+  lapFormats[current] ??= new Intl.NumberFormat(current, {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  });
+  return `${lapFormats[current].format(seconds)} s`;
+}
+
 /** "a, b and c" in the active language. */
 export function listJoin(parts) {
   if (parts.length <= 1) return parts.join("");

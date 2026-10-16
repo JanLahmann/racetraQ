@@ -5,18 +5,20 @@
 // tables ("studio.*"); the server's catalog labels and blurbs are English and
 // are shown translated by their ids (sensor preset, action count, track).
 
-import { t, has, actionLabel } from "./i18n.js";
+import { t, has, actionLabel, fmtLap } from "./i18n.js";
 
 const esc = (s) =>
   String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const fmtS = (s) => {
   if (typeof s !== "number" || !isFinite(s)) return "—";
-  if (s < 90) return `${Math.round(s)} s`;
-  return `${Math.floor(s / 60)} min ${String(Math.round(s % 60)).padStart(2, "0")} s`;
+  const r = Math.round(s);
+  if (r < 90) return `${r} s`;
+  const sec = r % 60;
+  return sec ? `${Math.floor(r / 60)} min ${String(sec).padStart(2, "0")} s` : `${r / 60} min`;
 };
-const fmtLap = (t) => (typeof t === "number" && isFinite(t) ? `${t.toFixed(2)} s` : "—");
 const TRACK_LABELS = { oval: "Oval", chicane: "Chicane", gp: "Grand Prix", combo: "Combo" };
+const trackName = (id) => TRACK_LABELS[id] || id;
 
 /** A string-table entry when there is one, else the server's own text. */
 const tOr = (key, fallback) => (has(key) ? t(key) : fallback);
@@ -75,17 +77,19 @@ export function testsSvg(tests) {
   if (!tests.length) return "";
   const w = 280;
   const h = 56;
+  const left = 16; // room for the scale's top ("12")
   const n = Math.max(tests.length, 12);
-  const bw = w / n;
+  const bw = (w - left) / n;
+  const top = tests[tests.length - 1][2];
   const bars = tests
     .map(([ep, lapped, of], i) => {
-      const bh = Math.max(2, (lapped / Math.max(1, of)) * (h - 4));
-      return `<rect x="${(i * bw + 1).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}"
+      const bh = Math.max(4, (lapped / Math.max(1, of)) * (h - 4));
+      return `<rect x="${(left + i * bw + 1).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}"
         height="${bh.toFixed(1)}" rx="1.5" class="${lapped > 0 ? "t-lap" : "t-none"}"><title>${esc(t("studio.tests.bar", { episode: ep, lapped, of }))}</title></rect>`;
     })
     .join("");
   return `<svg class="studio-tests" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img"
-    aria-label="${esc(t("studio.tests.aria"))}">${bars}</svg>`;
+    aria-label="${esc(t("studio.tests.aria"))}"><text x="${left - 3}" y="10" text-anchor="end">${esc(top)}</text>${bars}</svg>`;
 }
 
 export function initStudioPanel({ root, send, setName, onPhase, onStart, moderate, stage,
@@ -96,6 +100,7 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
   let last = null;
   let phase = "setup";
   let tests = []; // in-training tests of the current run: [episode, lapped, of]
+  let stopping = false; // Stop pressed: the last test is still running
   let firstLapSeen = null;
 
   const comboFor = () => catalog && catalog.combos[`${sel.track}_q${sel.qubits}`];
@@ -169,7 +174,7 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
     const ev = live.last_eval;
     return `
       <h3>${t("studio.live.heading", {
-        track: esc(spec.track), n: spec.qubits, sensors: esc(sensorShort(spec.sensors)), actions: spec.actions,
+        track: esc(trackName(spec.track)), n: spec.qubits, sensors: esc(sensorShort(spec.sensors)), actions: spec.actions,
       })}${spec.warm ? ` · ${t("studio.warm_short")}` : ""}</h3>
       <div class="studio-timer"><div class="studio-timer-fill" style="width:${(frac * 100).toFixed(1)}%"></div></div>
       <p class="studio-big">${fmtS(elapsed)} <span class="hint">${t("studio.live.of", { limit: fmtS(msg.time_limit_s) })}</span></p>
@@ -182,7 +187,7 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
       ${tests.length ? `<h3>${t("studio.tests.heading")}</h3>${testsSvg(tests)}
         <p class="hint">${t("studio.tests.hint")}</p>` : ""}
       <p class="hint">${t("studio.live.how")}</p>
-      <button type="button" id="studio-stop">${t("studio.stop")}</button>`;
+      <button type="button" id="studio-stop"${stopping ? " disabled" : ""}>${stopping ? t("studio.stopping") : t("studio.stop")}</button>`;
   }
 
   function resultHtml(msg) {
@@ -216,20 +221,21 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
         : "";
       if (bits.length) {
         compare = `<p>${t("studio.cmp.line", { bits: bits.join(t("studio.cmp.and")), median })}
-          <span class="hint">${t("studio.cmp.source", { runs: st.runs, episodes: st.episodes, source: esc(st.source) })}</span></p>`;
+          <span class="hint"${st.source ? ` title="${esc(st.source)}"` : ""}>${t("studio.cmp.source", { runs: st.runs, episodes: st.episodes })}</span></p>`;
       }
     } else if (!spec.studied) {
       compare = `<p class="hint">${t("studio.cmp.experiment")}</p>`;
     }
     const rank = msg.rank
-      ? `<p class="studio-rank">${t("studio.rank_on_board", { rank: msg.rank, track: esc(spec.track) })}</p>` : "";
+      ? `<p class="studio-rank">${t("studio.rank_on_board", { rank: msg.rank, track: esc(trackName(spec.track)) })}</p>` : "";
     const named = msg.name ? "" : lapped ? `<p class="hint">${t("studio.name_for_board")}</p>` : "";
     return `
-      <h3>${t("studio.result.heading", { track: esc(spec.track), n: spec.qubits, params: spec.n_params })}</h3>
+      <h3>${t("studio.result.heading", { track: esc(trackName(spec.track)), n: spec.qubits, params: spec.n_params })}</h3>
       <dl class="studio-facts">
         <dt>${t("studio.fact.trained")}</dt><dd>${t("studio.result.trained", { episodes: r.episodes, time: fmtS(r.seconds) })} <span class="hint">(${esc(reason(r.stop_reason))})</span></dd>
         <dt>${t("studio.fact.first_lap")}</dt><dd>${r.first_lap ? t("studio.episode_n", { n: r.first_lap }) : t("studio.none")}</dd>
-        <dt>${t("studio.fact.best_test")}</dt><dd>${best ? testText(best) : "—"}</dd>
+        <dt>${t("studio.fact.best_test")}</dt><dd>${best ? testText(best) : "—"}${r.final_test_best
+          ? ` <span class="hint">${t("studio.result.final_test")}</span>` : ""}</dd>
       </dl>
       ${r.error ? `<p class="hint">${t("studio.error", { error: esc(r.error) })}</p>` : ""}
       ${compare}${rank}${named}
@@ -263,18 +269,19 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
   // #operator: a ✕ per studio board entry (the server takes it from the booth machine only)
   const operator = () => document.body.classList.contains("operator");
 
-  function boardHtml(board) {
+  /** The studio board; `mine` is the visitor's own rank on it (1-based). */
+  function boardHtml(board, mine = null) {
     if (!board) return "";
     const rows = (board.entries || [])
       .map(
-        (e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}${operator()
+        (e, i) => `<tr${i + 1 === mine ? ' class="mine"' : ""}><td>${i + 1}</td><td>${esc(e.name)}${operator()
           ? ` <button type="button" class="board-remove" data-studio-remove="${i}"
               data-name="${esc(e.name)}" aria-label="${esc(t("board.remove_aria", { name: e.name }))}">✕</button>` : ""}</td>
-          <td>${e.qubits}q · ${esc(sensorShort(e.sensors))} · ${e.actions}a${e.warm ? ` · ${t("studio.warm_short")}` : ""}</td>
+          <td>${t("studio.board.circuit_cell", { n: e.qubits, sensors: esc(sensorShort(e.sensors)), actions: e.actions })}${e.warm ? ` · ${t("studio.warm_short")}` : ""}</td>
           <td>${e.lapped}/${e.eval_episodes}</td><td>${fmtLap(e.mean_lap)}</td></tr>`,
       )
       .join("");
-    return `<h2>${t("studio.board.heading", { track: esc(board.track) })}</h2>
+    return `<h2>${t("studio.board.heading", { track: esc(trackName(board.track)) })}</h2>
       ${rows ? `<table class="studio-board"><thead><tr><th>#</th><th>${t("studio.board.name")}</th><th>${t("studio.board.circuit")}</th><th>${t("studio.board.test")}</th><th>${t("studio.board.mean_lap")}</th></tr></thead><tbody>${rows}</tbody></table>`
         : `<p class="hint">${t("studio.board.empty")}</p>`}
       <p class="hint">${t("studio.board.hint")}</p>`;
@@ -325,7 +332,9 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
     else if (phase === "done") body = resultHtml(last);
     else if (phase === "race" || phase === "watch") body = drivingHtml(last);
     else body = setupHtml();
-    root.innerHTML = `<h2>${t("studio.title")}</h2>${body}${boardHtml(last.board)}`;
+    const spec = last.spec || {};
+    const mine = last.rank && last.board && last.board.track === spec.track ? last.rank : null;
+    root.innerHTML = `<h2>${t("studio.title")}</h2>${body}${boardHtml(last.board, mine)}`;
   }
 
   root.addEventListener("click", (ev) => {
@@ -344,7 +353,16 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
           index: Number(btn.dataset.studioRemove) });
       }
     } else if (btn.id === "studio-stop") {
+      stopping = true; // feedback until the result arrives
+      btn.disabled = true;
+      btn.textContent = t("studio.stopping");
       send("stop");
+      setTimeout(() => { // a refused stop (another device drives) re-arms the button
+        if (stopping && phase === "training") {
+          stopping = false;
+          render();
+        }
+      }, 15000);
     } else if (btn.dataset.cmd) {
       send(btn.dataset.cmd);
     }
@@ -354,6 +372,7 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
     setName(name ? name.value.trim() : "");
     tests = [];
     firstLapSeen = null;
+    stopping = false;
     onStart && onStart();
     send("start", { ...sel });
   }
@@ -415,6 +434,7 @@ export function initStudioPanel({ root, send, setName, onPhase, onStart, moderat
       if (msg.catalog) catalog = msg.catalog;
       if (msg.spec && msg.phase === "training" && !sel.track) sel.track = msg.spec.track;
       const changed = msg.phase !== phase;
+      if (changed) stopping = false;
       phase = msg.phase;
       last = msg;
       const live = msg.live || {};

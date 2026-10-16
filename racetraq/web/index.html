@@ -125,14 +125,14 @@
         <div id="qbars" data-i18n-tip="quantum.bars_tip" data-tip="Q-values: the agent's estimate of future reward for each action (steer right, straight, steer left, brake). The tallest bar wins and steers the car — 10 times per second."></div>
         <div id="qaction" class="qaction">—</div>
         <h2 data-i18n="quantum.circuit">The circuit</h2>
-        <div id="circuit-diagram" class="circuit-scroll" data-i18n-tip="quantum.circuit_tip" data-tip="The actual gate sequence being executed: encoding rotations write the sensors onto the qubits (re-uploaded every layer), trainable rotations are the learned weights, CZ gates entangle neighbours. Dimmed gates cannot influence any action."></div>
+        <div id="circuit-diagram" class="circuit-scroll" data-i18n-tip="quantum.circuit_tip" data-tip="The actual gate sequence being executed: encoding rotations write the sensors onto the qubits (re-uploaded every block), trainable rotations are the learned weights, CZ gates entangle neighbours. Dimmed gates cannot influence any action."></div>
         <div id="circuit-legend"></div>
         <div id="light-cone" hidden></div>
       </div>
 
       <div class="panel" id="panel-training">
-        <h2 data-i18n="train.heading">Train an agent</h2>
-        <form id="train-form">
+        <h2 id="train-heading" class="operator-only" data-i18n="train.heading">Train an agent</h2>
+        <form id="train-form" class="operator-only">
           <label>
             <span data-i18n="train.agent">Agent</span>
             <select id="train-agent">
@@ -155,7 +155,7 @@
           </div>
         </form>
         <h2 data-i18n="train.curves">Learning curves</h2>
-        <canvas id="training-chart" width="340" height="200" data-i18n-tip="train.curves_tip" data-tip="Learning curve: mean return per episode. Rising = the agent is figuring the track out; the epsilon schedule trades exploration for exploitation."></canvas>
+        <canvas id="training-chart" width="340" height="200" data-i18n-tip="train.curves_tip" data-tip="Learning curve: mean return per episode. Rising = the agent is figuring the track out; the epsilon schedule (ε = share of random moves) trades exploration for exploitation."></canvas>
         <h2 data-i18n="train.laps">Lap times</h2>
         <canvas id="lap-chart" width="340" height="160" data-i18n-tip="train.laps_tip" data-tip="Completed training lap times by episode — watch them drop as the policy improves."></canvas>
         <div id="train-stats"></div>

@@ -8,6 +8,19 @@ const SERIES_COLORS = { quantum: "#7a5cff", mlp: "#56b4e9" };
 const EPS_COLOR = "rgba(160,168,186,0.7)";
 const PAD = { l: 40, r: 34, t: 10, b: 22 };
 
+/** Axis captions: `x` centred under the axis (between the end ticks), `y`
+ *  turned up the left edge. */
+function axisCaptions(ctx, W, H, x, y) {
+  ctx.save();
+  ctx.fillStyle = "#8a91a0";
+  ctx.textAlign = "center";
+  ctx.fillText(x, (PAD.l + W - PAD.r) / 2, H - 8);
+  ctx.translate(9, (PAD.t + H - PAD.b) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(y, 0, 0);
+  ctx.restore();
+}
+
 export class TrainingChart {
   constructor(canvas) {
     this.canvas = canvas;
@@ -91,8 +104,8 @@ export class TrainingChart {
     ctx.textAlign = "center";
     ctx.fillText(String(ext.minX), PAD.l, H - 8);
     ctx.fillText(String(ext.maxX), W - PAD.r, H - 8);
+    axisCaptions(ctx, W, H, t("chart.x_episode"), t("chart.y_return"));
     ctx.textAlign = "left";
-    ctx.fillText("ε", W - PAD.r + 4, PAD.t + 8);
 
     // epsilon (dashed, secondary 0..1 axis)
     if (this.epsilon.length > 1) {
@@ -107,7 +120,7 @@ export class TrainingChart {
       ctx.setLineDash([]);
       const last = this.epsilon[this.epsilon.length - 1];
       ctx.fillStyle = EPS_COLOR;
-      ctx.fillText(last.eps.toFixed(2), W - PAD.r + 4, pyEps(last.eps) + 3);
+      ctx.fillText(`ε ${last.eps.toFixed(2)}`, W - PAD.r + 2, pyEps(last.eps) + 3);
     }
 
     // return series with last-value labels
@@ -127,7 +140,9 @@ export class TrainingChart {
       ctx.beginPath();
       ctx.arc(px(last.ep), py(last.ret), 2.5, 0, 2 * Math.PI);
       ctx.fill();
-      ctx.fillText(last.ret.toFixed(1), Math.min(px(last.ep) + 5, W - 28), py(last.ret) - 4);
+      ctx.textAlign = "right";
+      ctx.fillText(last.ret.toFixed(1), px(last.ep) - 5, Math.max(py(last.ret) - 4, PAD.t + 8));
+      ctx.textAlign = "left";
     }
   }
 }
@@ -333,6 +348,7 @@ export class LapChart {
     ctx.textAlign = "center";
     ctx.fillText(String(ext.minX), PAD.l, H - 8);
     ctx.fillText(String(ext.maxX), W - PAD.r, H - 8);
+    axisCaptions(ctx, W, H, t("chart.x_episode"), t("chart.y_lap"));
 
     for (const [name, pts] of Object.entries(this.laps)) {
       const color = SERIES_COLORS[name];

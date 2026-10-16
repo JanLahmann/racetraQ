@@ -377,7 +377,12 @@ input[type="number"],
 }
 
 .studio-tests rect.t-none {
-  fill: var(--border);
+  fill: var(--muted);
+}
+
+.studio-tests text {
+  fill: var(--muted);
+  font-size: 9px;
 }
 
 #race-hud {
@@ -732,6 +737,8 @@ input[type="number"],
 .tabs {
   display: flex;
   border-bottom: 1px solid var(--border);
+  overflow-x: auto; /* long (German) labels scroll rather than run together */
+  scrollbar-width: none;
 }
 
 .tab-btn {
@@ -739,7 +746,8 @@ input[type="number"],
   border: none;
   border-radius: 0;
   background: transparent;
-  padding: 10px 0;
+  padding: 10px 6px;
+  white-space: nowrap;
   color: var(--muted);
   border-bottom: 2px solid transparent;
 }
@@ -1465,6 +1473,15 @@ body.kiosk #sidebar h2 {
 .studio-board td {
   padding: 2px 6px 2px 0;
   font-variant-numeric: tabular-nums;
+}
+/* the visitor's own entry */
+.studio-board tr.mine td {
+  color: var(--text);
+  font-weight: 700;
+}
+.studio-board tr.mine td:first-child {
+  border-left: 3px solid var(--quantum);
+  padding-left: 4px;
 }
 .studio-name input {
   font: inherit;
