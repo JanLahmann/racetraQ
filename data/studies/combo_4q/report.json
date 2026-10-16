@@ -600,7 +600,7 @@
     "preset": "auto",
     "actions": null,
     "pace": false,
-    "init": "/Users/majl/.claude/projects/-Users-majl-GitHub-traQmania/auditA/snap1/traqmania/weights/quantum_combo.npz",
+    "init": "auditA/snap1/traqmania/weights/quantum_combo.npz",
     "overrides": [
      "training.bootstrap_truncation=true",
      "training.epsilon_end=0.30"
