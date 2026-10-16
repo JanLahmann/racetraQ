@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20  # npm 11 (Node 24+) cannot prepare the fork git dependency; same pin as Entangible
+          node-version: 20  # kept from when the fork was a git dependency (npm 11 could not prepare it)
           cache: npm
           cache-dependency-path: browser/package-lock.json
       - name: Install
