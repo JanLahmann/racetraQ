@@ -15,7 +15,7 @@ sourced next to its table; nothing was re-run. A non-technical companion is
 ## Abstract
 
 racetraQ trains a data re-uploading variational quantum circuit (4–10 qubits,
-56–188 parameters) as the Q-function of a double DQN that drives a car around
+56–196 parameters) as the Q-function of a double DQN that drives a car around
 four tracks from lidar and speed, against a parameter-matched MLP under the
 same trainer. An October 2026 audit found the 8- and 10-qubit circuits
 structurally blind to some inputs (readout light cones), snapshot selection
@@ -45,7 +45,7 @@ action agreement with the exact simulator) is reported as a single data point.
 | Time base | 60 Hz physics, 6 substeps per decision: agents decide at 10 Hz and hold the action | `racetraq/config/default.toml` `[physics]` |
 | Car (physics v2) | `accel` 11, `brake` 16, `drag` 0.35, `v_max` 25 | same |
 | Observation | n features for n qubits: n − 1 lidar rays evenly spaced over [−60°, +60°], normalised by `ray_max_dist` 30, plus speed v/v_max; every scalar in [0, 1]; default 3 rays + speed. Egocentric, no absolute position | SCIENCE.md "The circuit"; `racing_env.py` |
-| Actions | 4 discrete: right / straight / left at full throttle, and coast-brake (steer 0, throttle 0, brake 1). 6- and 8-action sets exist; no weights with more than 4 actions are bundled | `racetraq/agents/base.py` |
+| Actions | 4 discrete: right / straight / left at full throttle, and coast-brake (steer 0, throttle 0, brake 1). 6- and 8-action sets exist (trail braking, half-steer); `quantum_gp_q10` drives with 6, every other bundled driver with 4 | `racetraq/agents/base.py` |
 | Reward | signed centerline progress × 1.0; `checkpoint_bonus` 5 per checkpoint; `lap_bonus` 50; `offtrack_penalty` 10, and leaving the track ends the episode | `default.toml` `[reward]` |
 | Time limit | `max_decisions` 600 = 60 s, a truncation (no penalty, `truncated` flag); since the audit the TD target bootstraps through it | same; SCIENCE.md "Trainer options" |
 | Training env | 8 parallel cars | `default.toml` `[training]` |
@@ -56,17 +56,19 @@ action agreement with the exact simulator) is reported as a single data point.
 the numpy, `EstimatorQNN` and hardware paths): n qubits, L re-uploading blocks
 on |0…0⟩. Block l: encoding `RY(λ[l,i]·s[i])` on every qubit (all n features
 re-uploaded every block); variational `RY(θ[l,i,0])` then `RZ(θ[l,i,1])`; CZ
-ring `CZ(0,1) … CZ(n−1,0)`. Readout `E_a = ⟨Z_a⟩` on qubits 0–3 — four actions
-at any n; extra qubits widen the feature register. Head `Q_a = w[a]·E_a + b[a]`,
-essential because useful Q-values are of order 100 while ⟨Z⟩ ∈ [−1, 1]
-(bundled drivers end with |w| between 25 and 95).
+ring `CZ(0,1) … CZ(n−1,0)`. Readout `E_a = ⟨Z_a⟩` on qubits 0 to A − 1 — A
+actions (4 by default, 6 for `quantum_gp_q10`); extra qubits widen the feature
+register. Head `Q_a = w[a]·E_a + b[a]`, essential because useful Q-values are
+of order 100 while ⟨Z⟩ ∈ [−1, 1] (bundled 4-action drivers end with |w|
+between 25 and 95; the 6-action `quantum_gp_q10` between 102 and 184).
 
-**P = 3·L·n + 8**, flat vector `[λ, θ, w, b]`: λ L×n (init π), θ L×n×2 (init
-U(−0.1, 0.1)), w 4 (init 1), b 4 (init 0).
+**P = 3·L·n + 2A** (A actions; + 8 at the default A = 4), flat vector
+`[λ, θ, w, b]`: λ L×n (init π), θ L×n×2 (init U(−0.1, 0.1)), w A (init 1),
+b A (init 0).
 
 | n qubits × L blocks | 4 × 4 | 6 × 4 | 8 × 4 | 8 × 5 | 10 × 4 | 10 × 6 |
 |---|---|---|---|---|---|---|
-| P | 56 | 80 | 104 | 128 | 128 | 188 |
+| P (A = 4) | 56 | 80 | 104 | 128 | 128 | 188 |
 
 (source: SCIENCE.md "The circuit"; "Variants" tables in `data/studies/*/report.md`.)
 
@@ -122,10 +124,13 @@ under the emulated noise (SCIENCE.md "Which parameters ship").
 "best-snapshot lapped" and "final-params lapped" are the fractions with a lap.
 
 **Bundling.** `tools/bundle_driver.py` ranks a variant's seeds by that eval,
-re-evaluates the top three (four for hardware-demo drivers) on 72 *fresh*
-episodes on env seed 31 000, and chooses by (episodes lapped, mean lap) — or by
-laps on the simulated device first (`rank_by: "device"`, 8 device episodes) for
-`quantum_oval`, `quantum_chicane`, `quantum_oval_q6`. The sidecar records the
+re-evaluates the top three to five (four for `quantum_combo` and the
+hardware-demo drivers, five for `quantum_universal`) on 72 *fresh* episodes on
+env seed 31 000, and chooses by (episodes lapped, mean lap) — or by laps on the
+simulated device first (`rank_by: "device"`, 8 device episodes) for
+`quantum_oval`, `quantum_chicane`, `quantum_oval_q6`, or by tracks lapped
+including ten generated ones (`--unseen 10`, section 4.4) for
+`quantum_universal` and `quantum_gp_q10`. The sidecar records the
 fresh numbers, never the shortlisting ones, every candidate and the recipe's
 seed spread. A later re-check used 36 episodes on env seed 47 000
 (`python -m racetraq.records --episodes 36 --seed 47000`), then 61 000 and
@@ -133,7 +138,8 @@ seed spread. A later re-check used 36 episodes on env seed 47 000
 bundled drivers").
 
 **Seeds.** 8–10 per recipe at 4 qubits (29 gp variants, 6 or 10 seeds each);
-8 at 6 qubits; 6 at 8 and at 10; 5 for the universal driver; 3 for `pro`.
+8 at 6 qubits; 6 at 8 and at 10 (oval, chicane), 3 or 8 at 10 on gp; 5 for
+the universal driver; 3 for `pro`.
 
 **Statistics** (`tools/study.py`, lines 108–234):
 
@@ -214,10 +220,11 @@ simulated on that neighbourhood alone (notebook 07).
 
 ## 4 Results
 
-Measured 2026-10-01/03, physics v2, `fastsim`, distinct episodes. "Mean lap"
-averages every lap of an episode, the standing-start lap included; "first clean
-lap" is the training episode in which an exploring car first completes a lap;
-"P" is a probability of improvement with its interval.
+Measured 2026-10-01/03, re-checked 2026-10-08, follow-ups 2026-10-09/14 where
+stated; physics v2, `fastsim`, distinct episodes. "Mean lap" averages every lap
+of an episode, the standing-start lap included; "first clean lap" is the
+training episode in which an exploring car first completes a lap; "P" is a
+probability of improvement with its interval.
 
 ### 4.1 Circuit against the matched MLP at 4 qubits
 
@@ -409,12 +416,14 @@ no noise-robust options), next to an MLP on the same observation.
   visibility the simplest reading of the fifth block's effect, not a proof.
 - *10 qubits, 4 against 6 blocks.* Oval: the same direction, unsupported at 6
   seeds (final-params 0.68 against 0.36, P 0.71 [0.38, 1.00]; laps 13.3 s
-  against 14.3 s, P 0.75 [0.42, 1.00]). Chicane: indistinguishable (stability
-  P 0.50 [0.17, 0.83]; laps P 0.51 [0.17, 0.88]). The 4-block circuit is less
-  stable than the 4-qubit one on the oval (P 0.07 [0.00, 0.25]); the 6-block
-  one is less stable than the 6-qubit circuit (P 0.12 [0.00, 0.38]) and no
-  faster; the 9-ray MLP is steadier and laps earlier in every pairing (P 1.00).
-  Decision: `q10` runs 6 blocks — full visibility costs nothing measurable.
+  against 14.3 s, P 0.75 [0.42, 1.00]). Chicane: stability and end of training
+  indistinguishable (P 0.50 [0.17, 0.83] and 0.51 [0.17, 0.88]), laps faster
+  at 6 blocks (13.1 s against 13.6 s, P 0.83 [0.56, 1.00], the one supported
+  mark of ten). The 4-block circuit is less stable than the 4-qubit one on the
+  oval (P 0.07 [0.00, 0.25]); the 6-block one is less stable than the 6-qubit
+  circuit (P 0.12 [0.00, 0.38]) and no faster; the 9-ray MLP is steadier and
+  laps earlier in every pairing (P 1.00). Decision: `q10` runs 6 blocks — full
+  visibility costs nothing measurable.
 - *gp above 4 qubits.* Plain 6 qubits: 0 of 6 seeds (July recipe). The
   10-qubit feature circuit under the July recipe, single runs on 36 episodes:
   4 blocks lapped 6 (seed 0) and 24 (seed 42); 6 blocks 16 and 17; a hand-made
@@ -534,7 +543,9 @@ oval driver's median gap is 4.0 at |w| ≈ 65 (about three standard deviations);
 truncation-only seed 4 (36 of 36 exact, 52 of 72 device episodes) has 0.7.
 Costs at 400 episodes: 5 of 24 recipe seeds did not learn to lap reliably, and
 its exact lap count was no better than the default's (25.9 against 27.5 of
-36). Which lever does the work is unresolved; they were only tested together.
+36). Tested one at a time later (2026-10-09, section 8 item 3), the two levers
+are complementary on oval and chicane: either alone helps a little, both
+together lap 95 of 96 device episodes.
 
 | Bundled driver | Exact simulator | Emulated noise | Device path |
 |---|---|---|---|
@@ -548,9 +559,9 @@ its exact lap count was no better than the default's (25.9 against 27.5 of
 | `quantum_universal` on chicane | 36 / 36 | 11 / 36 | 3 / 12 |
 
 (device episodes capped at 200 decisions, 400 on gp, 520 on combo; three
-further sets gave 72 of 72 device episodes for each of the first three
-drivers; 8- and 10-qubit drivers not measured on the device path; the lower
-rows were trained without the robustness keys.)
+further sets gave 48 of 48 more device episodes for each of the first three
+drivers, 72 of 72 over the four sets; 8- and 10-qubit drivers not measured
+on the device path; the lower rows were trained without the robustness keys.)
 
 **SPSA sprint.** Replay batch and TD targets are computed once on the exact
 simulator; the device evaluates only the TD loss, two Estimator jobs per
@@ -594,10 +605,10 @@ fitted Q-iteration on the surrogate [15] was not run.
 **Shown.** A 56-parameter circuit learns each track from scratch and one
 4-qubit circuit learns all four at once; at 6 qubits it is reliable on both easy tracks in 8 of 8 seeds with
 chicane laps level with the MLP's; on gp its seeds reach a lapping greedy
-policy in about half the MLP's episodes; every re-selected bundled driver laps
-72 of 72 fresh episodes; three lap 72 of 72 device episodes on the simulated
-Nighthawk, and the recipe behind that works on 10 of 10 and 8 of 10 unselected
-seeds.
+policy in about half the MLP's episodes; every re-selected single-track bundled
+driver laps 72 of 72 fresh episodes (the universal driver 287 of 288); three
+lap 72 of 72 device episodes on the simulated Nighthawk, and the recipe behind
+that works on 10 of 10 and 8 of 10 unselected seeds.
 
 **Not shown, not claimed.** Parity or advantage: under 8–10 seeds the MLP is
 ahead on first clean lap and stability on the easy tracks and on pace on the
@@ -608,18 +619,22 @@ combo drivers are selected snapshots of an unstable optimisation (stability
 setting that fixes it. No quantum advantage is possible here: 4–10 qubits are
 trivially simulable, training ran on a classical simulation, the function is a
 Fourier series a classical regression recovers, and a racing toy has none of
-the properties an advantage claim needs [16, 19, 20, 21]. Engineered features
-and the July 8/10-qubit mechanisms were never re-measured.
+the properties an advantage claim needs [16, 19, 20, 21]. Engineered features,
+scaled action sets and the pace phase were re-measured on gp only (8 seeds,
+2026-10-09/14; section 4.3 and section 8, items 5–6); the other July
+8/10-qubit results were not.
 
 **Threats to validity.**
 
-- *Simulated device only*: one calibration snapshot of one Nighthawk, a 4- or
+- *Mostly a simulated device*: one calibration snapshot of one Nighthawk, a 4- or
   6-qubit patch — no drift, crosstalk or queue; one lap on heavy-hex `fake_fez`
-  (27 CZ, TREX) is one run; no physical-QPU lap.
+  (27 CZ, TREX) is one run; the one physical-QPU lap (ibm_marrakesh,
+  2026-10-03) is another.
 - *Seed counts*: 6 at 8 and 10 qubits, 5 for the universal driver, 3 for
-  `pro`, 2–3 per arm at 10-qubit gp; intervals at these n understate the
-  uncertainty, and single supported marks among many comparisons deserve little
-  weight (notebook 06 counts the marks chance alone would produce).
+  `pro`, 3 per arm at 10-qubit gp under the October recipe (8 under the July
+  recipe); intervals at these n understate the uncertainty, and single
+  supported marks among many comparisons deserve little weight (notebook 06
+  counts the marks chance alone would produce).
 - *Recipes tuned on the same tracks*: the circuit's recipe has options the
   MLP's does not and was developed on these four tracks; the robustness recipe
   was chosen among seven on seeds 0–7.
@@ -667,12 +682,16 @@ IBM's teaching material [19] set the bar this project does not meet.
   `report.json`, a pure function of the result files (fixed bootstrap seed).
 - `tools/export_study.py STUDY_DIR --name NAME` writes the committable
   `data/studies/NAME/{report.md, report.json, cells.json}`; `cells.json` holds
-  every seed's eval log and both 36-episode evals. Sixteen studies are
-  committed, 505 finished cells by their headers (`gp_4q` 202, `oval_4q` 56,
-  `chicane_4q` 56, `combo_4q` 35, `oval_q6` 16, `chicane_q6` 16, `oval_q8` 18,
-  `chicane_q8` 18, `oval_q10` 18, `chicane_q10` 18, `gp_q10feat` 6,
-  `universal_4q` 15, `pro` 3, `robust_oval_4q` 10, `robust_chicane_4q` 10,
-  `robust_oval_q6` 8), plus six single runs in
+  every seed's eval log and both 36-episode evals. Twenty-six studies are
+  committed, 721 finished cells by their headers: the sixteen of the audit,
+  505 (`gp_4q` 202, `oval_4q` 56, `chicane_4q` 56, `combo_4q` 35, `oval_q6`
+  16, `chicane_q6` 16, `oval_q8` 18, `chicane_q8` 18, `oval_q10` 18,
+  `chicane_q10` 18, `gp_q10feat` 6, `universal_4q` 15, `pro` 3,
+  `robust_oval_4q` 10, `robust_chicane_4q` 10, `robust_oval_q6` 8), and ten
+  follow-ups of 2026-10-09/14, 216 (`gp_4q_followups` 24, `gp_4q_pace30` 16,
+  `gp_q10feat_8seeds` 16, `gp_q10feat_plain` 8, `gp_q10feat_pace_L4` 16,
+  `gp_q10feat_pace_L6` 16, `gp_q10feat_widen` 24, `levers_oval_4q`,
+  `levers_chicane_4q` and `levers_gp_4q` 32 each), plus six single runs in
   `gp_q10feat_july_recipe/results.json`. Weights and full logs are not in the
   repository; SCIENCE.md's "487 training runs" predates the `chicane_q10` export.
 - `tools/bundle_driver.py --study DIR --variant V --name N` ranks,
@@ -707,10 +726,11 @@ IBM's teaching material [19] set the bar this project does not meet.
 3. **Which robustness lever matters** — measured 2026-10-09 (SCIENCE.md,
    "Follow-ups to the audit"): on oval and chicane the two levers are
    complementary (device laps of 96: 73/48 with neither, 81/71 gap only,
-   79/54 noise only, 95/95 both); on gp they hurt learning (best-snapshot
-   lapped 0.99 without, 0.05 with both), so gp still trains without them
-   and remains fragile on the device (36 of 96). Combo and the universal
-   driver were not tested.
+   79/54 noise only, 95/95 both; the chicane "neither" drivers are section
+   4.5's truncation-only seeds, which lapped 55 in an earlier device run);
+   on gp they hurt learning (best-snapshot lapped 0.99 without, 0.05 with
+   both), so gp still trains without them and remains fragile on the device
+   (36 of 96). Combo and the universal driver were not tested.
 4. **gp warm start and the end of training.** No variant makes the
    end-of-training parameters lap on gp, and warm live-training on gp mostly
    fails (`default.toml` `[training_warm_gp]`: 3 of 11 seeds end lapping).
@@ -718,14 +738,17 @@ IBM's teaching material [19] set the bar this project does not meet.
    each). Under the July recipe, 8 seeds per depth: the engineered-feature
    circuit learns gp at 4 and 6 layers (best snapshots lap 0.44 and 0.42 of
    their test episodes; 6 layers 22.2 s), but no run keeps what it learned.
-   A dependable 10-qubit gp driver is still open; the plain-ray profile, a
-   pace phase and scaled action sets are being measured.
+   A dependable 10-qubit gp recipe is still open; the plain-ray profile, a
+   pace phase and scaled action sets have since been measured (section 4.3):
+   plain rays 1 of 8 seeds, a pace phase adds nothing, 6 actions 6 of 8, and
+   the bundled 6-action `quantum_gp_q10` laps 72 of 72 fresh episodes at
+   18.9 s; the end-of-training parameters still do not lap (0.01).
 6. **Feature engineering and pace**: at 4 qubits on gp, two rays plus the
    corner feature do not learn (0.11), and a pace phase either loses
    reliability (exploration to 0.02) or keeps it without faster laps (held
    at 0.30); a pace selection rule (`snapshot_rank = "pace"`) exists but
-   changed nothing there. Scaled action sets are being measured at 10
-   qubits.
+   changed nothing there. Scaled action sets were measured at 10 qubits
+   (section 4.3: 6 actions 6 of 8 seeds, bundled as `quantum_gp_q10`).
 7. **Kernelized fitted Q-iteration** on the product kernel [15] was not run;
    the surrogate dequantizes inference only.
 8. **Stale records** — done 2026-10-08: `data/records.md` regenerated with

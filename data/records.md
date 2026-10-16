@@ -10,7 +10,9 @@ used), each episode ending at the first crash or at the decision budget.
 laps, the first lap from standstill included. The 10-qubit oval and chicane
 drivers are the 6-block files bundled on 2026-10-03; `quantum_gp_q10` (a
 6-block, 6-action file bundled on 2026-10-14) was re-run on 2026-10-14 under the
-same command; every other driver was re-selected on 2026-10-02 (see each
+same command; every other driver was re-selected on 2026-10-02, except
+`quantum_universal` (seed 3, swapped in on 2026-10-03 and re-selected by rule
+on 2026-10-09 with the same weights; see each
 `racetraq/weights/<name>.meta.json`). Rows are sorted by best lap.
 
 ### chicane

@@ -30,7 +30,8 @@ of a DQN agent. Canonical definition: `racetraq/agents/quantum/circuit.py`
 path, and the hardware path).
 
 - **n qubits** (default **4**), **L re-uploading blocks** on |0…0⟩ (4 by
-  default, 5 in the `q8` profile — "Light cones" below says why).
+  default, 5 in the `q8` profile and 6 in `q10` — "Light cones" below says
+  why).
   Block *l*:
   1. encoding: `RY(λ[l,i] · s[i])` on each qubit *i* — the n observation
      features `s` (n − 1 lidar rays evenly spaced over [−60°, +60°] plus
@@ -39,16 +40,17 @@ path, and the hardware path).
   2. variational: `RY(θ[l,i,0])` then `RZ(θ[l,i,1])` on each qubit;
   3. entanglement: a CZ ring `CZ(0,1) … CZ(n−1,0)`.
 - **Readout:** one Pauli-Z expectation per action, `E_a = ⟨Z_a⟩` on the
-  first four qubits — the **4 actions stay fixed at any n**; extra qubits
+  first A qubits — **A = 4 actions by default, at any n** (the bundled
+  `quantum_gp_q10` reads 6: two trail-braking actions added); extra qubits
   only widen the feature register — mapped through a trainable classical
   head `Q_a = w[a]·E_a + b[a]`. The output scaling is essential: useful
   Q-values for this task are of order 100 while ⟨Z⟩ ∈ [−1, 1] (the bundled
-  drivers end up with |w| between 25 and 95).
-- **Trainable parameters, P = 3·L·n + 8** (**56** at n = 4, **80** at
-  n = 6, 128 at n = 8 with 5 blocks), one flat vector `[λ, θ, w, b]`: input
-  scalings λ (L×n, init π),
+  drivers end up with |w| between 25 and 185).
+- **Trainable parameters, P = 3·L·n + 2·A**, i.e. 3·L·n + 8 with the
+  default 4 actions (**56** at n = 4, **80** at n = 6, 128 at n = 8 with 5
+  blocks), one flat vector `[λ, θ, w, b]`: input scalings λ (L×n, init π),
   variational angles θ (L×n×2, init U(−0.1, 0.1)), output weights w
-  (4, init 1) and biases b (4, init 0).
+  (A, init 1) and biases b (A, init 0).
 
 ### Light cones: what each readout can see
 
@@ -69,7 +71,8 @@ them against fastsim values and adjoint gradients):
 - **⟨Z_a⟩ sees exactly the features within ring distance L − 1 of qubit a.**
   Every action sees every feature only when L ≥ ⌊n/2⌋ + 1.
 
-At L = 4 — the depth of every profile except `q8` — with the four readouts
+At L = 4 — the depth of every profile except `q8` (5 blocks) and `q10`
+(6) — with the four readouts
 on qubits 0–3:
 
 | | 4 qubits | 6 qubits | 8 qubits | 10 qubits |
@@ -100,8 +103,9 @@ the feature order:
   `quantum_oval_q8` and `quantum_chicane_q8` are 5-block drivers and see
   everything): Right cannot see ray +20°, Straight ray +40°, Left ray +60° —
   and **Brake cannot see speed**.
-- `q10`, 9 rays + speed (`quantum_oval_q10`, `quantum_chicane_q10` — still
-  the July files): Right misses rays 0°/+15°/+30°, Straight +15°/+30°/+45°,
+- `q10`, 9 rays + speed (the July `q10` drivers; the bundled
+  `quantum_oval_q10` and `quantum_chicane_q10` are 6-block drivers and see
+  everything): Right misses rays 0°/+15°/+30°, Straight +15°/+30°/+45°,
   Left +30°/+45°/+60°, Brake rays +45°/+60° and speed.
 - the July `quantum_gp_q10` (replaced on 2026-10-14 by a 6-block file that
   sees everything), 5 rays + speed + four
@@ -149,20 +153,22 @@ under "Scaling and the light cone"):
   [0.42, 1.00]). At either depth the best snapshot of 6 of 6 seeds laps in
   at least half of its episodes.
 - *10 qubits on chicane, 6 blocks against 4* (6 seeds per depth, 800
-  episodes, `data/studies/chicane_q10`): indistinguishable. End-of-training
+  episodes, `data/studies/chicane_q10`): indistinguishable in reliability
+  and stability, faster with 6 blocks. End-of-training
   parameters lap in 0.55 [0.12, 0.93] of the evaluation episodes at 6
   blocks against 0.55 [0.24, 0.85] at 4, stability 0.45 [0.32, 0.66]
   against 0.46 [0.31, 0.70] (probability of improvement 0.50 [0.17, 0.83]);
   the best snapshots lap in 13.1 s [12.7, 13.4] against 13.6 s [13.2, 13.9]
-  (0.51 [0.17, 0.88]). The matched MLP on the same nine rays: stability
-  0.93 [0.80, 0.98], 12.7 s. Decision: the `q10` profile runs 6 blocks —
-  full visibility costs nothing measurable and helped on the oval — and the
-  bundled 10-qubit oval and chicane drivers are 6-block files re-selected
-  from these studies (72 of 72 fresh episodes each, 13.3 s and 12.6 s).
-  `quantum_gp_q10` stayed the July 4-block file at the time: under the
-  recipe that ships for 4-qubit gp neither depth learns the track (above);
-  since 2026-10-14 it is a 6-block, 6-action file ("Follow-ups to the
-  audit").
+  (0.83 [0.56, 1.00], the one supported difference). The matched MLP on
+  the same nine rays: stability 0.93 [0.80, 0.98], 12.7 s. Decision: the
+  `q10` profile runs 6 blocks — full visibility costs nothing measurable,
+  gives supportedly faster chicane laps and points the same way on the
+  oval — and the bundled 10-qubit oval and chicane drivers
+  are 6-block files re-selected from these studies (72 of 72 fresh episodes
+  each, 13.3 s and 12.6 s). `quantum_gp_q10` stayed the July 4-block file at
+  the time: under the recipe that ships for 4-qubit gp neither depth learns
+  the track (above); since 2026-10-14 it is a 6-block, 6-action file
+  ("Follow-ups to the audit").
 
 The stack now shows the light cone instead of hiding it: `circuit_spec()`
 carries `visibility`, `dead_params`, `dead_gates`,
@@ -254,7 +260,8 @@ end-of-training parameters next to the best snapshot so the two can be
 compared. Before the audit the "12 episodes" were a 4-car env rebuilt from
 the same seed three times — 4 distinct episodes counted three times — and
 the rule before that was a single 4-episode eval. The bundled 10-qubit
-drivers still date from then.
+drivers were re-selected under the new rule too (oval and chicane on
+2026-10-03, gp on 2026-10-14).
 
 **Trainer options** (`[training]` keys). `bootstrap_truncation` is on since
 the October 2026 studies; every other key defaults to the pre-audit
@@ -264,7 +271,7 @@ behaviour:
 |---|---|---|
 | `bootstrap_truncation` | `true` | Treat the 60 s time limit as a truncation, not a terminal state: the TD target keeps bootstrapping from the last observation (Pardo et al. [9]). Off-track stays terminal. `false` restores the pre-audit behaviour. |
 | `loss`, `huber_delta` | `"mse"`, 10 | `"huber"` clips the TD error in the gradient at ±`huber_delta`; Q-values here are of order 100, so a few large errors otherwise dominate a batch. |
-| `lr_groups` | — | Separate learning rates per parameter group (quantum: `lam`, `theta`, `head`; MLP: `body`, `head`). Circuit angles are of order 1, the output head grows to 25–95 — one rate may fit neither. |
+| `lr_groups` | — | Separate learning rates per parameter group (quantum: `lam`, `theta`, `head`; MLP: `body`, `head`). Circuit angles are of order 1, the output head grows to 25–185 — one rate may fit neither. |
 | `lr_end` | = `lr` | Linear learning-rate anneal over the run. |
 | `target_update`, `tau` | `"hard"`, 0.005 | `"soft"` replaces the copy every `target_sync_every` updates by Polyak averaging on every update. |
 | `grad_clip` | 0 (off) | Clip the gradient's global L2 norm. |
@@ -316,22 +323,23 @@ page written as `x [a, b]` is such an interquartile mean over seeds with its
 95 % interval. `tools/export_study.py STUDY_DIR --name NAME` writes the
 committable summary of a study to `data/studies/NAME/`: `report.md`,
 `report.json`, and `cells.json` with every seed's eval log and both
-36-episode evals. The studies behind this page are there (487 training
-runs); their weights and full logs are not in the repository.
+36-episode evals. The studies behind this page are there (721 training
+runs, plus six single July-recipe runs); their weights and full logs are
+not in the repository.
 
 **From a study to a bundled driver: `tools/bundle_driver.py`.** A bundled
 driver is one seed's best snapshot, so choosing it is a second selection
 step and needs its own control. The tool ranks a variant's seeds by the
-study's 36-episode eval, re-evaluates the top three or four on 72 *fresh*
-greedy episodes (another env seed), and chooses by that result — episodes
-lapped first, mean lap second; for the three hardware-demo drivers, laps on
-the simulated device first. The sidecar records the fresh numbers, never
-the ones a seed was shortlisted by, in a `selection` block: study, variant,
-chosen seed, every candidate's numbers, the recipe's spread over all seeds,
-`fresh_eval` and, where it ran, `device_eval`. The fresh eval still picks
-among the candidates, so a small selection effect remains in it; the
-36-episode re-check quoted under "Measured results" used a third env seed
-that nothing was selected on.
+study's 36-episode eval, re-evaluates the top three to five on 72 *fresh*
+greedy episodes per track (36 for `mlp_pro`; another env seed), and
+chooses by that result — episodes lapped first, mean lap second; for the
+three hardware-demo drivers, laps on the simulated device first. The
+sidecar records the fresh numbers, never the ones a seed was shortlisted by,
+in a `selection` block: study, variant, chosen seed, every candidate's
+numbers, the recipe's spread over all seeds, `fresh_eval` and, where it ran,
+`device_eval`. The fresh eval still picks among the candidates, so a small
+selection effect remains in it; the 36-episode re-check quoted under
+"Measured results" used a third env seed that nothing was selected on.
 
 **Two executions of one circuit, verified equal.** The training path is
 `fastsim`, a hand-written numpy statevector simulator with **adjoint**
@@ -441,7 +449,7 @@ over the first 2000 episodes, gamma 0.99, the time limit a terminal state.
   0.02 [0.00, 0.08] of the episodes, against 0.16 [0.03, 0.48] with the
   floor alone.
 - *Not a universal recipe.* The MLP does worse under the same floor on
-  every measure, but not by a supported margin: 3 of 10 seeds reach a
+  most measures, but not by a supported margin: 3 of 10 seeds reach a
   half-lapping snapshot, against 7 of 10 at 0.05, and the probability that
   a 0.30-floor seed beats a 0.05-floor seed is 0.28 [0.07, 0.51] for the
   best snapshot, 0.26 [0.04, 0.52] for the lapped fraction of the snapshot
@@ -796,12 +804,12 @@ action gap or acting noise.
 
 ## Measured results
 
-Everything here except the last subsection was measured on 2026-10-01/02
-under one protocol:
+Everything here except the last subsection was measured from 2026-10-01
+to 2026-10-14 under one protocol:
 
 - **Many seeds.** Each recipe is a `tools/study.py` variant: 8–10 seeds at 4
-  qubits, 8 at 6, 6 at 8 and at 10, 5 for the universal driver, 3 for the
-  pro driver.
+  qubits, 8 at 6, 6 at 8, 6 at 10 on oval and chicane and 8 on gp, 5 for
+  the universal driver, 3 for the pro driver.
   A number written `x [a, b]` is the interquartile mean over seeds with its
   95 % bootstrap interval; "P" is the probability of improvement with its
   interval, and a difference counts as supported when that interval
@@ -931,7 +939,7 @@ protocol) lapped in 24 (22.2 s, best 19.7 s), and neither oval nor chicane.
 
 ### Scaling and the light cone
 
-Oval and chicane at 4, 6 and 8 qubits and the oval at 10, all with the same
+Oval and chicane at 4, 6, 8 and 10 qubits, all with the same
 recipe (`[training]` with truncation, 800 episodes, no noise-robust
 options), next to an MLP on the same observation:
 
@@ -1020,12 +1028,14 @@ options), next to an MLP on the same observation:
   4-block circuit's in every pairing and not supportedly faster than the
   6-block one's (P 0.83 [0.50, 1.00]).
 - **10 qubits on chicane** (`data/studies/chicane_q10`, 6 seeds per depth):
-  4 and 6 blocks are indistinguishable — end-of-training lapped 0.55 against
-  0.55, stability 0.46 [0.31, 0.70] against 0.45 [0.32, 0.66], laps 13.6 s
-  against 13.1 s (P 0.51 [0.17, 0.88]) — and the matched MLP is again
-  steadier (0.93 [0.80, 0.98]) and faster (12.7 s). The `q10` profile runs 6
-  blocks because full visibility costs nothing measurable and helped on the
-  oval.
+  4 and 6 blocks are indistinguishable in reliability — end-of-training
+  lapped 0.55 against 0.55 (P 0.51 [0.17, 0.88]), stability 0.46
+  [0.31, 0.70] against 0.45 [0.32, 0.66] — but the 6-block circuit laps
+  faster, 13.1 s against 13.6 s (P 0.83 [0.56, 1.00]); the matched MLP is
+  again steadier (0.93 [0.80, 0.98]) and faster than the 4-block circuit
+  (12.7 s; against 6 blocks P 0.67 [0.33, 1.00], not supported). The `q10`
+  profile runs 6 blocks because full visibility costs nothing measurable,
+  gives faster chicane laps and points the same way on the oval.
 
 ### One driver, every track (cross-track generalization)
 
@@ -1064,16 +1074,18 @@ the 0.30 floor). It is no longer a warm migration of an older driver:
 across 5 seeds the fresh recipe gives best snapshots that lap in 0.89
 [0.68, 1.00] of 36 episodes (9 per track), and fine-tuning the July
 universal driver under the same recipe did worse (0.64 [0.49, 0.85];
-stability P 1.00 for fresh). The top three seeds lapped in 144, 143 and 141
-of 144 fresh episodes. The bundled one is seed 3 (143 of 144: oval 27.7 s,
-chicane 27.4 s, gp 35.3 s, combo 38.5 s), first chosen by hand over the
-top-ranked seed 0 (144 of 144 at 13.7 / 13.9 / 32.2 / 41.5 s) for the
+stability P 1.00 for fresh). On 72 fresh episodes per track the leading
+seeds lap in 287 (seed 3), 283 (seed 0) and 275 (seed 1) of 288. The
+bundled one is seed 3 (287 of 288: oval 27.6 s, chicane 27.4 s, gp
+35.3 s, combo 38.2 s), first chosen by hand over seed 0 (144 of 144 on an
+earlier 36-per-track check, at 13.7 / 13.9 / 32.2 / 41.5 s) for the
 reason the next paragraph measures: seed 0 drives only the four tracks it
 was trained on. Since 2026-10-09 a bundling rule that ranks on generated
-tracks as well picks the same seed ("Follow-ups to the audit"). The end of training is again not the
-driver (final-params lapped 0.47 [0.25, 0.76], stability 0.35
-[0.28, 0.48]). An MLP under the identical recipe reaches 0.95 [0.60, 1.00]
-and stability 0.48 [0.46, 0.49] — with the caveat that the 0.30 floor is
+tracks as well picks the same seed ("Follow-ups to the audit"). The end
+of training is again not the driver (final-params lapped 0.47 [0.25,
+0.76], stability 0.35 [0.28, 0.48]). An MLP under the identical recipe reaches final-params
+lapped 0.50 [0.50, 0.85] (best snapshots 0.95 [0.60, 1.00]) and stability
+0.48 [0.46, 0.49] — with the caveat that the 0.30 floor is
 the circuit's recipe, not the MLP's.
 
 **Unseen tracks: selection on the training tracks alone picks a
@@ -1098,9 +1110,11 @@ exactly those. All five seeds of the study, on the same tracks:
 
 Seed 3 is the one driver here that deserves the name — every bundled and
 every generated track, at about twice the oval and chicane lap time of
-seed 0 — and it is the one that ships (`tools/bundle_driver.py --seed 3`,
-recorded in the sidecar; the automatic rule would have shipped seed 0).
-Ranking seeds on unseen tracks as well is the open item. The hard-track specialists generalize too: `quantum_gp` and
+seed 0 — and it is the one that ships (first by hand,
+`tools/bundle_driver.py --seed 3`, when the rule ranked on the training
+tracks only and would have shipped seed 0; since 2026-10-09 `--unseen 10`,
+which ranks on generated tracks as well, picks it, and the sidecar records
+that rule). The hard-track specialists generalize too: `quantum_gp` and
 `quantum_combo` each lap all ten generated tracks in 120 of 120 episodes
 at both difficulties (gp: mean laps of 30–39 s and 33–41 s), and `mlp_gp`
 in 120 and 113 of 120. Ten other generated tracks (seeds 300–309, env seed
@@ -1179,7 +1193,7 @@ standard demo agents (and humans).
 
 ### Follow-ups to the audit (2026-10-08/09)
 
-Four questions the audit left open, under the same protocol (8 seeds per
+Five questions the audit left open, under the same protocol (8 seeds per
 variant; per-seed data in `data/studies/<name>/`).
 
 **Which training levers make a driver device-robust?** The oval and
@@ -1224,8 +1238,9 @@ at 36.3 s, slower than the bundled gp driver's 27.9 s, so nothing was
 re-bundled.
 
 **Fewer, engineered sensors at 4 qubits.** Two rays (±45°), speed and
-`corner_speed_ratio` in place of three rays and speed: on gp no seed
-learns a reliable policy (best-snapshot lapped 0.11 [0.00, 0.46];
+`corner_speed_ratio` in place of three rays and speed: on gp only 2 of 8
+seeds reach a best snapshot that laps in half its test episodes
+(best-snapshot lapped 0.11 [0.00, 0.46];
 `gp_4q_followups`, variant `feat4`). At 4 qubits the third ray matters
 more than the corner feature.
 
@@ -1283,8 +1298,8 @@ what it learned (final parameters lap almost never).
 The continued training alone lifts reliability (0.62 at 4 actions against
 0.42 before it), and the intervals of the three action sets overlap: no
 supported difference in reliability between them. What the wider sets add
-is pace in their best seeds — four of the 6- and 8-action seeds lap at
-18–19 s, no 4-action seed below 20.8 s — and as before, nothing keeps what
+is pace in their best seeds — five of the 6- and 8-action seeds lap in
+17.9–18.8 s, no 4-action seed below 20.8 s — and as before, nothing keeps what
 it learned.
 
 `bundle_driver.py --unseen 10` applied to `w6` picks seed 3: on 72 fresh
@@ -1298,11 +1313,13 @@ gp, below the 0.9 bundling floor; it was not bundled.
 
 ### July 2026 exploratory results (old protocol)
 
-Two campaigns of July 2026 have no successor measurement: observation
+Two campaigns of July 2026 were run under the old protocol: observation
 engineering, and a set of mechanisms meant to make extra qubits pay off.
 Their numbers came from one to three seeds, snapshots chosen on four
 evaluation episodes, and — at 8 and 10 qubits — circuits that hid inputs
-from actions. **None of them was re-measured, and none is quoted here.**
+from actions. **Their July numbers are not quoted here; features, scaled
+action sets and the pace phase were re-measured under the new protocol
+("Follow-ups to the audit").**
 (The earlier text is in the repository history.) What remains in the code
 and is worth knowing:
 
@@ -1325,14 +1342,17 @@ and is worth knowing:
   actions add trail braking (full steer + brake), 8 add half-steer
   (`racetraq/agents/base.py`; prefix-compatible, so the 4-action default
   is unchanged). In July no scaled-action run on gp converged to reliable
-  greedy lapping; no weights with more than 4 actions are bundled.
+  greedy lapping; since 2026-10-14 the bundled `quantum_gp_q10` has 6
+  actions ("Follow-ups to the audit").
 - **A pace objective** (`[reward] time_penalty`, `train_headless --pace
   --init <lapping snapshot>`): a low-epsilon fine-tune whose reward charges
   each decision, so that lap time and not only lap completion is optimised.
   July's two single runs were inconclusive: one traded reliability for
   pace, the other the reverse. A pace-phase
-  selection rule — best mean lap above a reliability floor — was never
-  built, so the reliability-first ranking still applies inside a pace run.
+  selection rule — best mean lap above a reliability floor — was built
+  after the audit (`[training] snapshot_rank = "pace"`, "Follow-ups to the
+  audit"); without it the reliability-first ranking applies inside a pace
+  run.
 
 ## Honest claims
 
@@ -1354,17 +1374,19 @@ Being honest matters more than being exciting:
   out-of-the-box classical models won overall [8].
 - **What the circuit does show.** It learns each of the four tracks from
   scratch, and a single 4-qubit circuit learns all four at once; one seed
-  of five also drives every unseen track we generated, though not the seed
-  the selection rule bundled. On gp its
+  of five also drives every unseen track we generated, and it is the one
+  the selection rule (ranking on generated tracks as well) bundles. On gp its
   seeds reach a lapping greedy policy in about half the MLP's episodes — a
   slower policy, and one that training does not keep. At 6 qubits it gives
   a reliable driver on both easy tracks in 8 of 8 seeds, with chicane laps
-  level with the matched MLP's. Every re-selected bundled driver laps in 72
-  of 72 fresh episodes, and three of them complete their laps on a
+  level with the matched MLP's. Every re-selected single-track driver laps
+  in 72 of 72 fresh episodes (the universal one in 287 of 288 over four
+  tracks), and three of them complete their laps on a
   simulated IBM device. At 10 qubits with engineered features and six
   actions, the selected gp driver laps at 18.9 s, the fastest learned gp
-  driver in the records; the recipe behind it gives such a seed only
-  sometimes (6 of 8 seeds lap in half their test episodes, 4 at 18–19 s),
+  driver in the records after the 2,436-parameter pro MLP (17.8 s); the
+  recipe behind it gives such a seed only sometimes (6 of 8 seeds lap in
+  half their test episodes, 3 of them in under 19 s),
   and no MLP was trained on that observation and action set. None of this
   is an advantage. It is what "it works" means here, with intervals.
 - **Shipped drivers are selected, and we say how.** On gp and combo the
@@ -1388,7 +1410,7 @@ Being honest matters more than being exciting:
   classically, given some data collected from a quantum device first.
   Notebook 07 — light cones and classical surrogates — builds such
   surrogates (`agents/quantum/surrogate.py`); the numbers here are from its
-  execution on 2026-10-03 against the drivers bundled now (a run on the
+  execution on 2026-10-14 against the drivers bundled now (a run on the
   July drivers on 2026-10-01/02 gave the same picture). The encoding of the
   4-qubit, 4-block circuit allows 531,441 frequency vectors per readout,
   but only 45,072 of them can carry a non-zero coefficient, for trained and
@@ -1419,13 +1441,16 @@ Being honest matters more than being exciting:
   best classical methods [20]; the open community tracker for such claims
   follows observable estimation, variational problems and classically
   verifiable problems [21]. A racing toy is none of these.
-- **Engineered features and 10 qubits: no claim.** The July comparisons of
+- **Engineered features and 10 qubits: narrow claims only.** The July comparisons of
   engineered observations, and every 8- and 10-qubit result of that
   campaign, were measured with circuits that could not show every input to
   every action, on one to three seeds. An asymmetry we once reported —
   features helping the circuit and hurting the MLP — had already dissolved
   at three seeds; neither it nor its absence was ever tested fairly.
-  Nothing about features has been re-measured. Ten qubits on plain rays
+  The July feature comparisons were not repeated as such; on gp, 8-seed
+  follow-ups found the third ray worth more than the corner feature at 4
+  qubits and the features worth more than extra rays at 10 qubits
+  ("Follow-ups to the audit"). Ten qubits on plain rays
   have been, on both easy tracks: no gain over 6 qubits at 4 or at 6
   blocks.
 - **Watch the denominators.** Every comparison here is per *episode*; per
@@ -1442,7 +1467,7 @@ Being honest matters more than being exciting:
   question — Skolik et al. [10] studied shot noise, coherent and incoherent
   errors in the training and evaluation of variational RL agents. What this
   testbed adds is narrow and concrete: a policy trained on an exact
-  simulator, with an output head that multiplies ⟨Z⟩ by 25–95, driven
+  simulator, with an output head that multiplies ⟨Z⟩ by 25–185, driven
   closed-loop where one flipped argmax can end the episode. An earlier
   version of this page said the trained policy "laps at reference pace"
   under shot noise; for the driver bundled at the time that was wrong — it
@@ -1455,7 +1480,8 @@ Being honest matters more than being exciting:
   8 without), and the three bundled hardware-demo drivers lap in 72 of 72
   device episodes over four sets ("Hardware"). At inference time, more shots and a per-readout rescale
   restore drivers with moderate margins, not a knife-edge one. Still open:
-  which of the two training levers matters, the hard tracks, whatever a
+  the hard tracks (on gp both levers hurt learning; on oval and chicane the
+  two proved complementary, "Follow-ups to the audit"), whatever a
   calibration snapshot of one device leaves out — and physical QPUs beyond
   the single `ibm_marrakesh` lap of 2026-10-03.
 

@@ -49,7 +49,7 @@ flowchart LR
 | Module | Responsibility |
 |---|---|
 | `racetraq/__main__.py` | CLI entry point: profile/config/host/port flags, starts uvicorn. |
-| `racetraq/config.py` | `default.toml` + profile overlay (`pi4`, `pi5`, `exhibition`, plus the circuit-size overlays `q6`/`q8`/`q10` — each sets `[circuit] n_qubits` and the matching `[observation] ray_angles_deg`, `q8` also `n_layers = 5`) + optional extra TOML; `./config/*.toml` in the working dir shadows packaged profiles. Also `resolve_training_cfg(config, track, warm, agent)` — the one precedence rule for training recipes, shared by the server and headless training: `[training]`, then `[training_presets.<track>]`, then `[training_presets_<agent>.<track>]`, then the warm-start recipes (see "Training recipes, studies and bundled drivers") and `parse_override` / `apply_overrides` (the dotted `section.key=value` overrides behind `train_headless --set` and `tools/study.py`). |
+| `racetraq/config.py` | `default.toml` + profile overlay (`pi4`, `pi5`, `exhibition`, plus the circuit-size overlays `q6`/`q8`/`q10` — each sets `[circuit] n_qubits` and the matching `[observation] ray_angles_deg`, `q8` also `n_layers = 5`, `q10` `n_layers = 6`) + optional extra TOML; `./config/*.toml` in the working dir shadows packaged profiles. Also `resolve_training_cfg(config, track, warm, agent)` — the one precedence rule for training recipes, shared by the server and headless training: `[training]`, then `[training_presets.<track>]`, then `[training_presets_<agent>.<track>]`, then the warm-start recipes (see "Training recipes, studies and bundled drivers") and `parse_override` / `apply_overrides` (the dotted `section.key=value` overrides behind `train_headless --set` and `tools/study.py`). |
 | `racetraq/env/track.py` | Closed-loop track geometry: resampling, arc-length projection, lidar raycasts, spatial-hash acceleration, validation. |
 | `racetraq/env/car.py` | Vectorized bicycle-ish car physics (throttle/brake/drag, speed-dependent steering). |
 | `racetraq/env/racing_env.py` | Gym-style vector env: obs = lidar rays (`[observation] ray_angles_deg`, 3 by default) + speed, progress reward, checkpoint/lap bonuses, off-track penalty, auto-reset. `step()` info also reports `truncated` (ended by the time limit, still on track) and `final_obs` (the observation before the auto-reset) for `[training] bootstrap_truncation`. |
@@ -62,14 +62,14 @@ flowchart LR
 | `racetraq/agents/quantum/fastsim.py`, `adjoint.py` | Hand-written numpy statevector simulator and adjoint (backprop-style) gradients. |
 | `racetraq/agents/quantum/noise.py` | Expectation-value noise model (numpy only at import): `ExpectationNoise` (attenuation, shots, bias — what a device does to ⟨Z_a⟩), `NoisyQFunction`, `ReadoutCorrection` (the calibrated rescale behind `HardwareQFunction(rescale=...)`), `calibrate` / `validate` against the local device patch (CLI: `python -m racetraq.agents.quantum.noise calibrate\|validate --fake fake_miami`). The model is semi-quantitative — what it gets right and wrong is measured in SCIENCE.md, "Why a driver fails under noise, and what helps". |
 | `racetraq/agents/quantum/surrogate.py` | Classical Fourier surrogates of the trained circuit (numpy only): the frequency spectrum set by the trained input scalings, (`frequency_spectrum` / `spectrum_size`: the product upper bound the encoding allows), `gate_coefficients` (the exact Fourier coefficients of a readout — which of those frequencies are really used), and `fit_surrogate` (`full` least squares, random Fourier features, kernel ridge) returning a `FourierSurrogate` that can drive in place of the circuit (`drive_laps`, `compare`). Backs notebook 07 — light cones and classical surrogates. |
-| `racetraq/agents/quantum/qdqn.py` | `QuantumQFunction`: fastsim-backed `QFunction`, flat `[lam, theta, w, b]` layout, P = 3·L·n + 8 params (56 at 4 qubits, 80 at 6); `param_groups()` names the `lam` / `theta` / `head` slices for per-group learning rates. |
+| `racetraq/agents/quantum/qdqn.py` | `QuantumQFunction`: fastsim-backed `QFunction`, flat `[lam, theta, w, b]` layout, P = 3·L·n + 2·A params (56 at 4 qubits, 80 at 6, with the default A = 4); `param_groups()` names the `lam` / `theta` / `head` slices for per-group learning rates. |
 | `racetraq/agents/quantum/qnn.py` | Same circuit via qiskit-machine-learning `EstimatorQNN` (parity checks, shots/noise backends; `aer_noisy` uses the local device twin from `hardware.local_simulator`). |
 | `racetraq/agents/classical/mlp.py` | 76-parameter numpy MLP baseline (4-8-4, tanh) with analytic backprop; `param_groups()`: `body` / `head`. |
 | `racetraq/agents/training/dqn.py` | Double-DQN loop over vectorized envs, Adam, replay buffer — shared by both backends. Snapshot eval (one round of `eval_episodes` distinct greedy episodes every `eval_every` episodes; `history["eval_log"]`, `final_eval`, `trainer.final_params`) and the optional `[training]` knobs `bootstrap_truncation`, `loss` / `huber_delta`, `lr_groups`, `lr_end`, `target_update` / `tau`, `grad_clip`, `reward_scale`, plus, for robustness to device noise, `act_noise` (act and select snapshots under an `ExpectationNoise`; TD targets and gradients stay exact) and `action_gap` (advantage learning). In the trainer every knob is off unless the recipe sets it; `default.toml` turns `bootstrap_truncation` on for everyone and `act_noise` / `action_gap` on for the quantum agent on oval and chicane. |
 | `racetraq/agents/training/spsa.py` | Minimal SPSA minimizer used by hardware sprints: two loss evaluations per iteration, plus the optional safeguards the sprint turns on — per-parameter `scale` (0 freezes a parameter), a `max_step` trust region, `blocking` (reject a step the loss does not confirm), `accept` (a veto on a proposed point, costing no loss evaluation) and `calibrate_gain`. |
 | `racetraq/hardware.py` | IBM Quantum via `qiskit-ibm-runtime`, real or simulated. `get_backend` (real QPU, or a fake by name — default `fake_miami`, a Nighthawk calibration snapshot; unknown names raise), `local_simulator` / `execution_backend` (the Aer twin of a fake, built once: fakes of up to 7 qubits whole, larger devices — the 120–156-qubit ones above all — as a *device patch* of just the physical qubits the routed circuit touches), `open_execution_mode` (Session → Batch → job fallback, with the reason), `HardwareQFunction` (inference-only; light-cone-pruned ISA circuit, client-side `executor_estimator.Estimator` with `EstimatorV2` fallback, `resilience_level` 0/1/2, optional calibrated attenuation `rescale`), `run_hardware_lap`, `spsa_sprint` (by default: output head only, blocking, and a guard that vetoes steps costing more than 10 % of the exact-simulator greedy return; TD targets follow the recipe in the weights' sidecar; the result lists `accepted` and `vetoed` per iteration, and `sprint_steps_text` words them). CLI: `python -m racetraq.hardware lap\|sprint [--track T] [--profile q6] [--fake] [--fake-name NAME] [--backend NAME] [--weights W.npz] [--shots N] [--resilience 0\|1\|2] [--rescale off\|global\|readout] [--no-prune]`, plus `--max-decisions N` for a lap and `--iterations N --batch N --groups lam,theta,head --no-blocking --no-guard` for a sprint. `[hardware]` config: `backend_name`, `fake_name`, `shots`, `decision_shots`, `spsa_iterations`, `spsa_groups`, `spsa_blocking`, `spsa_guard`, `resilience_level`, `prune_light_cone`, `rescale`, `calibration_samples`, `calibration_shots`. |
 | `racetraq/server/protocol.py` | Typed WS messages; strict client-side validation (`ProtocolError`). |
-| `racetraq/studio.py` | Training studio, the pure part: sensor presets (`lidar`: n−1 rays + speed, what every bundled driver and study uses; `corner`: the rays + `corner_speed_ratio`), `studio_config` (the q<n> profile with the run's sensors and action set), `option_problem`, `catalog` (setup options, study numbers and time estimates per track × size), `compare` (a run against the study runs), the per-track booth board (`studio_<track>.json` in the leaderboard dir; ranked by the best test's lapped share, then mean lap). |
+| `racetraq/studio.py` | Training studio, the pure part: sensor presets (`lidar`: n−1 rays + speed, what the bundled drivers and studies use apart from `quantum_gp_q10`, `mlp_pro` and the engineered-feature gp studies; `corner`: the rays + `corner_speed_ratio`), `studio_config` (the q<n> profile with the run's sensors and action set), `option_problem`, `catalog` (setup options, study numbers and time estimates per track × size), `compare` (a run against the study runs), the per-track booth board (`studio_<track>.json` in the leaderboard dir; ranked by the best test's lapped share, then mean lap). |
 | `racetraq/server/studio.py` | `StudioController`, the session side of studio mode: phases setup → training → done → race / watch; starts the quantum job under the studio config with a random seed, follows the trainer's periodic tests, stops at `[studio] time_limit_s` (300) or once the best test laps every drive and six more tests bring no improvement; files named runs that lapped; gives the session its profile config back when another mode takes over and re-applies the run's config and track when the model drives again. |
 | `racetraq/data/studio_stats.json` | Generated by `tools/export_studio.py`: per (track, qubits) the closest study runs (first-lap episodes, best tests) and the live training speed per size measured through the server's own training path (`--calibrate`, stored in `data/studies/studio_calibration.json`). |
 | `racetraq/server/session.py` | `DemoSession`: the mode state machine and synchronous 60 Hz `tick()`; training threads; ghost recording. |
@@ -93,7 +93,8 @@ The quantum stack is generalized over `[circuit] n_qubits`. Qubits map 1:1 to
 observation features — (n − 1) lidar rays evenly spaced over [−60°, +60°]
 plus normalized speed — while the **4 actions and the Z_0…Z_3 readout stay
 fixed** (extra qubits only widen the feature register). The overlays set
-exactly that pair of config values, and `q8` the circuit depth as well:
+exactly that pair of config values, and `q8` / `q10` the circuit depth as
+well (5 / 6 blocks):
 
 - `--profile q6` — 6 qubits, 5 rays; trained oval and chicane weights are
   bundled (`weights/quantum_oval_q6.npz`, `quantum_chicane_q6.npz`).
@@ -151,9 +152,9 @@ contradicts them is an error. Only a parameter count that fits no depth
 `error` naming the file and the count, car-less attract mode.
 
 The default stays 4 qubits and is bit-identical to the pre-scaling stack
-(pinned by a regression test). The evolution stages and the bundled MLP
-(agent and race opponent) are 4-qubit-only: at n ≠ 4 the session rejects
-those modes/opponents with an `error` message instead of crashing (evolution
+(pinned by a regression test). The bundled MLP (agent and race opponent) is
+4-qubit-only, and the evolution stages ship only at 4 qubits and for the
+6-qubit oval: elsewhere at n ≠ 4 the session rejects those modes/opponents with an `error` message instead of crashing (evolution
 comes back if you produce `_stage<i>` weights at that qubit count).
 
 Weight filenames follow one rule (`server/session.quantum_weights_path`):
@@ -207,20 +208,21 @@ driver written by `tools/bundle_driver.py`, a `selection` block:
 | `source`, `weights_sha256` | the cell file the weights were copied from, byte for byte |
 | `candidates` | every shortlisted seed with its study, fresh and device numbers |
 | `seed_spread` | the recipe over all its seeds: IQM, 95 % interval and median of best-snapshot lapped, final-params lapped and stability; `seeds_lapping_half` |
-| `fresh_eval` | the chosen seed on fresh episodes (72; 36 per track for a multi-track driver, under `tracks`): `lapped`, `mean_lap`, `best_lap`, `eval_seed` |
+| `fresh_eval` | the chosen seed on fresh episodes (72; 72 per track for a multi-track driver — 36 in the older `mlp_pro` — under `tracks`): `lapped`, `mean_lap`, `best_lap`, `eval_seed` |
 | `device_eval` | when it ran: fake backend and patch, shots, rescale, resilience, episodes, `lapped`, `crashed`, two-qubit gates |
 
-Files that predate the tool (the 10-qubit drivers) have no `selection`
-block, and a sidecar without a `circuit` block gets its depth from the
-parameter count ("Depth and the light cone" above).
+Every bundled driver has a `selection` block (only the evolution-stage and
+warm-start files have none), and a sidecar without a `circuit` block gets its
+depth from the parameter count ("Depth and the light cone" above).
 
 ## Random tracks (🎲)
 
 `env/trackgen.generate_track(seed, difficulty=0.5)` builds a procedural
 closed-loop track, deterministic per `(seed, difficulty)`: random polar
 harmonics around a loop, amplitude-normalized so the minimum corner radius
-lands ~3× the car's kinematic minimum turn radius at difficulty 0, tightening
-toward ~1.6× (and narrowing from wide to gp-like width) at difficulty 1. The
+lands near 12 units (~7× the car's ~1.73-unit kinematic minimum turn radius)
+at difficulty 0, tightening toward 6.6 units (~3.8×, and narrowing from a
+half-width of 7.0 to 3.5; gp is 6.0) at difficulty 1. The
 candidate is constructed through the same code path `Track.load` uses after
 parsing JSON (resample + validation + precompute), so a generated track can
 never be unlearnable by the load-time rules; a failing candidate retries with
@@ -238,14 +240,14 @@ Differences from bundled tracks:
   specialist `quantum_gp[_q<n>].npz`. The car is labelled honestly:
   `driver: universal` or `driver: gp-trained generalist`
   (`session.random_track_weights`). Warm starts and evolution stages follow
-  the same chain (`_warmstart` / `_stage<i>` suffixes). **As bundled in
-  October 2026 the first link is the weak one**: `quantum_universal` laps
-  the four bundled tracks but none of ten generated tracks (0 of 120
-  episodes at difficulty 0.5 and at the 0.65 the server generates), while
-  `quantum_gp` laps all ten (120 of 120 at both) and, zero-shot, oval and
-  chicane (36 of 36 each) and combo (16–22 of 36) — SCIENCE.md, "One driver,
-  every track". Until the universal driver is re-selected, `set_driver
-  {driver: "gp"}` is the working choice on generated and drawn tracks. At
+  the same chain (`_warmstart` / `_stage<i>` suffixes). **As bundled since
+  2026-10-03 (seed 3)** `quantum_universal` laps the four bundled tracks
+  (287 of 288 fresh episodes) and all ten generated tracks (120 of 120
+  episodes at difficulty 0.5 and at the 0.65 the server generates), and so
+  does `quantum_gp` (120 of 120 at both), which also laps, zero-shot, oval
+  and chicane (36 of 36 each) and combo (16–22 of 36) — SCIENCE.md, "One
+  driver, every track". `set_driver {driver: "gp"}` is an alternative on
+  generated and drawn tracks. At
   10 qubits there is no universal file and the fallback is
   `quantum_gp_q10`, which laps oval and chicane in 36 of 36 and 85 of 120
   generated-track episodes (2026-10-14; the July file it replaced lapped
@@ -260,8 +262,9 @@ The universal-driver *candidates* are trained offline with
 `train_headless --track multi` (bundled-track mixture) or `--track random`
 (generated pool via `MultiTrackEnv.random_pool`). The bundled
 `quantum_universal.npz` was promoted from a `--track multi` study with
-`tools/bundle_driver.py`, which ranks seeds on the four bundled tracks
-only — not on generated ones (see the fallback chain above).
+`tools/bundle_driver.py --unseen 10`, which ranks seeds on the four bundled
+tracks and on ten generated ones (trackgen seeds 100–109, difficulty 0.65)
+and picks seed 3.
 
 ## WebSocket protocol reference
 
