@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { CircuitEditor, QamposerProvider, type Circuit, type Gate } from '@qamposer/react';
 import type { SimulationGate } from '@qamposer/react';
+import { t, useLang } from '../i18n';
 
 /** Column layout: single-qubit gates go to the first column after the
  *  qubit's last gate; a CZ occupies every wire between its two qubits. */
@@ -39,13 +40,14 @@ export function CircuitView({
   /** CSS zoom of QAMPoser's editor (its lanes are 80 px apart) */
   zoom?: number;
 }) {
+  useLang();
   const circuit = useMemo(() => layoutCircuit(nQubits, gates), [nQubits, gates]);
   const config = useMemo(() => ({ maxQubits: Math.max(nQubits, 5), maxGates: 1000 }), [nQubits]);
   return (
     <div
       className="circuit-view"
       style={{ zoom }}
-      aria-label={`${nQubits}-qubit circuit of the current decision`}
+      aria-label={t('circuit.aria', { n: nQubits })}
     >
       <QamposerProvider circuit={circuit} onCircuitChange={ignore} config={config}>
         <CircuitEditor />

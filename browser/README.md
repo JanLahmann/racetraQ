@@ -28,6 +28,22 @@ model and no hardware path.
   **C** or the 📷 button switches between top-down, chase and cockpit cameras.
 - **Evolution** — four snapshots of one training run racing each other (the same mode as at the booth).
 
+## Languages
+
+English and German: the **EN/DE** switch in the header (at phone width at
+the end of the modes row). The first visit follows the browser language
+(`de…` → German, anything else English); a choice made with the switch is
+remembered in this browser, and `?lang=de` / `?lang=en` in the URL wins over
+both, e.g. https://racetraq.org/?lang=de for a German class. Lap times and
+values follow the language (12,20 s in German). The linked documentation and
+the notebooks stay English.
+
+The strings are flat tables in `src/i18n/en.ts` and `src/i18n/de.ts`, with
+`{name}` placeholders and the desktop app's German vocabulary
+(`racetraq/web/i18n/de.json`); a key missing in German falls back to English,
+and `tests/i18n.test.ts` checks that both tables have the same keys and
+placeholders.
+
 ## How it relates to the Python project
 
 | | server demo (`racetraq/`) | browser edition (`browser/`) |

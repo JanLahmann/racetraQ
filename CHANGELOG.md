@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **racetraq.org in German**: an EN/DE switch in the header of the browser
+  edition (also `?lang=de`, and German by default in a German browser), with
+  the desktop app's vocabulary and German number formats; the notebooks stay
+  English.
+
 ## 0.3.3 — 2026-10-17
 
 - **Claims audit**: about 2,600 numbers and statements in SCIENCE.md,

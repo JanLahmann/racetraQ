@@ -37,11 +37,13 @@ measure it honestly, not about a quantum win.
   **Clear today's laps** and a ✕ per entry, and the Studio board shows a ✕
   per entry. To empty a whole Studio board, stop the server and delete
   `racetraq/data/leaderboard/studio_<track>.json`.
-- **Language.** [racetraq.org](https://racetraq.org/) and the notebooks
-  are in English only. The German interface is in the local app: the EN/DE
-  switch in its header, or `[ui] language = "de"` in the same TOML file;
-  its "Erklärung" tab is a German reading (what the demo is, how it learns,
-  the circuit, classical against quantum).
+- **Language.** [racetraq.org](https://racetraq.org/) speaks English and
+  German: the EN/DE switch in its header, or hand out
+  [racetraq.org/?lang=de](https://racetraq.org/?lang=de) to open it in German
+  (a German browser gets German by itself). The notebooks are in English
+  only. The local app has the same switch, or `[ui] language = "de"` in the
+  same TOML file; its "Erklärung" tab is a German reading (what the demo is,
+  how it learns, the circuit, classical against quantum).
 - **Phones.** [racetraq.org](https://racetraq.org/) works on a phone with
   nothing installed: enough for the opening and for anyone whose notebook
   will not start.
