@@ -8,7 +8,8 @@
   "entrypoint": {
     "type": "docker",
     "working_dir": "racetraQ",
-    "docker_image": "ghcr.io/janlahmann/racetraq",
+    "docker_image": "ghcr.io/janlahmann/racetraq@sha256:1577654c098818ea6b933993bf192f081ff316f26f6e695b0ecad46dccb63c6e",
+    "docker_image_fallback": "ghcr.io/janlahmann/racetraq:v0.3.3",
     "docker_port": 8000
   },
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `rqb-demo.json` pins the Docker image by digest (v0.3.3), with the tag as a
+  fallback, so a RasQberry Pi runs the reviewed image, not whatever `:latest` is.
 - **racetraq.org in German**: an EN/DE switch in the header of the browser
   edition (also `?lang=de`, and German by default in a German browser), with
   the desktop app's vocabulary and German number formats; the notebooks stay

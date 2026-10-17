@@ -54,6 +54,15 @@ you change it. `python tools/export_browser.py` regenerates
 - Numbers in the README and docs come from `data/records.json` and
   `data/studies/`; update them together.
 
+## Releasing
+
+A GitHub release triggers `publish.yml` (multi-arch image on GHCR, signed;
+Zenodo archives the release). Afterwards, pin the new image in
+`rqb-demo.json` for RasQberry: `docker_image` = `ghcr.io/janlahmann/racetraq@<digest
+of the release's multi-arch index>` and `docker_image_fallback` = the
+`:vX.Y.Z` tag, add the release's Zenodo DOI to `CITATION.cff`, and tell
+RasQberry the commit to pin in its catalogue.
+
 ## Style
 
 Code reads like the code around it. Docs say what was measured, on how many
