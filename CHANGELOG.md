@@ -6,6 +6,10 @@
   edition (also `?lang=de`, and German by default in a German browser), with
   the desktop app's vocabulary and German number formats; the notebooks stay
   English.
+- The sixteen audit studies now name the code they ran: a
+  `git_commits_reconstructed` block in each `report.json` (`eb1182f`, and
+  `778e5a8` for the three `robust_*` studies) and a table in REPORT §7. Both
+  matches are exact, by file hashes.
 
 ## 0.3.3 — 2026-10-17
 

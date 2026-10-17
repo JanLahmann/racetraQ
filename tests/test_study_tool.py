@@ -665,3 +665,25 @@ def test_export_writes_no_absolute_paths(tmp_path, monkeypatch):
         assert str(tmp_path) not in (target / name).read_text(encoding="utf-8")
     monkeypatch.chdir(tmp_path / "out")  # outside the working directory: its name only
     assert export_study.neutral_label(study_dir) == "my_study"
+
+
+def test_export_keeps_reconstructed_commits(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location(
+        "racetraq_export_study", STUDY_PATH.parent / "export_study.py")
+    export_study = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(export_study)
+    study_dir = tmp_path / "my_study"
+    _write_fake_study(study_dir, [
+        _fake_result("base", 0, 36, 36, [0, 1.0], first_clean=80, mean_lap=30.0)])
+    monkeypatch.chdir(tmp_path)
+    target = export_study.export(study_dir, "summary", tmp_path / "out")
+    report = json.loads((target / "report.json").read_text(encoding="utf-8"))
+    block = {"commit": "eb1182f", "exact": True, "differs": []}
+    report["git_commits_reconstructed"] = block
+    (target / "report.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    export_study.export(study_dir, "summary", tmp_path / "out")  # re-export
+    again = json.loads((target / "report.json").read_text(encoding="utf-8"))
+    assert again["git_commits_reconstructed"] == block
+    if "git_commits" in again:
+        keys = list(again)
+        assert keys.index("git_commits_reconstructed") == keys.index("git_commits") + 1
