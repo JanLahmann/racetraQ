@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- The sixteen audit studies now name the code they ran: a
+  `git_commits_reconstructed` block in each `report.json` (`eb1182f`, and
+  `778e5a8` for the three `robust_*` studies) and a table in REPORT §7. Both
+  matches are exact, by file hashes.
+
 ## 0.3.2 — 2026-10-14
 
 - **New 10-qubit gp driver**: `quantum_gp_q10` is now a 6-block circuit

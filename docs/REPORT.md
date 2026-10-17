@@ -694,6 +694,33 @@ IBM's teaching material [19] set the bar this project does not meet.
   `levers_chicane_4q` and `levers_gp_4q` 32 each), plus six single runs in
   `gp_q10feat_july_recipe/results.json`. Weights and full logs are not in the
   repository; SCIENCE.md's "487 training runs" predates the `chicane_q10` export.
+- Code commits of the audit studies. The sixteen audit studies ran from
+  copies of the code without a `.git` folder, so their `report.json` says
+  `"git_commits": []`. The commit was reconstructed on 2026-10-17. Every run
+  in each raw `manifest.json` started `tools/study.py` inside one of two
+  copies. `git hash-object` of each copy's files equals the blobs of all
+  files tracked in one commit (347 files for the first copy, 353 for the
+  second), and no file in either copy changed after its first run. The code
+  was frozen at 15:26 on 2026-10-01 and committed unchanged as `eb1182f` at
+  19:49; `778e5a8` was copied at the moment it was committed. Each affected
+  `report.json` now carries a `git_commits_reconstructed` block (commit,
+  method, `exact`, `differs`). The interpreter was Python 3.12.2 with numpy
+  2.5.1; the other package versions were not recorded.
+
+  | Study | Commit | Exact? |
+  |---|---|---|
+  | `oval_4q`, `chicane_4q`, `gp_4q` | `eb1182f` | yes |
+  | `oval_q6`, `chicane_q6`, `oval_q8`, `chicane_q8` | `eb1182f` | yes |
+  | `oval_q10`, `chicane_q10`, `gp_q10feat` | `eb1182f` | yes |
+  | `combo_4q`, `universal_4q`, `pro` | `eb1182f` | yes |
+  | `robust_oval_4q`, `robust_chicane_4q`, `robust_oval_q6` | `778e5a8` | yes |
+
+  The ten follow-up studies record their commit themselves. The six runs in
+  `gp_q10feat_july_recipe` can be pinned only roughly. They came from a
+  separate untracked A/B script, started at about 12:40 on 2026-10-01 in the
+  main checkout, whose HEAD was then `801a5ce` (from the reflog). Any
+  uncommitted changes in that checkout cannot be checked any more, so that
+  pin is not exact.
 - Reproducing one table: the circuit's oval row of §4.1 (and of the
   README's headline table) is `robust_oval_4q`, variant `gap8an`. From a
   checkout (`pip install -e .`):
@@ -707,7 +734,8 @@ IBM's teaching material [19] set the bar this project does not meet.
 
   The recipe comes from the study's `report.json` (800 episodes, preset
   `auto`, 36-episode evals at env seed 20000, the defaults). The committed
-  cells took 3–9 minutes each; the study did not record its commit. Seed 8,
+  cells took 3–9 minutes each and ran at commit `778e5a8` (reconstructed,
+  above; the study itself did not record it). Seed 8,
   re-run on 2026-10-16 at commit 9c528e2 (M1 Max, 144 s), matched its
   committed cell exactly (eval log, both 36-episode evals, first clean lap
   414). Compare `runs/robust_oval/report.md` with

@@ -18,6 +18,12 @@
   "seed": 20000
  },
  "git_commits": [],
+ "git_commits_reconstructed": {
+  "commit": "778e5a8ef7451f6dbd24e243941f18e6a86360e4",
+  "method": "reconstructed 2026-10-17: every run in the raw manifest.json ran tools/study.py with cwd auditA/snap2, a copy of the code without .git (hence git_commit null); git hash-object of the snapshot's copies equals the blobs of all 353 files tracked in the commit (incl. every .py/.toml under traqmania/ and tools/, and pyproject.toml), and no snapshot file changed after its first run",
+  "exact": true,
+  "differs": []
+ },
  "failed_cells": [],
  "variants": {
   "gap8an": {
