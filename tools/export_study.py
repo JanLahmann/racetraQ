@@ -44,6 +44,24 @@ def neutral_label(study_dir: Path) -> str:
         return path.name
 
 
+def _keep_reconstructed_commits(report: dict, previous: Path) -> dict:
+    """Carry an earlier export's ``git_commits_reconstructed`` block over (it
+    was added by hand from the snapshot each study ran in; the study itself
+    records no commit), placed right after ``git_commits``."""
+    if report.get("git_commits") or not previous.is_file():
+        return report
+    block = json.loads(previous.read_text(encoding="utf-8")).get("git_commits_reconstructed")
+    if block is None:
+        return report
+    out = {}
+    for key, value in report.items():
+        out[key] = value
+        if key == "git_commits":
+            out["git_commits_reconstructed"] = block
+    out.setdefault("git_commits_reconstructed", block)
+    return out
+
+
 def export(study_dir: Path, name: str, out: Path, baseline: str | None = None) -> Path:
     """Write the summary of ``study_dir`` to ``out/name``; returns that directory."""
     target = out / name
@@ -52,6 +70,7 @@ def export(study_dir: Path, name: str, out: Path, baseline: str | None = None) -
     report["directory"] = neutral_label(study_dir)
     for cell in report["failed_cells"]:
         cell["error_file"] = Path(cell["error_file"]).relative_to(study_dir).as_posix()
+    report = _keep_reconstructed_commits(report, target / "report.json")
     (target / "report.md").write_text(study.render_markdown(report), encoding="utf-8")
     (target / "report.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     cells = []
