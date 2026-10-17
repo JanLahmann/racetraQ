@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **racetraq.org in German**: an EN/DE switch in the header of the browser
+  edition (also `?lang=de`, and German by default in a German browser), with
+  the desktop app's vocabulary and German number formats; the notebooks stay
+  English.
+
 ## 0.3.2 — 2026-10-14
 
 - **New 10-qubit gp driver**: `quantum_gp_q10` is now a 6-block circuit

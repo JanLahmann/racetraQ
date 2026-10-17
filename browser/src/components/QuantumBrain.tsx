@@ -7,6 +7,7 @@ import { QuantumDriver } from '../sim/agents';
 import type { WorldCar } from '../sim/world';
 import { CircuitView } from './CircuitView';
 import { layoutCircuit } from './CircuitView';
+import { fmtInt, fmtNum, hasKey, t, useLang } from '../i18n';
 
 const COMPOSER_BASE = 'https://quantum.cloud.ibm.com/composer';
 const ARROWS: Record<string, string> = {
@@ -26,6 +27,22 @@ export function composerUrl(qasm: string, title: string): string {
   const payload = JSON.stringify({ title, description: '', qasm });
   const url = `${COMPOSER_BASE}?initial=${encodeURIComponent(LZString.compressToEncodedURIComponent(payload))}`;
   return url.length > 7500 ? COMPOSER_BASE : url;
+}
+
+/** An action label ("Brake right") in the active language. */
+function actionLabel(label: string): string {
+  const key = `action.${label.toLowerCase().replace(/ /g, '_')}`;
+  return hasKey(key) ? t(key) : label;
+}
+
+/** An observer feature name ("ray +30°", "curvature ahead 12m") in the active language. */
+export function featureLabel(name: string): string {
+  const ray = /^ray (.+)$/.exec(name);
+  if (ray) return t('feature.ray', { deg: ray[1] });
+  const [, base, metres] = /^(.*?)(?: (\d+(?:\.\d+)?)m)?$/.exec(name)!;
+  const key = `feature.${base.replace(/ /g, '_')}`;
+  const label = hasKey(key) ? t(key) : base;
+  return metres ? t('feature.lookahead', { name: label, m: fmtNum(Number(metres), 0) }) : label;
 }
 
 function Bar({ value, min = 0, max = 1, color }: { value: number; min?: number; max?: number; color: string }) {
@@ -50,8 +67,9 @@ export function QuantumBrain({
   wideCircuit: boolean;
   onToggleWide: () => void;
 }) {
+  useLang();
   if (!car || !car.driver || !car.observer) {
-    return <p className="hint">Pick a driver to see what it computes.</p>;
+    return <p className="hint">{t('brain.pick')}</p>;
   }
   const { driver, observer, decision, obs } = car;
   const labels = actionLabels(driver.nActions);
@@ -64,24 +82,24 @@ export function QuantumBrain({
     if (!quantum || !decision?.gates) return;
     const qasm = circuitToQasm(layoutCircuit(quantum.nQubits, decision.gates));
     track('composer open', { qubits: quantum.nQubits, track: car.observer?.track.name });
-    window.open(composerUrl(qasm, `racetraQ decision (${quantum.nQubits} qubits)`), '_blank', 'noopener');
+    window.open(composerUrl(qasm, t('brain.composer_title', { n: quantum.nQubits })), '_blank', 'noopener');
   };
 
   return (
     <div className="brain">
       <section>
         <h3>
-          <span className="step">1</span> Sensors
+          <span className="step">1</span> {t('brain.sensors')}
           <span className="sub">
-            {observer.nFeatures} numbers in [0, 1]{quantum ? ' — one per qubit' : ''}
+            {t(quantum ? 'brain.sensors_sub_q' : 'brain.sensors_sub', { n: observer.nFeatures })}
           </span>
         </h3>
         <ul className="features">
           {observer.featureNames.map((name, i) => (
             <li key={name}>
-              <span className="label">{name}</span>
+              <span className="label">{featureLabel(name)}</span>
               <Bar value={obs?.[i] ?? 0} color={name.startsWith('ray') ? '#7a5cff' : '#22d3ee'} />
-              <span className="num">{(obs?.[i] ?? 0).toFixed(2)}</span>
+              <span className="num">{fmtNum(obs?.[i] ?? 0)}</span>
             </li>
           ))}
         </ul>
@@ -91,28 +109,29 @@ export function QuantumBrain({
         <>
           <section>
             <h3>
-              <span className="step">2</span> Circuit
+              <span className="step">2</span> {t('brain.circuit')}
               <span className="sub">
-                {quantum.nQubits} qubits · {quantum.nLayers} blocks · {quantum.nParams} trained numbers
+                {t('brain.circuit_sub', {
+                  n: quantum.nQubits,
+                  layers: quantum.nLayers,
+                  params: fmtInt(quantum.nParams),
+                })}
               </span>
             </h3>
-            <p className="hint">
-              Each block writes the sensor values into the qubits as rotation angles (RY = λ·s, new every
-              decision), applies trained RY/RZ rotations, and entangles neighbours with a CZ ring.
-            </p>
+            <p className="hint">{t('brain.circuit_hint')}</p>
             <button type="button" className="chip expand" onClick={onToggleWide}>
-              {wideCircuit ? '⤡ Back into this panel' : '⤢ Show the whole circuit under the track'}
+              {t(wideCircuit ? 'brain.wide_back' : 'brain.wide_show')}
             </button>
             {wideCircuit ? null : decision?.gates ? (
               <CircuitView nQubits={quantum.nQubits} gates={decision.gates} zoom={quantum.nQubits > 6 ? 0.42 : 0.55} />
             ) : (
-              <p className="hint">The circuit appears with the first decision.</p>
+              <p className="hint">{t('brain.circuit_wait')}</p>
             )}
           </section>
           <section>
             <h3>
-              <span className="step">3</span> Measurement
-              <span className="sub">⟨Z⟩ of every qubit, exact (state vector in your browser)</span>
+              <span className="step">3</span> {t('brain.measure')}
+              <span className="sub">{t('brain.measure_sub')}</span>
             </h3>
             <ul className="qubits">
               {Array.from({ length: quantum.nQubits }, (_, i) => {
@@ -123,8 +142,8 @@ export function QuantumBrain({
                   <li key={i} className={readout ? 'readout' : 'spectator'}>
                     <span className="label">q{i}</span>
                     <Bar value={z ?? 0} min={-1} max={1} color={readout ? '#b4a3ff' : '#4b5163'} />
-                    <span className="num">{z === undefined ? '—' : `${z >= 0 ? '+' : ''}${z.toFixed(2)}`}</span>
-                    <span className="role">{readout ? `→ ${labels[i]}` : 'no readout'}</span>
+                    <span className="num">{z === undefined ? '—' : fmtNum(z, 2, { sign: true })}</span>
+                    <span className="role">{readout ? `→ ${actionLabel(labels[i])}` : t('brain.no_readout')}</span>
                   </li>
                 );
               })}
@@ -134,17 +153,17 @@ export function QuantumBrain({
       ) : (
         <section>
           <h3>
-            <span className="step">2</span> Classical network
-            <span className="sub">{driver.nParams.toLocaleString('en')} trained numbers</span>
+            <span className="step">2</span> {t('brain.classical')}
+            <span className="sub">{t('brain.classical_sub', { params: fmtInt(driver.nParams) })}</span>
           </h3>
-          <p className="hint">A small neural network (one tanh hidden layer) maps the sensors to scores.</p>
+          <p className="hint">{t('brain.classical_hint')}</p>
         </section>
       )}
 
       <section>
         <h3>
-          <span className="step">{quantum ? 4 : 3}</span> Decision
-          <span className="sub">{quantum ? 'Q = w·⟨Z⟩ + b — highest score wins' : 'highest score wins'}</span>
+          <span className="step">{quantum ? 4 : 3}</span> {t('brain.decision')}
+          <span className="sub">{t(quantum ? 'brain.decision_sub_q' : 'brain.decision_sub')}</span>
         </h3>
         <ul className="actions">
           {labels.map((label, a) => {
@@ -153,7 +172,7 @@ export function QuantumBrain({
             return (
               <li key={label} className={chosen ? 'chosen' : ''}>
                 <span className="arrow">{ARROWS[label] ?? '·'}</span>
-                <span className="label">{label}</span>
+                <span className="label">{actionLabel(label)}</span>
                 <span className="bar">
                   <span
                     className="bar-fill"
@@ -164,7 +183,7 @@ export function QuantumBrain({
                     }}
                   />
                 </span>
-                <span className="num">{q.toFixed(2)}</span>
+                <span className="num">{fmtNum(q)}</span>
               </li>
             );
           })}
@@ -174,12 +193,9 @@ export function QuantumBrain({
       {quantum && decision?.gates && (
         <section className="composer">
           <button type="button" className="link-button" onClick={openInComposer}>
-            Open this decision in IBM Quantum Composer ↗
+            {t('brain.composer')}
           </button>
-          <p className="hint">
-            The exact circuit with this decision's angles, ready to run on a real IBM quantum computer
-            {quantum.nQubits > 4 ? ' (sign in to simulate more than 4 qubits there)' : ''}.
-          </p>
+          <p className="hint">{t(quantum.nQubits > 4 ? 'brain.composer_hint_big' : 'brain.composer_hint')}</p>
         </section>
       )}
     </div>

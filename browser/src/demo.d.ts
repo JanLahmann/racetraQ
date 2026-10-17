@@ -34,6 +34,8 @@ declare module '@demo/race.js' {
     showRays: boolean;
     camera: CameraView;
     minimapCorner: string;
+    /** text on the human car's tag ("YOU") */
+    youLabel: string;
     setCamera(view: CameraView): void;
     cycleCamera(): CameraView;
     setTrack(payload: TrackPayload): void;

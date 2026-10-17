@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { findDriver, loadManifest, quantumDrivers, type DriverInfo, type Manifest } from './data';
-import { buildRace, type BuiltRace, type Mode, type RaceSetup, type Rival } from './race';
+import { buildRace, labelCars, type BuiltRace, type Mode, type RaceSetup, type Rival } from './race';
 import { outbound, track } from './analytics';
 import { About } from './components/About';
 import { Lapboard, fmtLap } from './components/Lapboard';
@@ -9,12 +9,19 @@ import { CircuitView } from './components/CircuitView';
 import { QuantumDriver } from './sim/agents';
 import { TouchControls, keysToControls } from './components/TouchControls';
 import { TrackStage } from './components/TrackStage';
+import { LangSwitch } from './components/LangSwitch';
 import { CAMERA_VIEWS, type CameraView } from '@demo/race.js';
+import { hasKey, rich, t, useLang, type Key } from './i18n';
 
-const MODES: { id: Mode; label: string; hint: string }[] = [
-  { id: 'watch', label: 'Watch', hint: 'a quantum driver races; see every decision' },
-  { id: 'race', label: 'Race', hint: 'you against the quantum driver' },
-  { id: 'evolution', label: 'Evolution', hint: 'four snapshots from one training run: watch it learn' },
+const MODES: { id: Mode; label: Key; hint: Key }[] = [
+  { id: 'watch', label: 'mode.watch', hint: 'mode.watch_hint' },
+  { id: 'race', label: 'mode.race', hint: 'mode.race_hint' },
+  { id: 'evolution', label: 'mode.evolution', hint: 'mode.evolution_hint' },
+];
+const RIVALS: [Rival, Key][] = [
+  ['none', 'rival.none'],
+  ['mlp', 'rival.mlp'],
+  ['pro', 'rival.pro'],
 ];
 const SPEEDS = [0.25, 0.5, 1, 2, 4];
 const KEYMAP: Record<string, 'left' | 'right' | 'gas' | 'brake'> = {
@@ -37,14 +44,14 @@ function driverChoices(manifest: Manifest, track: string): DriverInfo[] {
 
 function driverChipLabel(d: DriverInfo): string {
   const n = d.circuit?.n_qubits ?? 4;
-  return d.track === 'multi' ? `${n} qubits · all-round` : `${n} qubits`;
+  return t(d.track === 'multi' ? 'chip.qubits_multi' : 'chip.qubits', { n });
 }
 
 function evalLine(d: DriverInfo | undefined): string | null {
   const e = d?.fresh_eval;
   if (!e?.episodes || e.lapped_fraction == null) return null;
   const laps = Math.round(e.lapped_fraction * e.episodes);
-  return `Tested on ${e.episodes} fresh episodes: lapped in ${laps}/${e.episodes}, mean lap ${fmtLap(e.mean_lap)}.`;
+  return t('hint.eval', { episodes: e.episodes, laps, lap: fmtLap(e.mean_lap) });
 }
 
 const ABOUT_SEEN_KEY = 'racetraq-about-seen';
@@ -58,7 +65,13 @@ function firstVisit(): boolean {
   }
 }
 
-const CAMERA_LABELS: Record<CameraView, string> = { top: 'Top', chase: 'Chase', cockpit: 'Cockpit' };
+const CAMERA_LABELS: Record<CameraView, Key> = { top: 'camera.top', chase: 'camera.chase', cockpit: 'camera.cockpit' };
+
+/** A track name in the active language (the manifest's name when unknown). */
+function trackName(id: string, name: string): string {
+  const key = `track.${id}`;
+  return hasKey(key) ? t(key) : name;
+}
 const CAMERA_KEY = 'racetraq-camera';
 
 const query = (q: string) => typeof window.matchMedia === 'function' && window.matchMedia(q).matches;
@@ -82,6 +95,7 @@ function loadCamera(): CameraView {
 }
 
 export function App() {
+  const lang = useLang();
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [setup, setSetup] = useState<RaceSetup>({
@@ -147,6 +161,11 @@ export function App() {
       stale = true;
     };
   }, [manifest, setup, restartKey]);
+
+  // car names follow the language, also mid-race
+  useEffect(() => {
+    if (manifest && race) labelCars(manifest, race);
+  }, [manifest, race, lang]);
 
   // a visitor's finished race laps
   useEffect(() => {
@@ -238,11 +257,11 @@ export function App() {
     return (
       <div className="fatal">
         <h1>racetraQ</h1>
-        <p>Could not load the race data: {error}</p>
+        <p>{t('app.error', { error })}</p>
       </div>
     );
   }
-  if (!manifest) return <div className="loading">Loading racetraQ…</div>;
+  if (!manifest) return <div className="loading">{t('app.loading')}</div>;
 
   const world = race?.world;
   const focus = world?.cars.find((c) => c.id === focusId);
@@ -264,41 +283,42 @@ export function App() {
           <span className="logo">
             racetra<span className="q">Q</span>
           </span>
-          <span className="edition">browser edition</span>
+          <span className="edition">{t('header.edition')}</span>
         </div>
-        <nav className="tracks" aria-label="Track">
-          {manifest.tracks.map((t) => (
+        <nav className="tracks" aria-label={t('header.tracks')}>
+          {manifest.tracks.map((tr) => (
             <button
-              key={t.id}
+              key={tr.id}
               type="button"
-              className={t.id === setup.track ? 'active' : ''}
-              onClick={() => pickTrack(t.id)}
+              className={tr.id === setup.track ? 'active' : ''}
+              onClick={() => pickTrack(tr.id)}
             >
-              {t.name}
+              {trackName(tr.id, tr.name)}
             </button>
           ))}
         </nav>
-        <nav className="modes" aria-label="Mode">
+        <nav className="modes" aria-label={t('header.modes')}>
           {MODES.map((m) => (
             <button
               key={m.id}
               type="button"
-              title={m.hint}
+              title={t(m.hint)}
               className={m.id === setup.mode ? 'active' : ''}
               onClick={() => pickMode(m.id)}
             >
-              {m.label}
+              {t(m.label)}
             </button>
           ))}
         </nav>
         <button type="button" className="about-button" onClick={openAbout}>
-          What is this?
+          {t('header.about')}
         </button>
+        <LangSwitch />
       </header>
       <p className="pitch">
-        A tiny quantum circuit learned to drive this car. Watch it lap, then race it yourself.{' '}
+        {t('pitch.text')}{' '}
         <button type="button" className="link" onClick={openAbout}>
-          How does it work?
+          {t('pitch.how')}
         </button>
       </p>
 
@@ -317,33 +337,38 @@ export function App() {
               <div className="hud">
                 {focus && (
                   <div className="clock" style={{ borderColor: focus.color }}>
-                    <span className="who">{setup.mode === 'race' && human ? 'You' : focus.label}</span>
+                    <span className="who">{setup.mode === 'race' && human ? t('hud.you') : focus.label}</span>
                     <span className="time">{fmtLap(world.lapClock(human ?? focus))}</span>
                   </div>
                 )}
               </div>
               {countdown !== null && <div className="countdown">{countdown}</div>}
               {setup.mode === 'race' && human?.frozenUntil !== null && human && (
-                <div className="banner danger">Off track — back to the start</div>
+                <div className="banner danger">{t('banner.off_track')}</div>
               )}
-              {paused && <div className="banner">Paused — press Step to advance one decision</div>}
+              {paused && <div className="banner">{t('banner.paused')}</div>}
               {setup.mode === 'race' && <TouchControls onChange={(patch) => {
                 Object.assign(keys.current, patch);
                 world.humanControls = keysToControls(keys.current);
               }} />}
             </TrackStage>
           ) : (
-            <div className="stage loading">Loading track…</div>
+            <div className="stage loading">{t('stage.loading')}</div>
           )}
 
           {wideCircuit && focus?.driver instanceof QuantumDriver && focus.decision?.gates && (
             <div className="wide-circuit">
               <div className="wide-circuit-head">
                 <span>
-                  Circuit of the current decision · {focus.label} · {focus.driver.nQubits} qubits ×{' '}
-                  {focus.driver.nLayers} blocks
+                  {t('wide.heading', { label: focus.label, n: focus.driver.nQubits, layers: focus.driver.nLayers })}
                 </span>
-                <button type="button" className="chip" onClick={() => setWideCircuit(false)}>
+                <button
+                  type="button"
+                  className="chip"
+                  aria-label={t('wide.close')}
+                  title={t('wide.close')}
+                  onClick={() => setWideCircuit(false)}
+                >
                   ✕
                 </button>
               </div>
@@ -358,7 +383,7 @@ export function App() {
           <div className="controls">
             {setup.mode !== 'evolution' && (
               <div className="control-group">
-                <span className="control-label">Quantum driver</span>
+                <span className="control-label">{t('controls.driver')}</span>
                 <div className="chips">
                   {choices.map((d) => (
                     <button
@@ -375,22 +400,16 @@ export function App() {
             )}
             {setup.mode === 'watch' && (
               <div className="control-group">
-                <span className="control-label">Rival</span>
+                <span className="control-label">{t('controls.rival')}</span>
                 <div className="chips">
-                  {(
-                    [
-                      ['none', 'none'],
-                      ['mlp', 'classical MLP'],
-                      ['pro', 'classical pro'],
-                    ] as [Rival, string][]
-                  ).map(([id, label]) => (
+                  {RIVALS.map(([id, label]) => (
                     <button
                       key={id}
                       type="button"
                       className={id === setup.rival ? 'chip active' : 'chip'}
                       onClick={() => pickRival(id)}
                     >
-                      {label}
+                      {t(label)}
                     </button>
                   ))}
                 </div>
@@ -398,7 +417,7 @@ export function App() {
             )}
             {setup.mode !== 'race' && (
               <div className="control-group">
-                <span className="control-label">Speed</span>
+                <span className="control-label">{t('controls.speed')}</span>
                 <div className="chips">
                   {SPEEDS.map((s) => (
                     <button
@@ -407,7 +426,7 @@ export function App() {
                       className={s === speed ? 'chip active' : 'chip'}
                       onClick={() => setSpeed(s)}
                     >
-                      {s}×
+                      {s.toLocaleString(lang)}×
                     </button>
                   ))}
                 </div>
@@ -417,55 +436,49 @@ export function App() {
               {setup.mode !== 'race' && (
                 <>
                   <button type="button" className="chip" onClick={() => setPaused((p) => !p)}>
-                    {paused ? '▶ Resume' : '❚❚ Pause'}
+                    {t(paused ? 'controls.resume' : 'controls.pause')}
                   </button>
                   <button type="button" className="chip" onClick={stepDecision} disabled={!paused}>
-                    Step
+                    {t('controls.step')}
                   </button>
                 </>
               )}
               <button type="button" className="chip" onClick={() => setRestartKey((k) => k + 1)}>
-                ↺ Restart
+                {t('controls.restart')}
               </button>
               {setup.mode === 'race' && (
                 <button
                   type="button"
                   className="chip"
-                  title="Camera (C): top-down, chase (turns with your car) or cockpit (closer, more road ahead)"
+                  title={t('camera.tip')}
                   onClick={(e) => {
                     cycleCamera();
                     e.currentTarget.blur();
                   }}
                 >
-                  📷 {CAMERA_LABELS[camera]}
+                  📷 {t(CAMERA_LABELS[camera])}
                 </button>
               )}
               <label className="toggle">
                 <input type="checkbox" checked={showRays} onChange={(e) => setShowRays(e.target.checked)} />
-                lidar
+                {t('controls.lidar')}
               </label>
               {setup.mode !== 'evolution' &&
                 !(setup.mode === 'watch' && setup.driver === `quantum_${setup.track}`) &&
                 manifest.ghosts.some((g) => g.track === setup.track) && (
                 <label className="toggle">
                   <input type="checkbox" checked={setup.ghost} onChange={(e) => update({ ghost: e.target.checked })} />
-                  ghost
+                  {t('controls.ghost')}
                 </label>
               )}
             </div>
             {setup.mode === 'race' && (
               <p className="hint">
-                {isTouch()
-                  ? 'Drive with the on-screen pedals. The 📷 button switches the camera: chase and cockpit turn with your car.'
-                  : 'Drive with the arrow keys or WASD (Space brakes) — or the on-screen pedals. C switches the camera: chase and cockpit turn with your car.'}{' '}
-                The quantum car decides 10 times a second.
+                {t(isTouch() ? 'hint.race_touch' : 'hint.race_keys')} {t('hint.race_decides')}
               </p>
             )}
             {setup.mode === 'evolution' && (
-              <p className="hint">
-                Four snapshots of the same quantum driver, saved at different points of one training run. Click a
-                car in the table to look inside its circuit.
-              </p>
+              <p className="hint">{t('hint.evolution')}</p>
             )}
             {setup.mode !== 'evolution' && evalLine(selected) && <p className="hint">{evalLine(selected)}</p>}
           </div>
@@ -477,7 +490,7 @@ export function App() {
 
         <aside className="panel">
           <h2>
-            Inside the driver
+            {t('panel.heading')}
             {focus && (
               <span className="focus-name" style={{ color: focus.color }}>
                 {' '}
@@ -490,15 +503,18 @@ export function App() {
       </main>
 
       <footer>
-        Inference only: the drivers were trained offline with{' '}
-        <a href="https://github.com/JanLahmann/racetraQ" target="_blank" rel="noopener" {...outbound('https://github.com/JanLahmann/racetraQ')}>
-          racetraQ
-        </a>{' '}
-        (Python, Qiskit). Every circuit is simulated in this browser by{' '}
-        <a href="https://qamposer.org" target="_blank" rel="noopener" {...outbound('https://qamposer.org')}>
-          QAMPoser
-        </a>
-        's state-vector simulator — no server.{' '}
+        {rich('footer.text', {
+          racetraq: (
+            <a href="https://github.com/JanLahmann/racetraQ" target="_blank" rel="noopener" {...outbound('https://github.com/JanLahmann/racetraQ')}>
+              racetraQ
+            </a>
+          ),
+          qamposer: (
+            <a href="https://qamposer.org" target="_blank" rel="noopener" {...outbound('https://qamposer.org')}>
+              QAMPoser
+            </a>
+          ),
+        })}{' '}
         <a href="https://fun-with-quantum.org" target="_blank" rel="noopener" {...outbound('https://fun-with-quantum.org')}>
           Fun with Quantum
         </a>

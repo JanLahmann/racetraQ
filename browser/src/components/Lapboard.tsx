@@ -1,6 +1,8 @@
 import type { World } from '../sim/world';
+import { fmtSeconds, t, useLang } from '../i18n';
 
-export const fmtLap = (t: number | null | undefined) => (t == null ? '—' : `${t.toFixed(2)} s`);
+/** A lap time in the active language: "12.20 s" / "12,20 s". */
+export const fmtLap = (s: number | null | undefined) => (s == null ? '—' : fmtSeconds(s));
 
 export function Lapboard({
   world,
@@ -11,14 +13,15 @@ export function Lapboard({
   focusId: string;
   onFocus?: (id: string) => void;
 }) {
+  useLang();
   return (
     <table className="lapboard">
       <thead>
         <tr>
-          <th>Car</th>
-          <th>Lap</th>
-          <th>Last</th>
-          <th>Best</th>
+          <th>{t('lap.car')}</th>
+          <th>{t('lap.lap')}</th>
+          <th>{t('lap.last')}</th>
+          <th>{t('lap.best')}</th>
         </tr>
       </thead>
       <tbody>
@@ -42,7 +45,7 @@ export function Lapboard({
           <tr className="ghost-row">
             <td>
               <span className="swatch ghost" />
-              Ghost · 4-qubit driver's lap from a standing start
+              {t('lap.ghost')}
             </td>
             <td />
             <td />

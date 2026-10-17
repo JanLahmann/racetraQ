@@ -149,6 +149,36 @@ nav button.active {
 .about-button:hover {
   border-color: var(--quantum);
 }
+/* the EN/DE switch: after "What is this?"; on phones at the end of the modes row */
+.lang-switch {
+  margin-left: -8px;
+  display: flex;
+  gap: 2px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  flex: none;
+}
+.lang-switch button {
+  border: 0;
+  background: none;
+  min-width: 32px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.lang-switch button:hover {
+  color: var(--text);
+}
+.lang-switch button[aria-pressed='true'] {
+  background: #262b36;
+  color: var(--text);
+}
 
 /* ------------------------------------------------------------------ main */
 main {
@@ -630,6 +660,10 @@ footer {
   }
   nav {
     order: 3;
+  }
+  .lang-switch {
+    order: 4;
+    margin-left: auto;
   }
   nav.tracks {
     flex: 1 1 100%;

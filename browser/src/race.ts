@@ -12,6 +12,7 @@ import { makeDriver } from './sim/agents';
 import { Observer } from './sim/observer';
 import { Track } from './sim/track';
 import { World, type CarSpec } from './sim/world';
+import { fmtInt, t } from './i18n';
 
 export type Mode = 'watch' | 'race' | 'evolution';
 export type Rival = 'none' | 'mlp' | 'pro';
@@ -39,6 +40,8 @@ export interface BuiltRace {
   world: World;
   track: Track;
   focusId: string;
+  /** the setup it was built for (labelCars) */
+  setup: RaceSetup;
 }
 
 async function agentSpec(
@@ -63,7 +66,32 @@ async function agentSpec(
 export function quantumLabel(manifest: Manifest, driverId: string): string {
   const info = findDriver(manifest, driverId);
   const n = info?.circuit?.n_qubits ?? 4;
-  return info?.track === 'multi' ? `Quantum · ${n} qubits · all-round` : `Quantum · ${n} qubits`;
+  return t(info?.track === 'multi' ? 'car.quantum_multi' : 'car.quantum', { n });
+}
+
+const rivalId = (setup: RaceSetup) => (setup.rival === 'pro' ? 'mlp_pro' : `mlp_${setup.track}`);
+
+function rivalLabel(manifest: Manifest, setup: RaceSetup): string {
+  const info = findDriver(manifest, rivalId(setup));
+  const params = fmtInt(info?.n_params ?? 0);
+  if (setup.rival === 'pro') return t('car.pro', { params });
+  // the MLP is matched to the 4-qubit circuit (same 3 rays + speed), not to the larger ones
+  const larger = (findDriver(manifest, setup.driver)?.circuit?.n_qubits ?? 4) > 4;
+  return larger ? t('car.mlp_unmatched', { params, rays: info?.n_rays ?? 0 }) : t('car.mlp', { params });
+}
+
+/** (Re)label a race's cars in the active language: at build time and when
+ *  the visitor switches language mid-race. */
+export function labelCars(manifest: Manifest, race: BuiltRace): void {
+  const { setup, world } = race;
+  const stages = setup.mode === 'evolution' ? evolutionStages(manifest, setup.track) : [];
+  for (const car of world.cars) {
+    const stage = /^stage(\d+)$/.exec(car.id);
+    if (stage) car.label = stages[Number(stage[1]) - 1]?.label ?? car.label;
+    else if (car.id === 'human') car.label = t('car.you');
+    else if (car.id === 'quantum') car.label = quantumLabel(manifest, setup.driver);
+    else if (car.id === 'mlp' || car.id === 'pro') car.label = rivalLabel(manifest, setup);
+  }
 }
 
 export async function buildRace(manifest: Manifest, setup: RaceSetup): Promise<BuiltRace> {
@@ -83,22 +111,16 @@ export async function buildRace(manifest: Manifest, setup: RaceSetup): Promise<B
     focusId = specs[specs.length - 1]?.id ?? '';
   } else {
     if (setup.mode === 'race') {
-      specs.push({ id: 'human', kind: 'human', label: 'You', color: COLORS.human });
+      specs.push({ id: 'human', kind: 'human', label: t('car.you'), color: COLORS.human });
     }
     specs.push(
       await agentSpec(manifest, track, setup.driver, 'quantum', quantumLabel(manifest, setup.driver), COLORS.quantum),
     );
     if (setup.mode === 'watch' && setup.rival !== 'none') {
-      const rivalId = setup.rival === 'pro' ? 'mlp_pro' : `mlp_${setup.track}`;
-      const info = findDriver(manifest, rivalId);
-      if (info) {
-        // the MLP is matched to the 4-qubit circuit (same 3 rays + speed), not to the larger ones
-        const larger = (findDriver(manifest, setup.driver)?.circuit?.n_qubits ?? 4) > 4;
-        const label =
-          setup.rival === 'pro'
-            ? `Classical pro · ${info.n_params.toLocaleString('en')} params`
-            : `Classical MLP · ${info.n_params} params${larger ? ` (${info.n_rays} rays, not matched)` : ''}`;
-        specs.push(await agentSpec(manifest, track, rivalId, setup.rival, label, setup.rival === 'pro' ? COLORS.pro : COLORS.mlp));
+      const id = rivalId(setup);
+      if (findDriver(manifest, id)) {
+        const color = setup.rival === 'pro' ? COLORS.pro : COLORS.mlp;
+        specs.push(await agentSpec(manifest, track, id, setup.rival, rivalLabel(manifest, setup), color));
       }
     }
   }
@@ -119,5 +141,5 @@ export async function buildRace(manifest: Manifest, setup: RaceSetup): Promise<B
   ) {
     world.setGhost(await loadGhost(setup.track), setup.mode === 'race' ? 'human' : 'quantum');
   }
-  return { world, track, focusId };
+  return { world, track, focusId, setup };
 }
