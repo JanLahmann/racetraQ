@@ -1,3 +1,3 @@
 """racetraQ — a quantum reinforcement learning racing demo."""
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
