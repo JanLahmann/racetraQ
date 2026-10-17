@@ -29,8 +29,8 @@ table lists each notebook's level and how long it takes to read and to run.
 
 **Time:** 5 minutes. **Prerequisites:** none.
 
-1. Open [racetraq.org](https://racetraq.org/) and watch the quantum driver
-   for a lap. Pause it: the side panel shows one decision — the sensors,
+1. Open [racetraq.org](https://racetraq.org/) (EN/DE switch in the header)
+   and watch the quantum driver for a lap. Pause it: the side panel shows one decision — the sensors,
    the circuit, the four qubit readings and the four scores. (2 min)
 2. Press **Race** and try to beat it. (2 min)
 3. Read "What is this?" and "What did we find?" in

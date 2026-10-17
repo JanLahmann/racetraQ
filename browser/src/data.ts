@@ -3,6 +3,7 @@ import type { CircuitShape, DriverFile } from './sim/agents';
 import type { PhysicsConfig } from './sim/car';
 import type { TrackJson } from './sim/track';
 import type { GhostLap } from './sim/world';
+import { t } from './i18n';
 
 export interface FreshEval {
   episodes?: number;
@@ -81,11 +82,14 @@ export function evolutionStages(manifest: Manifest, track: string): { label: str
       (d) => d.agent === 'quantum' && d.kind === 'stage' && d.track === track && d.circuit?.n_qubits === 4,
     )
     .sort((a, b) => (a.stage ?? 0) - (b.stage ?? 0))
-    .map((d) => ({ label: d.episodes ? `ep ${d.episodes}` : `stage ${d.stage}`, id: d.id }));
+    .map((d) => ({
+      label: d.episodes ? t('car.ep', { n: d.episodes }) : t('car.stage', { n: d.stage ?? '' }),
+      id: d.id,
+    }));
   const best = findDriver(manifest, `quantum_${track}`);
   if (stages.length && best) {
     stages[stages.length - 1] = {
-      label: best.episodes ? `best (of ${best.episodes} ep run)` : 'best',
+      label: best.episodes ? t('car.best_of', { n: best.episodes }) : t('car.best'),
       id: best.id,
     };
   }

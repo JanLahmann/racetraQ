@@ -1,9 +1,11 @@
 /** On-screen pedals and steering for touch devices (race mode). */
 import type { Controls } from '../sim/world';
+import { t, useLang } from '../i18n';
 
 type Key = 'left' | 'right' | 'gas' | 'brake';
 
 export function TouchControls({ onChange }: { onChange: (patch: Partial<Record<Key, boolean>>) => void }) {
+  useLang();
   const bind = (key: Key) => ({
     onPointerDown: (e: React.PointerEvent) => {
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -20,8 +22,8 @@ export function TouchControls({ onChange }: { onChange: (patch: Partial<Record<K
         <button type="button" {...bind('right')}>▶</button>
       </div>
       <div className="pedals">
-        <button type="button" className="brake" {...bind('brake')}>BRAKE</button>
-        <button type="button" className="gas" {...bind('gas')}>GAS</button>
+        <button type="button" className="brake" {...bind('brake')}>{t('touch.brake')}</button>
+        <button type="button" className="gas" {...bind('gas')}>{t('touch.gas')}</button>
       </div>
     </div>
   );

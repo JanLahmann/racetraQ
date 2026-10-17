@@ -119,7 +119,8 @@ racetraq/config/exhibition.toml`. Run the browser fullscreen, e.g.
 9. Phones on the venue Wi-Fi can watch at `http://<laptop-ip>:8000`; check
    the venue allows it, or leave it.
 10. Fallback if the laptop dies: https://racetraq.org runs the same
-    drivers in any browser, no install.
+    drivers in any browser, no install, in English or German
+    (https://racetraq.org/?lang=de, or its EN/DE switch).
 
 ### The 6-qubit variant
 

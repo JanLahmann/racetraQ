@@ -2,10 +2,37 @@
 
 ## Unreleased
 
+- **racetraq.org in German**: an EN/DE switch in the header of the browser
+  edition (also `?lang=de`, and German by default in a German browser), with
+  the desktop app's vocabulary and German number formats; the notebooks stay
+  English.
 - The sixteen audit studies now name the code they ran: a
   `git_commits_reconstructed` block in each `report.json` (`eb1182f`, and
   `778e5a8` for the three `robust_*` studies) and a table in REPORT §7. Both
   matches are exact, by file hashes.
+
+## 0.3.3 — 2026-10-17
+
+- **Claims audit**: about 2,600 numbers and statements in SCIENCE.md,
+  REPORT.md, the README, the other docs, the notebooks and `data/records.md`
+  were checked against the study data; 89 were corrected. Among them: the
+  chicane 4-versus-6-block result at 10 qubits (6 blocks lap supportedly
+  faster), `quantum_gp_q10` as the fastest learned gp driver *after* the
+  `pro` MLP, and statements left over from before the October re-bundles.
+- **Studio and app** (from persona walkthroughs in English and German):
+  working links in the in-app docs, a readable lap board, track names
+  instead of ids, German number formatting, feedback on Stop, axis titles
+  on the training charts, "blocks" as in the docs, clearer comparison
+  text, and an accurate claim instead of "genuinely quantum".
+- **racetraq.org**: the rival is labelled when it is not a matched
+  comparison, About is accurate for the larger circuits and cites the DOI,
+  About pauses a race, and the help text fits touch screens.
+- **Docs**: realistic teaching and learning plans (the Studio needs the
+  local app; racetraq.org is English-only), five glossary entries, a
+  command that reproduces one published row, no private paths in
+  `data/studies`, and the hardware log names its weights' sha256.
+- The browser edition vendors the built `@qamposer/react`: npm can no
+  longer prepare it as a git dependency.
 
 ## 0.3.2 — 2026-10-14
 

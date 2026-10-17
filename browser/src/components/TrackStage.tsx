@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
 import { RaceRenderer, type CameraView, type RenderCar, type TrackPayload } from '@demo/race.js';
 import type { Track } from '../sim/track';
 import type { World } from '../sim/world';
+import { t, useLang } from '../i18n';
 
 interface Props {
   world: World;
@@ -55,7 +56,9 @@ export function stateMessage(world: World): { cars: RenderCar[] } {
     return {
       id: car.id,
       kind: car.id === 'pro' ? 'pro' : car.kind,
-      label: car.label,
+      // the renderer keys evolution colours and numbers by label: send the
+      // stable car id, so a language switch doesn't renumber the cars
+      label: car.id,
       x,
       y,
       theta,
@@ -72,6 +75,7 @@ export function stateMessage(world: World): { cars: RenderCar[] } {
 export function TrackStage({ world, track, mode, paused, speed, showRays, camera, children }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<RaceRenderer | null>(null);
+  const lang = useLang();
   const live = useRef({ paused, speed });
   live.current = { paused, speed };
 
@@ -84,6 +88,10 @@ export function TrackStage({ world, track, mode, paused, speed, showRays, camera
       renderer.running = false;
     };
   }, []);
+
+  useEffect(() => {
+    rendererRef.current!.youLabel = t('race.you');
+  }, [lang]);
 
   useEffect(() => {
     rendererRef.current!.setTrack(trackPayload(track));
@@ -136,7 +144,7 @@ export function TrackStage({ world, track, mode, paused, speed, showRays, camera
 
   return (
     <div className="stage" style={{ '--track-aspect': track.aspect().toFixed(3) } as React.CSSProperties}>
-      <canvas ref={canvasRef} aria-label="Race track" />
+      <canvas ref={canvasRef} aria-label={t('stage.aria')} />
       {children}
     </div>
   );
