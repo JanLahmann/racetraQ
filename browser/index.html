@@ -17,6 +17,93 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="racetraQ: a race track driven by a 4-qubit quantum circuit, with its live qubit readout and Q-values" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" hreflang="en" href="https://racetraq.org/?lang=en" />
+    <link rel="alternate" hreflang="de" href="https://racetraq.org/?lang=de" />
+    <link rel="alternate" hreflang="x-default" href="https://racetraq.org/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://racetraq.org/#app",
+            "name": "racetraQ (browser edition)",
+            "url": "https://racetraq.org/",
+            "description": "A race car driven by a small variational quantum circuit trained with double deep Q-learning, next to a classical baseline. Watch it lap, race it yourself; everything is simulated in the browser.",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Any (web browser)",
+            "browserRequirements": "Requires JavaScript.",
+            "inLanguage": [
+              "en",
+              "de"
+            ],
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "EUR"
+            },
+            "image": "https://racetraq.org/og.png",
+            "license": "https://www.apache.org/licenses/LICENSE-2.0",
+            "author": {
+              "@id": "https://racetraq.org/#author"
+            },
+            "isBasedOn": {
+              "@id": "https://racetraq.org/#code"
+            },
+            "keywords": "quantum machine learning, quantum reinforcement learning, variational quantum circuits, Qiskit, education"
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "@id": "https://racetraq.org/#code",
+            "name": "racetraQ: a quantum reinforcement learning racing demo",
+            "codeRepository": "https://github.com/JanLahmann/racetraQ",
+            "programmingLanguage": [
+              "Python",
+              "TypeScript"
+            ],
+            "license": "https://www.apache.org/licenses/LICENSE-2.0",
+            "identifier": "https://doi.org/10.5281/zenodo.23270600",
+            "sameAs": "https://doi.org/10.5281/zenodo.23270600",
+            "author": {
+              "@id": "https://racetraq.org/#author"
+            }
+          },
+          {
+            "@type": "Dataset",
+            "@id": "https://racetraq.org/#studies",
+            "name": "racetraQ multi-seed training studies",
+            "description": "Per-seed results of the multi-seed studies behind racetraQ's measured results: quantum circuit and classical MLP drivers on four tracks, 4 to 10 qubits, with statistical reports.",
+            "url": "https://github.com/JanLahmann/racetraQ/tree/main/data/studies",
+            "license": "https://www.apache.org/licenses/LICENSE-2.0",
+            "isPartOf": {
+              "@id": "https://racetraq.org/#code"
+            },
+            "creator": {
+              "@id": "https://racetraq.org/#author"
+            }
+          },
+          {
+            "@type": "Report",
+            "@id": "https://racetraq.org/#report",
+            "name": "racetraQ technical report",
+            "url": "https://github.com/JanLahmann/racetraQ/blob/main/docs/REPORT.md",
+            "inLanguage": "en",
+            "isPartOf": {
+              "@id": "https://racetraq.org/#code"
+            },
+            "author": {
+              "@id": "https://racetraq.org/#author"
+            }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://racetraq.org/#author",
+            "name": "Jan Lahmann"
+          }
+        ]
+      }
+    </script>
     <!-- Umami analytics — shared Fun with Quantum family property (cookie-free).
          data-domains keeps dev servers, previews and self-hosted copies out of the numbers. -->
     <script defer src="https://cloud.umami.is/script.js" data-website-id="97f347ac-e7ba-4be3-b26f-ab4b328bdbf2" data-domains="racetraq.org"></script>
