@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- racetraq.org: structured data for search engines (JSON-LD: the app, the
+  source code with its DOI, the study data and the report) and hreflang
+  en/de in the page and the sitemap.
 - `rqb-demo.json` pins the Docker image by digest (v0.3.3), with the tag as a
   fallback, so a RasQberry Pi runs the reviewed image, not whatever `:latest` is.
 - **racetraq.org in German**: an EN/DE switch in the header of the browser
