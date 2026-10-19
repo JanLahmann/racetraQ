@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- racetraq.org uses the Fun with Quantum family's standard Umami snippet:
+  headless browsers and bots send nothing, and `?notrack` turns tracking off
+  in this browser (`?track` turns it back on).
 - racetraq.org: structured data for search engines (JSON-LD: the app, the
   source code with its DOI, the study data and the report) and hreflang
   en/de in the page and the sitemap.
