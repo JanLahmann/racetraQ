@@ -90,6 +90,10 @@ header::-webkit-scrollbar {
   align-items: baseline;
   gap: 8px;
   flex: none;
+  /* the page's h1, styled as the header logo */
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
 }
 .logo {
   font-weight: 800;

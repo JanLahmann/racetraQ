@@ -6,7 +6,8 @@
     <meta name="description" content="racetraQ browser edition: quantum reinforcement-learning race cars driven by a variational quantum circuit, simulated entirely in your browser." />
     <meta name="theme-color" content="#0f1117" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1117'/%3E%3Cpath d='M7 22 L16 7 L25 22 Z' fill='%237a5cff'/%3E%3Ccircle cx='16' cy='17' r='2.6' fill='white'/%3E%3C/svg%3E" />
-    <title>racetraQ · browser edition</title>
+    <title>racetraQ: a quantum circuit learns to drive a race car</title>
+    <link rel="canonical" href="https://racetraq.org/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://racetraq.org/" />
     <meta property="og:site_name" content="racetraQ" />
@@ -17,7 +18,7 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="racetraQ: a race track driven by a 4-qubit quantum circuit, with its live qubit readout and Q-values" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="alternate" hreflang="en" href="https://racetraq.org/?lang=en" />
+    <link rel="alternate" hreflang="en" href="https://racetraq.org/" />
     <link rel="alternate" hreflang="de" href="https://racetraq.org/?lang=de" />
     <link rel="alternate" hreflang="x-default" href="https://racetraq.org/" />
     <script type="application/ld+json">
@@ -111,7 +112,24 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="97f347ac-e7ba-4be3-b26f-ab4b328bdbf2" data-domains="racetraq.org" data-before-send="fwqUmamiBeforeSend"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Shown before the app starts (and to crawlers that don't run JavaScript); React replaces it on mount. -->
+      <main style="max-width: 40rem; margin: 3rem auto; padding: 0 16px; font-family: system-ui, sans-serif; line-height: 1.5; color: #e6e9ef; background: #0f1117">
+        <h1>racetraQ: a quantum circuit learned to drive this car</h1>
+        <p>
+          racetraQ is a quantum reinforcement-learning demo. A race car is driven by a small
+          variational quantum circuit, trained with double deep Q-learning, next to a classical
+          neural-network baseline. Watch the trained drivers lap the track, then race them yourself.
+          Everything is simulated in your browser, phone included; the page needs JavaScript.
+        </p>
+        <ul>
+          <li><a href="https://github.com/JanLahmann/racetraQ" style="color: #a28bff">Source code, studies and science report on GitHub</a></li>
+          <li><a href="https://doi.org/10.5281/zenodo.23270600" style="color: #a28bff">Cite racetraQ (Zenodo DOI)</a></li>
+          <li><a href="https://fun-with-quantum.org/" style="color: #a28bff">Part of the Fun with Quantum family</a></li>
+          <li><a href="https://racetraq.org/?lang=de" hreflang="de" style="color: #a28bff">Auf Deutsch</a></li>
+        </ul>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

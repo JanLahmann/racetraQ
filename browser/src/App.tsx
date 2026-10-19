@@ -279,12 +279,12 @@ export function App() {
   return (
     <div className="app">
       <header>
-        <div className="brand">
+        <h1 className="brand">
           <span className="logo">
             racetra<span className="q">Q</span>
-          </span>
+          </span>{' '}
           <span className="edition">{t('header.edition')}</span>
-        </div>
+        </h1>
         <nav className="tracks" aria-label={t('header.tracks')}>
           {manifest.tracks.map((tr) => (
             <button

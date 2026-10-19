@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- racetraq.org for search engines: the page carries a heading, a short intro
+  and links in its raw HTML (replaced by the app on mount), a canonical URL
+  (`?lang=de` keeps its own), a descriptive title, and a sitemap without the
+  duplicate `?lang=en` entry, with `lastmod`. The header logo is now the
+  page's h1.
 - racetraq.org uses the Fun with Quantum family's standard Umami snippet:
   headless browsers and bots send nothing, and `?notrack` turns tracking off
   in this browser (`?track` turns it back on).
