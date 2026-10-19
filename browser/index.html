@@ -104,9 +104,11 @@
         ]
       }
     </script>
-    <!-- Umami analytics — shared Fun with Quantum family property (cookie-free).
-         data-domains keeps dev servers, previews and self-hosted copies out of the numbers. -->
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="97f347ac-e7ba-4be3-b26f-ab4b328bdbf2" data-domains="racetraq.org"></script>
+    <!-- Umami analytics — shared Fun with Quantum family property (cookie-free), standard family snippet.
+         data-domains keeps dev servers, previews and self-hosted copies out of the numbers;
+         the before-send hook drops headless browsers and bots; ?notrack opts this browser out, ?track back in. -->
+    <script>(function(){try{var q=location.search;if(/[?&]notrack\b/.test(q))localStorage.setItem('umami.disabled','1');if(/[?&]track\b/.test(q))localStorage.removeItem('umami.disabled')}catch(e){}window.fwqUmamiBeforeSend=function(t,p){var n=navigator;return(n.webdriver||/HeadlessChrome|bot|crawl|spider|Lighthouse|PageSpeed/i.test(n.userAgent))?false:p}})();</script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="97f347ac-e7ba-4be3-b26f-ab4b328bdbf2" data-domains="racetraq.org" data-before-send="fwqUmamiBeforeSend"></script>
   </head>
   <body>
     <div id="root"></div>

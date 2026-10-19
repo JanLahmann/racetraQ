@@ -104,6 +104,9 @@ relative paths, so `dist/` also works from any other web server.
 The page loads the Fun with Quantum family's cookie-free
 [Umami](https://umami.is) tracker, restricted to `racetraq.org` by
 `data-domains` (local dev, previews and self-hosted copies send nothing).
+It uses the family's standard snippet: a `data-before-send` hook drops
+headless browsers and bots, and `?notrack` turns tracking off in this browser
+(`?track` turns it back on).
 Events follow the family taxonomy (`racetraQ: <what happened>`); the list is
 in `src/analytics.ts`.
 
