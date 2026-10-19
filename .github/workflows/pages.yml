@@ -35,6 +35,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # the deploy date as lastmod, so IndexNow (below) sends the pages this deploy changed
+      - run: sed -i "s#<lastmod>[^<]*</lastmod>#<lastmod>$(date -u +%F)</lastmod>#" dist/sitemap.xml
       - uses: actions/upload-pages-artifact@v3
         with:
           path: browser/dist
@@ -48,3 +50,14 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Tell Bing, Yandex & co. which pages changed (Fun with Quantum family workflow,
+  # family/indexnow/README.md there). The key is public by design: browser/public/<key>.txt.
+  indexnow:
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    permissions: {}
+    uses: JanLahmann/Fun-with-Quantum/.github/workflows/indexnow.yml@master
+    with:
+      site: https://racetraq.org
+      key: 71e3935f20f8792d829eb5c8e6c36158
