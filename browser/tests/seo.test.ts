@@ -46,3 +46,27 @@ describe('hreflang', () => {
     }
   });
 });
+
+describe('crawlable page', () => {
+  const root = html.match(/<div id="root">([\s\S]*?)<\/div>\s*<script/)![1];
+
+  it('prerenders an h1, an intro and links into #root', () => {
+    expect(root.match(/<h1>[^<]+<\/h1>/g)).toHaveLength(1);
+    expect(root).toMatch(/<p>[\s\S]{200,}<\/p>/);
+    expect(root).toContain('href="https://github.com/JanLahmann/racetraQ"');
+    expect(root).toContain('href="https://fun-with-quantum.org/"');
+  });
+
+  it('has a canonical URL and a descriptive title of at most 60 characters', () => {
+    expect(html).toContain('<link rel="canonical" href="https://racetraq.org/" />');
+    const title = html.match(/<title>([^<]+)<\/title>/)![1];
+    expect(title.length).toBeGreaterThan(30);
+    expect(title.length).toBeLessThanOrEqual(60);
+  });
+
+  it('lists each page once in the sitemap, with a lastmod', () => {
+    const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    expect(locs).toEqual(['https://racetraq.org/', 'https://racetraq.org/?lang=de']);
+    expect(sitemap.match(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/g)).toHaveLength(locs.length);
+  });
+});

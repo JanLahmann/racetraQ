@@ -5,7 +5,7 @@
  * markup, by rich(key, { name: <a>…</a> }).
  */
 export const en = {
-  'app.title': 'racetraQ · browser edition',
+  'app.title': 'racetraQ: a quantum circuit learns to drive a race car',
   'app.loading': 'Loading racetraQ…',
   'app.error': 'Could not load the race data: {error}',
 

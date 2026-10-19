@@ -7,7 +7,7 @@
 import type { Key } from './en';
 
 export const de: Record<Key, string> = {
-  'app.title': 'racetraQ · Browser-Edition',
+  'app.title': 'racetraQ: Ein Quantenschaltkreis lernt Rennwagen fahren',
   'app.loading': 'racetraQ wird geladen…',
   'app.error': 'Die Renndaten ließen sich nicht laden: {error}',
 

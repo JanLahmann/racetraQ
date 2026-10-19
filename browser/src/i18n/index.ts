@@ -52,6 +52,9 @@ function apply(): void {
   if (typeof document === 'undefined') return;
   document.documentElement.lang = current;
   document.title = t('app.title');
+  // ?lang=de is the German page in its own right (hreflang); every other URL is the English one
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (canonical) canonical.href = current === 'de' && /[?&]lang=de\b/i.test(location.search) ? 'https://racetraq.org/?lang=de' : 'https://racetraq.org/';
 }
 
 /** Pick the language at startup (before the first render). */
