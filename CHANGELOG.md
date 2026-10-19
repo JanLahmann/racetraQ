@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- racetraq.org pings IndexNow (Bing, Yandex & co.) after each deploy, through
+  the Fun with Quantum family workflow; the sitemap's `lastmod` is the deploy
+  date.
 - racetraq.org for search engines: the page carries a heading, a short intro
   and links in its raw HTML (replaced by the app on mount), a canonical URL
   (`?lang=de` keeps its own), a descriptive title, and a sitemap without the
