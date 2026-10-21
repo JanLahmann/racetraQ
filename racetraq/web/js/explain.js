@@ -49,6 +49,20 @@ export function lightConeHtml(n = 4, layers = 4, visibility = null, needed = nul
       <p>${t("explain.cone.html", { verdict })}</p>`;
 }
 
+/** Explain -> "Take it home": one QR code per learner level, so a visitor
+ *  leaves with the next step. The SVGs are committed (tools/make_qr.py writes
+ *  them from the same ids), so the booth needs no network to show them. */
+export const TAKE_HOME = ["play", "learn", "notebooks", "research"];
+
+export function takeHomeHtml() {
+  const cards = TAKE_HOME.map((id) => `
+      <figure class="take-home-card">
+        <img src="img/qr-${id}.svg" width="116" height="116" alt="${t(`explain.home.${id}.alt`)}">
+        <figcaption><strong>${t(`explain.home.${id}.title`)}</strong>${t(`explain.home.${id}.text`)}</figcaption>
+      </figure>`).join("");
+  return `<p>${t("explain.home.intro")}</p><div class="take-home">${cards}</div>`;
+}
+
 const sections = ({
   n_qubits: n = 4,
   n_layers: layers = 4,
@@ -89,6 +103,11 @@ const sections = ({
     id: "try",
     title: t("explain.try.title"),
     html: t("explain.try.html"),
+  },
+  {
+    id: "home",
+    title: t("explain.home.title"),
+    html: takeHomeHtml(),
   },
   {
     id: "docs",
