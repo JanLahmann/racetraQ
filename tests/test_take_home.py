@@ -24,19 +24,19 @@ def _qr_links() -> dict[str, str]:
     tree = ast.parse((ROOT / "tools" / "make_qr.py").read_text())
     consts = {"REPO": "https://github.com/JanLahmann/racetraQ"}
     for node in tree.body:
-        if isinstance(node, ast.AnnAssign) and getattr(node.target, "id", None) == "LINKS":
-            value = node.value
-        elif isinstance(node, ast.Assign) and getattr(node.targets[0], "id", None) == "LINKS":
-            value = node.value
-        else:
+        if not (isinstance(node, ast.Assign) and getattr(node.targets[0], "id", None) == "LINKS"):
             continue
+        value = node.value
         out = {}
-        for k, v in zip(value.keys, value.values):
+        for k, v in zip(value.keys, value.values, strict=True):
             if isinstance(v, ast.JoinedStr):
-                v = "".join(consts[p.value.id] if isinstance(p, ast.FormattedValue) else p.value for p in v.values)
+                parts = (
+                    consts[p.value.id] if isinstance(p, ast.FormattedValue) else p.value
+                    for p in v.values
+                )
+                out[k.value] = "".join(parts)
             else:
-                v = v.value
-            out[k.value] = v
+                out[k.value] = v.value
         return out
     raise AssertionError("LINKS not found in tools/make_qr.py")
 

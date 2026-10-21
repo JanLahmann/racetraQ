@@ -33,8 +33,12 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for key, url in LINKS.items():
         path = OUT / f"qr-{key}.svg"
-        # dark modules on a white quiet zone: scanners need the contrast, even on the dark booth theme
-        segno.make(url, error="m").save(path, kind="svg", scale=4, border=2, dark="#0f1117", light="#ffffff", xmldecl=False, svgns=True)
+        # dark modules on a white quiet zone: scanners need the contrast,
+        # even on the dark booth theme
+        segno.make(url, error="m").save(
+            path, kind="svg", scale=4, border=2,
+            dark="#0f1117", light="#ffffff", xmldecl=False, svgns=True,
+        )
         print(f"{path.relative_to(OUT.parent.parent.parent)}  {url}")
 
 
