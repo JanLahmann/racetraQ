@@ -19,7 +19,7 @@ from __future__ import annotations
 import numpy as np
 
 from racetraq.agents.quantum import adjoint
-from racetraq.agents.quantum.fastsim import FastStatevectorSim
+from racetraq.agents.quantum.fastsim import FastStatevectorSim, circuit_entangler
 
 
 class QuantumQFunction:
@@ -29,6 +29,8 @@ class QuantumQFunction:
         cfg = circuit_cfg.get("circuit", circuit_cfg)
         self.n_qubits = int(cfg.get("n_qubits", 4))
         self.n_layers = int(cfg.get("n_layers", 4))
+        # "cz_ring" (default) | "none": the entanglement ablation, no CZ gates
+        self.entangler = circuit_entangler(cfg)
         if seed is None:
             seed = int(cfg.get("seed", 7))
         self.seed = int(seed)
@@ -42,7 +44,8 @@ class QuantumQFunction:
                 f"qubits, got n_qubits = {self.n_qubits}"
             )
 
-        self._sim = FastStatevectorSim(n_qubits=self.n_qubits, n_layers=self.n_layers)
+        self._sim = FastStatevectorSim(n_qubits=self.n_qubits, n_layers=self.n_layers,
+                                       entangler=self.entangler)
 
         rng = np.random.default_rng(self.seed)
         self.lam = np.full((self.n_layers, self.n_qubits), np.pi, dtype=np.float64)
@@ -101,7 +104,8 @@ class QuantumQFunction:
         expectations, psi = self._sim.forward(obs, self.lam, self.theta, return_state=True)
         # Chain rule through the output head: dQ_sel/dE_sel = w[a_b].
         dlam, dtheta = adjoint.grad(
-            obs, self.lam, self.theta, action_idx, upstream * self.w[action_idx], psi_final=psi
+            obs, self.lam, self.theta, action_idx, upstream * self.w[action_idx], psi_final=psi,
+            entangler=self.entangler,
         )
         dw = np.zeros(self.n_actions, dtype=np.float64)
         db = np.zeros(self.n_actions, dtype=np.float64)

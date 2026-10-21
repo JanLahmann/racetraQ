@@ -31,6 +31,7 @@ import numpy as np
 from racetraq.agents.base import N_ACTIONS, action_set
 from racetraq.agents.classical import MLPQFunction
 from racetraq.agents.quantum.circuit import circuit_spec
+from racetraq.agents.quantum.fastsim import circuit_entangler
 from racetraq.agents.quantum.lightcone import blind_spot_warning
 from racetraq.agents.quantum.qdqn import QuantumQFunction
 from racetraq.agents.training import DEFAULT_EVAL_EPISODES, DQNTrainer
@@ -57,6 +58,7 @@ from racetraq.server.runtime import (
     track_payload,
     weights_actions,
     weights_circuit,
+    weights_entangler,
     weights_observation,
 )
 from racetraq.server.studio import StudioController
@@ -344,6 +346,8 @@ class DemoSession:
         # ... and the profile's own depth: what fresh training builds, and
         # what the circuit spec shows while no quantum driver is loaded
         self._profile_n_layers = int(circuit_cfg.get("n_layers", 4))
+        # ... and its entangler (the CZ ring unless an ablation profile says "none")
+        self._profile_entangler = circuit_entangler(circuit_cfg)
 
         server_cfg = config["server"]
         hz = 1.0 / self.dt
@@ -421,9 +425,9 @@ class DemoSession:
 
     def _sync_to_weights(self, use_weights: bool = True) -> None:
         """Adopt the [observation], the action-set size AND the circuit depth
-        the active quantum driver was trained with (recorded in its weights
-        .meta.json; the depth of an older file follows from its parameter
-        count — ``runtime.weights_circuit``), else the profile's own.
+        (and entangler) the active quantum driver was trained with (recorded
+        in its weights .meta.json; the depth of an older file follows from its
+        parameter count — ``runtime.weights_circuit``), else the profile's own.
 
         The circuit encodes one feature per qubit and reads one Q-value per
         action qubit, so driving feature-observation or 6/8-action weights
@@ -440,6 +444,7 @@ class DemoSession:
         meta_obs = None
         meta_actions = None
         n_layers = self._profile_n_layers
+        entangler = self._profile_entangler
         path = None
         if use_weights:
             path = self._quantum_weights_path()
@@ -448,11 +453,13 @@ class DemoSession:
                 meta_actions = weights_actions(path)
                 try:
                     shape = weights_circuit(path, self.n_qubits)
+                    recorded_entangler = weights_entangler(path)
                 except ValueError:
                     pass  # unusable file: _agent_unavailable reports why
                 else:
                     if shape["n_qubits"] == self.n_qubits:
                         n_layers = shape["n_layers"]
+                        entangler = recorded_entangler
         target = {**self._profile_obs, **(meta_obs or {})}
         if meta_obs is not None:
             try:  # a bad sidecar must not crash the session: fall back to profile
@@ -482,6 +489,9 @@ class DemoSession:
             changed = True
         if n_layers != int(self.config.get("circuit", {}).get("n_layers", 4)):
             self.config.setdefault("circuit", {})["n_layers"] = int(n_layers)
+            changed = True
+        if entangler != circuit_entangler(self.config.get("circuit", {})):
+            self.config.setdefault("circuit", {})["entangler"] = entangler
             changed = True
         if changed:
             self._outbox.append(self.welcome_payload())
@@ -619,6 +629,7 @@ class DemoSession:
         # count means pre-scaled-readout weights: 4 actions)
         cfg = dict(self.config["circuit"])
         cfg.update(weights_circuit(path, self.n_qubits))
+        cfg["entangler"] = weights_entangler(path)  # with or without the CZ ring
         qfunc = QuantumQFunction(cfg)
         qfunc.set_params(np.load(path)["params"])
         return qfunc
@@ -631,6 +642,7 @@ class DemoSession:
         fits no depth, or that was trained at another qubit count."""
         try:
             shape = weights_circuit(path, self.n_qubits)
+            weights_entangler(path)  # an unknown entangler cannot be built
         except (OSError, ValueError) as exc:
             return str(exc)
         if shape["n_qubits"] != self.n_qubits:
@@ -1142,6 +1154,10 @@ class DemoSession:
                     reason = (f"warm-start weights '{warm_path.name}' have "
                               f"{shape['n_layers']} blocks (profile: "
                               f"{self._profile_n_layers})")
+                elif weights_entangler(warm_path) != self._profile_entangler:
+                    reason = (f"warm-start weights '{warm_path.name}' use entangler "
+                              f"{weights_entangler(warm_path)} (profile: "
+                              f"{self._profile_entangler})")
             if reason is None:
                 qfunc: Any = self._load_quantum_qfunc(warm_path)
             else:
@@ -1154,7 +1170,8 @@ class DemoSession:
         if agent == "quantum":
             # too few blocks for the ring: some actions decide without some
             # features — worth a server-log line, not a client error
-            for line in blind_spot_warning(env.feature_names, qfunc.n_layers, qfunc.n_actions):
+            for line in blind_spot_warning(env.feature_names, qfunc.n_layers, qfunc.n_actions,
+                                           entangler=qfunc.entangler):
                 _log.warning("%s", line)
 
         track, config = self.track, self.config  # bind now: self.track may change later

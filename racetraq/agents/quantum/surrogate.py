@@ -54,6 +54,11 @@ surrogate needs query access to an already TRAINED model, so it replaces
 inference, not training (classical surrogates: Schreiber, Eisert & Meyer,
 Phys. Rev. Lett. 131, 100803 (2023)).
 
+The spectrum functions, the white-box coefficients and the surrogate take an
+``entangler`` keyword (``[circuit] entangler``: "cz_ring" | "none"); without
+the ring each readout's light cone is its own qubit, so its spectrum is that
+of one feature.
+
 numpy/stdlib only — no qiskit imports in this module.
 """
 
@@ -65,6 +70,7 @@ from typing import Any
 import numpy as np
 
 from racetraq.agents.quantum import lightcone
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER, check_entangler
 
 METHODS = ("full", "rff", "kernel")
 
@@ -97,17 +103,21 @@ def _as_lam(lam) -> np.ndarray:
     return lam
 
 
-def encoding_mask(n_qubits: int, n_layers: int, readout: int | None = None) -> np.ndarray:
+def encoding_mask(
+    n_qubits: int, n_layers: int, readout: int | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
+) -> np.ndarray:
     """Encoding gates that can contribute frequencies: bool (L, n).
 
     ``readout=None`` ignores the light cone (every gate of every block: the
     a-priori bound); ``readout=a`` keeps only the gates inside the light cone
-    of ``<Z_a>``. A single qubit has no ring and nothing to prune: every
-    encoding gate acts on the measured qubit.
+    of ``<Z_a>`` (for ``entangler="none"``: the gates on qubit a). A single
+    qubit has no ring and nothing to prune: every encoding gate acts on the
+    measured qubit.
     """
     if readout is None or int(n_qubits) == 1:
         return np.ones((int(n_layers), int(n_qubits)), dtype=bool)
-    return lightcone.readout_live_gates(n_qubits, n_layers, readout)["enc"]
+    return lightcone.readout_live_gates(n_qubits, n_layers, readout, entangler)["enc"]
 
 
 def _distinct(values: np.ndarray, tol: float) -> np.ndarray:
@@ -118,7 +128,8 @@ def _distinct(values: np.ndarray, tol: float) -> np.ndarray:
 
 
 def frequency_spectrum(
-    lam, readout: int | None = None, *, tol: float = _FREQ_TOL
+    lam, readout: int | None = None, *, tol: float = _FREQ_TOL,
+    entangler: str = DEFAULT_ENTANGLER,
 ) -> list[np.ndarray]:
     """Frequencies each feature can carry in a readout, one sorted array per feature.
 
@@ -135,7 +146,7 @@ def frequency_spectrum(
     """
     lam = _as_lam(lam)
     layers, n = lam.shape
-    mask = encoding_mask(n, layers, readout)
+    mask = encoding_mask(n, layers, readout, entangler)
     spectrum = []
     for i in range(n):
         freqs = np.zeros(1)
@@ -148,7 +159,10 @@ def frequency_spectrum(
     return spectrum
 
 
-def spectrum_size(lam, readout: int | None = None, *, tol: float = _FREQ_TOL) -> dict[str, Any]:
+def spectrum_size(
+    lam, readout: int | None = None, *, tol: float = _FREQ_TOL,
+    entangler: str = DEFAULT_ENTANGLER,
+) -> dict[str, Any]:
     """How big the Fourier basis of a readout is (the upper bound, see above).
 
     Returns ``{"per_feature": [...], "total": int, "live_gates": G,
@@ -159,11 +173,12 @@ def spectrum_size(lam, readout: int | None = None, *, tol: float = _FREQ_TOL) ->
     these overflow int64 quickly.
     """
     lam = _as_lam(lam)
-    per_feature = [int(f.size) for f in frequency_spectrum(lam, readout, tol=tol)]
+    per_feature = [int(f.size)
+                   for f in frequency_spectrum(lam, readout, tol=tol, entangler=entangler)]
     total = 1
     for count in per_feature:
         total *= count
-    gates = int(encoding_mask(lam.shape[1], lam.shape[0], readout).sum())
+    gates = int(encoding_mask(lam.shape[1], lam.shape[0], readout, entangler).sum())
     return {"per_feature": per_feature, "total": total, "live_gates": gates, "bound": 3**gates}
 
 
@@ -253,7 +268,7 @@ def product_kernel(x, y, lam, mask: np.ndarray | None = None) -> np.ndarray:
 
 
 def slice_coefficients(
-    lam, theta, obs, feature: int, readout: int
+    lam, theta, obs, feature: int, readout: int, *, entangler: str = DEFAULT_ENTANGLER
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Exact Fourier coefficients of ``<Z_readout>`` along one feature.
 
@@ -287,7 +302,7 @@ def slice_coefficients(
     # fastsim takes angles lam * s: feed s = 1 and put the angles into "lam"
     angles = np.broadcast_to(lam * obs, (grid.shape[0], layers, n)).copy()
     angles[:, :, feature] = grid
-    sim = FastStatevectorSim(n_qubits=n, n_layers=layers)
+    sim = FastStatevectorSim(n_qubits=n, n_layers=layers, entangler=entangler)
     ones = np.ones((1, n))
     values = np.array([sim.forward(ones, a, theta)[0, readout] for a in angles])
     k = index.copy()
@@ -296,7 +311,9 @@ def slice_coefficients(
     return k, k @ lam[:, feature], coef
 
 
-def gate_coefficients(theta, readout: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def gate_coefficients(
+    theta, readout: int, *, entangler: str = DEFAULT_ENTANGLER
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Exact Fourier coefficients of ``<Z_readout>`` over ALL its live encoding gates.
 
     The angle of every encoding gate inside the readout's light cone is made
@@ -326,7 +343,7 @@ def gate_coefficients(theta, readout: int) -> tuple[np.ndarray, np.ndarray, np.n
     from racetraq.agents.quantum.fastsim import (
         apply_ry,
         apply_rz,
-        cz_ring_diagonal,
+        entangler_diagonal,
         z_diagonals,
     )
 
@@ -334,7 +351,7 @@ def gate_coefficients(theta, readout: int) -> tuple[np.ndarray, np.ndarray, np.n
     if theta.ndim != 3 or theta.shape[2] != 2:
         raise ValueError(f"theta must have shape (n_layers, n_qubits, 2), got {theta.shape}")
     layers, n = theta.shape[:2]
-    gates = np.argwhere(encoding_mask(n, layers, readout))
+    gates = np.argwhere(encoding_mask(n, layers, readout, entangler))
     n_gates = gates.shape[0]
     if n_gates > MAX_DFT_GATES:
         raise ValueError(
@@ -346,7 +363,7 @@ def gate_coefficients(theta, readout: int) -> tuple[np.ndarray, np.ndarray, np.n
     ).reshape(-1, n_gates)  # (3**G, G), entries 0..2, row 0 all zero
     column = np.full((layers, n), -1)
     column[gates[:, 0], gates[:, 1]] = np.arange(n_gates)
-    ring, z_diag = cz_ring_diagonal(n), z_diagonals(n)[int(readout)]
+    ring, z_diag = entangler_diagonal(n, entangler), z_diagonals(n)[int(readout)]
     values = np.empty(index.shape[0])
     step = max(1, _DFT_CHUNK >> n)
     for start in range(0, index.shape[0], step):
@@ -360,7 +377,8 @@ def gate_coefficients(theta, readout: int) -> tuple[np.ndarray, np.ndarray, np.n
             for i in range(n):
                 apply_ry(psi, i, theta[layer, i, 0], n)
                 apply_rz(psi, i, theta[layer, i, 1], n)
-            psi *= ring
+            if ring is not None:
+                psi *= ring
         values[start:start + step] = (psi.real**2 + psi.imag**2) @ z_diag
     coef = np.fft.fftn(values.reshape((3,) * n_gates)).reshape(-1) / index.shape[0]
     k = index.copy()
@@ -389,6 +407,8 @@ class FourierSurrogate:
                       (shots, hardware) want it larger, or the fit chases the noise
     light_cone        restrict each readout's spectrum to its light cone
                       (False: use every encoding gate — the a-priori basis)
+    entangler         the circuit's ``[circuit] entangler`` ("cz_ring" | "none"):
+                      which light cones ``light_cone`` restricts to
     head              optional ``(w, b)``: when the fitted targets are raw
                       expectations ``<Z_a>``, ``q_values`` returns
                       ``w * fit + b``; without it ``q_values`` returns the fit
@@ -406,6 +426,7 @@ class FourierSurrogate:
         light_cone: bool = True,
         head: tuple[Any, Any] | None = None,
         seed: int = 0,
+        entangler: str = DEFAULT_ENTANGLER,
     ):
         if method not in METHODS:
             raise ValueError(f"method must be one of {METHODS}, got {method!r}")
@@ -422,13 +443,15 @@ class FourierSurrogate:
         self.n_frequencies = int(n_frequencies)
         self.ridge = float(ridge)
         self.light_cone = bool(light_cone)
+        self.entangler = check_entangler(entangler)
         self.seed = int(seed)
         self.w = self.b = None
         if head is not None:
             self.w = np.asarray(head[0], dtype=np.float64).copy()
             self.b = np.asarray(head[1], dtype=np.float64).copy()
         self.masks = [
-            encoding_mask(self.n_features, self.n_layers, a if self.light_cone else None)
+            encoding_mask(self.n_features, self.n_layers, a if self.light_cone else None,
+                          entangler)
             for a in range(self.n_actions)
         ]
         self.n_samples = 0
@@ -516,7 +539,8 @@ class FourierSurrogate:
                 self._models.append({"coef": np.linalg.solve(gram, y[:, a])})
                 continue
             if self.method == "full":
-                spectrum = frequency_spectrum(self.lam, a if self.light_cone else None)
+                spectrum = frequency_spectrum(self.lam, a if self.light_cone else None,
+                                              entangler=self.entangler)
                 freqs = _full_frequencies(spectrum, _FREQ_TOL)
             else:
                 freqs = _sample_frequencies(self.lam, mask, self.n_frequencies, rng, _FREQ_TOL)
@@ -614,8 +638,11 @@ def fit_surrogate(
     ``model``), ``cube_fraction`` of the budget from the uniform cube
     ``[0, 1]^n`` instead (1.0, or no track: all of it). Remaining keyword
     arguments go to :class:`FourierSurrogate` (``method``, ``n_frequencies``,
-    ``ridge``, ``light_cone``, ``seed``).
+    ``ridge``, ``light_cone``, ``seed``, ``entangler`` — which defaults to the
+    model's own).
     """
+    if hasattr(model, "entangler"):
+        surrogate_kwargs.setdefault("entangler", model.entangler)
     query, lam, head, n_actions = _resolve_model(model, lam, head, n_actions)
     lam = _as_lam(lam)
     if obs is None:

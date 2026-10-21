@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER, circuit_entangler
+
 BACKENDS = ("aer_statevector", "aer_shots", "aer_noisy")
 
 
@@ -40,7 +42,8 @@ def _depolarizing_noise_model():
     return noise_model
 
 
-def _noise_simulator(name: str | None, n_qubits: int, n_layers: int, n_actions: int):
+def _noise_simulator(name: str | None, n_qubits: int, n_layers: int, n_actions: int,
+                     entangler: str = DEFAULT_ENTANGLER):
     """Aer twin of a fake IBM device, or None if qiskit-ibm-runtime is unavailable.
 
     ``name`` takes any spelling ('fake_fez', 'FakeFez', 'FakeManilaV2';
@@ -57,7 +60,8 @@ def _noise_simulator(name: str | None, n_qubits: int, n_layers: int, n_actions: 
     fake = hardware.get_backend(
         use_fake=True, fake_name=name or hardware.DEFAULT_FAKE, min_qubits=n_qubits
     )
-    return hardware.local_simulator(fake, n_qubits, n_layers, n_actions, prune=False)
+    return hardware.local_simulator(fake, n_qubits, n_layers, n_actions, prune=False,
+                                    entangler=entangler)
 
 
 class QiskitQFunction:
@@ -76,6 +80,8 @@ class QiskitQFunction:
         cfg = circuit_cfg.get("circuit", circuit_cfg)
         self.n_qubits = int(cfg.get("n_qubits", 4))
         self.n_layers = int(cfg.get("n_layers", 4))
+        # "cz_ring" (default) | "none": the entanglement ablation, no CZ gates
+        self.entangler = circuit_entangler(cfg)
         if seed is None:
             seed = int(cfg.get("seed", 7))
         self.seed = int(seed)
@@ -107,7 +113,7 @@ class QiskitQFunction:
 
         from racetraq.agents.quantum import circuit as circuit_mod
 
-        qc = circuit_mod.build_circuit(self.n_qubits, self.n_layers)
+        qc = circuit_mod.build_circuit(self.n_qubits, self.n_layers, self.entangler)
         input_params, weight_params = circuit_mod.split_parameters(qc)
         obs = circuit_mod.observables(self.n_qubits)[: self.n_actions]
 
@@ -118,7 +124,8 @@ class QiskitQFunction:
         precision = 0.0 if exact else 1.0 / float(np.sqrt(self.shots))
         if self.backend == "aer_noisy":
             sim = _noise_simulator(
-                noise_backend_name, self.n_qubits, self.n_layers, self.n_actions
+                noise_backend_name, self.n_qubits, self.n_layers, self.n_actions,
+                self.entangler,
             )
             if sim is not None:
                 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager

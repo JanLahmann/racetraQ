@@ -383,6 +383,7 @@ def calibrate(
     resilience_level: int = 0,
     prune: bool = True,
     seed_simulator: int | None = None,
+    entangler: str = "cz_ring",
 ) -> dict:
     """Fit the attenuation of a fake device for one circuit shape.
 
@@ -394,13 +395,16 @@ def calibrate(
     and two tables to hand to ``[training] act_noise`` or
     :class:`ExpectationNoise`: ``noise`` (the global ``{attenuation, shots}``)
     and ``noise_per_readout`` (a slope and a bias per readout — the model that
-    reproduces the device's action flips).
+    reproduces the device's action flips). ``entangler`` is the circuit's
+    ``[circuit] entangler`` ("cz_ring" | "none").
     """
     from racetraq.agents.quantum.qdqn import QuantumQFunction
 
     circuit_cfg: dict[str, Any] = {"n_qubits": int(n_qubits), "n_layers": int(n_layers)}
     if n_actions is not None:
         circuit_cfg["n_actions"] = int(n_actions)
+    if entangler != "cz_ring":
+        circuit_cfg["entangler"] = entangler
     fast = QuantumQFunction(circuit_cfg, seed=seed)
     if params is None:
         params = random_circuit_params(fast.n_qubits, fast.n_layers, fast.n_actions, seed)

@@ -82,15 +82,21 @@ def weights_config(weights: Path, profile: str | None) -> dict:
     """The config the weights drive under: the profile, then the observation
     of the weights' ``.meta.json`` sidecar and the circuit shape the weights
     need (``runtime.weights_circuit``: the sidecar's ``circuit`` block, else
-    the depth their parameter count implies at the profile's qubit count).
-    Raises ``ValueError`` for weights that fit no depth."""
+    the depth their parameter count implies at the profile's qubit count)
+    and entangler (``runtime.weights_entangler``). Raises ``ValueError`` for
+    weights that fit no depth."""
     from racetraq.config import load_config
-    from racetraq.server.runtime import weights_circuit, with_weights_observation
+    from racetraq.server.runtime import (
+        weights_circuit,
+        weights_entangler,
+        with_weights_observation,
+    )
 
     config = with_weights_observation(load_config(profile), weights)
     circuit = config.setdefault("circuit", {})
     circuit.update(weights_circuit(weights, int(circuit.get("n_qubits", 4)),
                                    circuit.get("n_actions")))
+    circuit["entangler"] = weights_entangler(weights)
     return config
 
 
@@ -172,7 +178,7 @@ def fit_device_model(args: argparse.Namespace, config: dict, params: np.ndarray,
         args.fake, int(circuit["n_qubits"]), int(circuit.get("n_layers", 4)),
         circuit.get("n_actions"), samples=MODEL_SAMPLES, shots=args.model_shots,
         seed=args.seed, params=params, resilience_level=resilience,
-        seed_simulator=args.seed,
+        seed_simulator=args.seed, entangler=circuit.get("entangler", "cz_ring"),
     )
 
 

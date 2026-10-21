@@ -22,7 +22,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from racetraq.agents.quantum.fastsim import FastStatevectorSim, apply_ry, apply_rz
+from racetraq.agents.quantum.fastsim import (
+    DEFAULT_ENTANGLER,
+    FastStatevectorSim,
+    apply_ry,
+    apply_rz,
+)
 
 
 def _pauli_expectation_im(
@@ -50,13 +55,16 @@ def grad(
     obs_idx: np.ndarray,
     upstream: np.ndarray,
     psi_final: np.ndarray | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Gradients of ``sum_b upstream[b] * <Z_{obs_idx[b]}>_b`` wrt lam and theta.
 
     s (B, n) float; lam (L, n); theta (L, n, 2); obs_idx (B,) int in [0, n);
     upstream (B,) float. ``psi_final`` (B, 2^n) may pass cached final
     statevectors from ``FastStatevectorSim.forward(..., return_state=True)``
-    to skip the internal forward pass. Returns ``(dlam (L, n), dtheta (L, n, 2))``.
+    to skip the internal forward pass; they must come from a simulator with
+    the same ``entangler`` ("cz_ring" | "none", see ``fastsim``). Returns
+    ``(dlam (L, n), dtheta (L, n, 2))``.
     """
     s = np.asarray(s, dtype=np.float64)
     lam = np.asarray(lam, dtype=np.float64)
@@ -65,7 +73,7 @@ def grad(
     upstream = np.asarray(upstream, dtype=np.float64)
     layers, n = lam.shape
 
-    sim = FastStatevectorSim(n_qubits=n, n_layers=layers)
+    sim = FastStatevectorSim(n_qubits=n, n_layers=layers, entangler=entangler)
     if psi_final is None:
         _, psi = sim.forward(s, lam, theta, return_state=True)
     else:
@@ -78,9 +86,11 @@ def grad(
     dtheta = np.zeros((layers, n, 2), dtype=np.float64)
 
     for layer in reversed(range(layers)):
-        # CZ ring: diagonal and self-inverse, not parameterized.
-        psi *= sim.ring_diagonal
-        phi *= sim.ring_diagonal
+        # CZ ring: diagonal and self-inverse, not parameterized (absent for
+        # entangler="none").
+        if sim.ring_diagonal is not None:
+            psi *= sim.ring_diagonal
+            phi *= sim.ring_diagonal
         # Variational sublayer, exact reverse order: per qubit RZ then RY.
         for i in reversed(range(n)):
             g = _pauli_expectation_im(phi, psi, i, n, "z")

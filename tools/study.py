@@ -417,7 +417,8 @@ def weights_config(spec: dict, weights_path: Path) -> dict:
     """The config a cell's weights drive under: the cell's profile and
     overrides, then the observation / circuit shape / action count recorded in
     the weights' own ``.meta.json`` sidecar on top (the loaders' rule — see
-    ``runtime.weights_observation`` / ``weights_actions``)."""
+    ``runtime.weights_observation`` / ``weights_actions``). A sidecar without
+    ``circuit.entangler`` means the CZ ring (only "none" is recorded)."""
     from racetraq.config import apply_overrides, load_config
 
     config = load_config(profile=spec["profile"])
@@ -427,7 +428,9 @@ def weights_config(spec: dict, weights_path: Path) -> dict:
     meta_path = weights_path.with_suffix("").with_suffix(".meta.json")
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     config["observation"].update(meta.get("observation") or {})
-    config.setdefault("circuit", {}).update(meta.get("circuit") or {})
+    circuit = meta.get("circuit") or {}
+    config.setdefault("circuit", {}).update(circuit)
+    config["circuit"]["entangler"] = circuit.get("entangler", "cz_ring")
     n_actions = (meta.get("actions") or {}).get("n_actions")
     if n_actions:
         config["circuit"]["n_actions"] = int(n_actions)

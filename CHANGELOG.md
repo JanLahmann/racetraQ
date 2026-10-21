@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `[circuit] entangler = "none"` builds the circuit without its CZ rings (the
+  entanglement ablation of Learning Audit item 13; default `"cz_ring"`,
+  unchanged). fastsim, the adjoint gradients, the Qiskit/hardware circuits,
+  the light-cone analysis and the surrogate spectra all follow it; weights
+  trained that way record it in their `.meta.json` and every loader rebuilds
+  the same circuit. The browser export refuses such drivers.
 - racetraq.org pings IndexNow (Bing, Yandex & co.) after each deploy, through
   the Fun with Quantum family workflow; the sitemap's `lastmod` is the deploy
   date.

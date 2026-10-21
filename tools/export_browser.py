@@ -125,6 +125,14 @@ def load_driver(path: Path, base_config: dict) -> tuple[dict, object, dict]:
         n_qubits = runtime.weights_circuit(path)["n_qubits"]
         profile_config = base_config if n_qubits == 4 else load_config(f"q{n_qubits}")
         config = runtime.with_weights_config(profile_config, path)
+        entangler = config["circuit"].get("entangler", "cz_ring")
+        if entangler != "cz_ring":
+            # the browser's circuit (browser/src) always closes a block with
+            # the CZ ring: it would drive these params as another circuit
+            raise ValueError(
+                f"{path.name}: its .meta.json records circuit.entangler = {entangler!r}; "
+                "the browser edition only runs the CZ-ring circuit — keep entanglement-"
+                "ablation drivers out of racetraq/weights/ (or port the option first)")
         circuit = {key: int(config["circuit"][key])
                    for key in ("n_qubits", "n_layers", "n_actions")}
         qfunc = QuantumQFunction(dict(config["circuit"]))
