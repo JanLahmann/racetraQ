@@ -54,7 +54,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import importlib.util
 import json
 import os
 import platform
@@ -355,8 +354,15 @@ def resolve_variant(spec: str, defaults: dict[str, Any],
 
 
 def _find_racetraq() -> None:
-    if importlib.util.find_spec("racetraq") is None:  # checkout without an install
-        sys.path.insert(0, str(REPO_ROOT))
+    """Import ``racetraq`` from this checkout, not whichever one is installed.
+
+    An editable install points at ONE checkout; run from a git worktree, the
+    study would otherwise train the main checkout's code under this checkout's
+    recipe (on 2026-10-21 an ablation's ``circuit.entangler=none`` arm silently
+    trained with the CZ ring that way)."""
+    root = str(REPO_ROOT)
+    if (REPO_ROOT / "racetraq" / "__init__.py").is_file() and sys.path[:1] != [root]:
+        sys.path.insert(0, root)
 
 
 def new_config_keys(recipe: dict) -> list[str]:
@@ -1161,6 +1167,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     args = build_parser().parse_args(argv)
+    _find_racetraq()  # every command, before anything imports racetraq
     if args.command == "_cell":
         run_cell(Path(args.cell_dir))
         return 0
