@@ -323,7 +323,7 @@ page written as `x [a, b]` is such an interquartile mean over seeds with its
 95 % interval. `tools/export_study.py STUDY_DIR --name NAME` writes the
 committable summary of a study to `data/studies/NAME/`: `report.md`,
 `report.json`, and `cells.json` with every seed's eval log and both
-36-episode evals. The studies behind this page are there (721 training
+36-episode evals. The studies behind this page are there (753 training
 runs, plus six single July-recipe runs); their weights and full logs are
 not in the repository.
 
@@ -1310,6 +1310,46 @@ bundled `quantum_gp_q10` since 2026-10-14 — 6 layers (no blind spots) and
 6 actions. Applied to `w8`, the rule picks seed 1, which lapped all 120
 generated-track episodes (10 of 10 tracks reliable) but only 64 of 72 on
 gp, below the 0.9 bundling floor; it was not bundled.
+
+**Is the CZ ring pulling its weight? (2026-10-21)** The shipped oval and
+chicane recipe (`gap8an`, 800 episodes, 4 qubits), 8 seeds each, with the
+CZ ring and without it (`[circuit] entangler = "none"`: same encoding,
+rotations, readout and 56 parameters, no two-qubit gate at all). The
+CZ-ring arm reproduced `robust_oval_4q` and `robust_chicane_4q` seed for
+seed, every eval number identical; data in `data/studies/entangler_oval_4q`
+and `entangler_chicane_4q`.
+
+| Track | Lapped by the best snapshots, of 288: CZ ring | none | Seeds whose best snapshot laps ≥ 50 %: CZ ring | none | Final params lapped (IQM): CZ ring | none |
+|---|---|---|---|---|---|---|
+| oval | 278 | 276 | 8/8 | 8/8 | 0.73 | 1.00 |
+| chicane | 280 | **26** | 8/8 | **0/8** | 0.60 | 0.00 |
+
+What "none" removes is more than entanglement. Each Q-value is ⟨Z⟩ of one
+qubit, and without a two-qubit gate a qubit's state depends only on its own
+input, so every action is scored from exactly one sensor: the two steering
+actions each from one side ray, Straight from the ray ahead, Brake from the
+speed alone. In this circuit the CZ ring is the only channel between the
+sensors and the actions; the ablation measures what that channel is worth.
+
+- **oval: nothing.** Four independent one-sensor scores are enough to lap
+  the oval, as fast (14.0 s against 13.8 s IQM) and in as many seeds. The
+  product circuit learns more slowly (half of the seeds lap half their eval
+  episodes after 400 episodes, against 250) but holds on to it better: its
+  final parameters lap at least 34 of 36 episodes in 7 seeds, the CZ
+  ring's in 3. The difference in final-params reliability is not
+  statistically supported with 8 seeds (P = 0.75 [0.50, 0.94]).
+- **chicane: everything.** No product-circuit seed becomes reliable: its
+  best snapshots lap 26 of 288 episodes (0–11 of 36 per seed), and 3 of
+  8 seeds never drive a clean lap. The chicane needs braking on what lies
+  ahead; without the ring, Brake sees only the speed and can't know a
+  corner is coming.
+
+This sits next to Bowles, Ahmed & Schuld [8], where removing entanglement
+often did not hurt classifiers: here it costs nothing on the easy track
+and makes the harder one unlearnable. The ablation does not separate
+entanglement from information flow; any two-qubit gate that lets
+sensors reach other readouts might do as well, and a classical mixing
+layer is not tested here.
 
 ### July 2026 exploratory results (old protocol)
 
