@@ -240,12 +240,18 @@ describe('training', () => {
     expect(Array.from(c.params)).not.toEqual(Array.from(a.params));
   });
 
-  it('a step takes well under a frame at 2 qubits', () => {
+  it('a step stays cheap at 2 qubits (a guard against gross slowdowns)', () => {
+    // about 3 ms on a laptop; shared CI runners under parallel test load measured 33 ms,
+    // so this takes the fastest of several short bursts and only catches a 10x regression
     const trainer = new ToyTrainer(batch, 2);
     trainer.step(); // warm up
-    const t0 = performance.now();
-    for (let i = 0; i < 20; i++) trainer.step();
-    expect((performance.now() - t0) / 20).toBeLessThan(16);
+    let best = Infinity;
+    for (let burst = 0; burst < 5; burst++) {
+      const t0 = performance.now();
+      for (let i = 0; i < 4; i++) trainer.step();
+      best = Math.min(best, (performance.now() - t0) / 4);
+    }
+    expect(best).toBeLessThan(60);
   });
 
   it('maps P(Left) over the (left, right) square', () => {
