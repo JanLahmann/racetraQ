@@ -50,7 +50,9 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
         </ul>
         <h3>{t('about.modes')}</h3>
         <ul>
-          <li>{rich('about.watch', { mode: <strong>{t('mode.watch')}</strong> })}</li>
+          <li>
+            {rich('about.watch', { mode: <strong>{t('mode.watch')}</strong> })} {t('about.predict')}
+          </li>
           <li>{rich('about.race', { mode: <strong>{t('mode.race')}</strong> })}</li>
           <li>{rich('about.evolution', { mode: <strong>{t('mode.evolution')}</strong> })}</li>
         </ul>

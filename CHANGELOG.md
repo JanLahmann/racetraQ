@@ -13,6 +13,19 @@
   the light-cone analysis and the surrogate spectra all follow it; weights
   trained that way record it in their `.meta.json` and every loader rebuilds
   the same circuit. The browser export refuses such drivers.
+- **Predict, then check** in the browser edition (Learning Audit item 5): at a
+  paused decision, "Guess before you look" hides the scores until you pick the
+  move you expect, then says whether the driver agrees and how close it was;
+  "cover" a sensor re-runs the same decision with that input at 0, and (quantum
+  drivers) a slider nudges one trained RY/RZ angle by up to ±π, with the
+  Q-values side by side and a note when the gate is outside every readout's
+  light cone. Inference only, on copies (`browser/src/sim/whatif.ts`, tested);
+  two new Umami events, `racetraQ: predict` and `racetraQ: what-if`, at most
+  once per decision.
+- Booth: Explain → **Take it home** (DE: Zum Mitnehmen) shows four QR codes:
+  racetraq.org, the learning path, the notebooks and the technical report, so
+  visitors leave with the next step. The codes are committed SVGs
+  (`tools/make_qr.py`), so the booth shows them offline.
 - racetraq.org pings IndexNow (Bing, Yandex & co.) after each deploy, through
   the Fun with Quantum family workflow; the sitemap's `lastmod` is the deploy
   date.
