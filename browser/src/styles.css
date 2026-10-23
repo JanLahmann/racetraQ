@@ -8,6 +8,10 @@
   --muted: #8a91a0;
   --accent: #0f62fe;
   --quantum: #7a5cff;
+  /* text-safe tints of the brand purple (WCAG AA 4.5:1): purple text on the dark
+     surfaces (5.6-6.1:1), and a fill behind white text (5.1:1) */
+  --quantum-text: #9580ff;
+  --quantum-fill: #6f50f5;
   --mlp: #56b4e9; /* sky blue: tells apart from the orange human car with red-green colour blindness */
   --human: #ff9f1c;
   --danger: #e5484d;
@@ -65,7 +69,7 @@ button {
   background: none;
   border: 0;
   padding: 0;
-  color: var(--quantum);
+  color: var(--quantum-text);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -102,7 +106,7 @@ header::-webkit-scrollbar {
   letter-spacing: -0.02em;
 }
 .logo .q {
-  color: var(--quantum);
+  color: var(--quantum-text);
 }
 .edition {
   font-size: 11px;
@@ -138,7 +142,7 @@ nav button.active {
   color: var(--text);
 }
 .modes button.active {
-  background: var(--quantum);
+  background: var(--quantum-fill);
   color: white;
 }
 .about-button {
@@ -804,7 +808,7 @@ footer {
   background: none;
   border: 0;
   padding: 0;
-  color: var(--quantum);
+  color: var(--quantum-text);
   text-decoration: underline;
   cursor: pointer;
   font-size: inherit;

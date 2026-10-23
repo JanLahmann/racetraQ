@@ -16,6 +16,7 @@ export const en = {
   'header.modes': 'Mode',
   'header.about': 'What is this?',
   'pitch.text': 'A tiny quantum circuit learned to drive this car. Watch it lap, then race it yourself.',
+  'pitch.aria': 'About racetraQ',
   'pitch.how': 'How does it work?',
   'pitch.toy': 'Watch a tiny circuit learn',
 

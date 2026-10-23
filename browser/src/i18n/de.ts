@@ -19,6 +19,7 @@ export const de: Record<Key, string> = {
   'header.about': 'Was ist das?',
   'pitch.text':
     'Ein winziger Quantenschaltkreis hat gelernt, dieses Auto zu fahren. Sieh ihm bei seinen Runden zu und fahr dann selbst gegen ihn.',
+  'pitch.aria': 'Über racetraQ',
   'pitch.how': 'Wie funktioniert das?',
   'pitch.toy': 'Sieh einem winzigen Schaltkreis beim Lernen zu',
 
