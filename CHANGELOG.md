@@ -14,6 +14,15 @@
   in about 45 s and in CI. Linked from the README, the learning path (tracks
   2–5), the glossary (overfitting, generalisation, selection bias) and the
   teaching answer key.
+- **Predict, then check** in the browser edition (Learning Audit item 5): at a
+  paused decision, "Guess before you look" hides the scores until you pick the
+  move you expect, then says whether the driver agrees and how close it was;
+  "cover" a sensor re-runs the same decision with that input at 0, and (quantum
+  drivers) a slider nudges one trained RY/RZ angle by up to ±π, with the
+  Q-values side by side and a note when the gate is outside every readout's
+  light cone. Inference only, on copies (`browser/src/sim/whatif.ts`, tested);
+  two new Umami events, `racetraQ: predict` and `racetraQ: what-if`, at most
+  once per decision.
 - Booth: Explain → **Take it home** (DE: Zum Mitnehmen) shows four QR codes:
   racetraq.org, the learning path, the notebooks and the technical report, so
   visitors leave with the next step. The codes are committed SVGs

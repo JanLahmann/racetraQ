@@ -11,6 +11,7 @@
   --mlp: #56b4e9; /* sky blue: tells apart from the orange human car with red-green colour blindness */
   --human: #ff9f1c;
   --danger: #e5484d;
+  --good: #3ccf91;
   --header-h: 52px;
   color-scheme: dark;
 }
@@ -464,6 +465,172 @@ main {
   color: var(--muted);
   font-size: 11px;
 }
+
+/* predict, then check: guess, cover a sensor, nudge an angle (paused only) */
+.mini {
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mini:hover:not(:disabled) {
+  border-color: #3a4152;
+  color: var(--text);
+}
+.mini.active {
+  border-color: var(--quantum);
+  background: rgba(122, 92, 255, 0.18);
+  color: var(--text);
+}
+.mini:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.brain .features.coverable li {
+  grid-template-columns: 96px 1fr 44px 64px;
+}
+/* "Geschwindigkeit" in a narrow label column: hyphenate rather than run under the bar */
+.brain .features .label {
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+.brain .features li.covered .bar,
+.brain .features li.covered .num {
+  opacity: 0.35;
+}
+.brain .features li.covered .num {
+  text-decoration: line-through;
+}
+.guess-toggle {
+  display: flex;
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+.brain .ask {
+  margin: 2px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.guess-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+}
+.chip.guess {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: left;
+  white-space: normal;
+}
+.chip.guess:hover {
+  border-color: var(--quantum);
+}
+.chip.guess .arrow {
+  flex: none;
+  min-width: 18px;
+  text-align: center;
+}
+.verdict {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--good);
+  border-radius: 6px;
+  background: var(--bg-inset);
+  font-size: 12px;
+}
+.verdict.wrong {
+  border-left-color: var(--human);
+}
+.brain .actions li.guessed {
+  box-shadow: inset 0 0 0 1px var(--quantum);
+}
+.brain .actions.with-whatif li {
+  grid-template-columns: 22px 78px 1fr 48px 48px;
+}
+.brain .actions li.head {
+  padding-bottom: 0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+/* a header wider than its column grows to the left, not off the panel */
+.brain .actions li.head .num {
+  display: flex;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+.brain .num.whatif {
+  font-weight: 400;
+  color: var(--muted);
+}
+.brain .num.whatif.win {
+  font-weight: 700;
+  color: var(--human);
+}
+.whatif-line {
+  margin: 6px 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.whatif-line.changed {
+  padding-left: 8px;
+  border-left: 3px solid var(--human);
+  color: var(--text);
+}
+.nudge {
+  margin-top: 8px;
+}
+.nudge-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 8px 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.nudge-pick label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.nudge-pick select {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+.nudge-slider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.nudge-slider input[type='range'] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--quantum);
+}
+.nudge-slider .num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.hint.dead {
+  padding-left: 8px;
+  border-left: 3px solid var(--quantum);
+  color: var(--text);
+}
 .bar {
   position: relative;
   height: 8px;
@@ -538,6 +705,17 @@ footer {
   display: none;
 }
 @media (pointer: coarse) {
+  /* finger-sized targets in the brain panel */
+  .mini {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .chip.guess {
+    min-height: 40px;
+  }
+  .nudge-pick select {
+    padding: 5px 6px;
+  }
   .touch-controls {
     position: absolute;
     left: 12px;
@@ -698,6 +876,14 @@ footer {
   }
   .brain li {
     grid-template-columns: 84px 1fr 40px;
+  }
+  .brain .features.coverable li {
+    grid-template-columns: 84px 1fr 36px auto;
+    gap: 6px;
+  }
+  .brain .actions.with-whatif li {
+    grid-template-columns: 20px 72px 1fr 46px 46px;
+    gap: 6px;
   }
   .countdown {
     font-size: 80px;
