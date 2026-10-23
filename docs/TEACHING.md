@@ -51,7 +51,7 @@ measure it honestly, not about a quantum win.
   cloned for the Studio (and for local notebooks if Binder fails); network
   access for Binder and racetraq.org; a phone or laptop per pair; paper for
   the predictions.
-- **Exercises.** Each of notebooks 01–04 ends with three exercises. The
+- **Exercises.** Each of notebooks 01–04 and 08 ends with three exercises. The
   question is in a text cell; the reasoning is in a collapsed "Solution" box
   below it; the code that checks it is in a cell marked `# Solution N`,
   which JupyterLab opens collapsed. Ask students to write a prediction down
@@ -218,6 +218,9 @@ single runs, so a different machine can show slightly different numbers.
 | [04](../notebooks/04_training_the_quantum_driver.ipynb) | 1. One seed against one seed | on the oval the circuit looks more stable in about 1 pairing in 5 |
 | | 2. Four seeds instead of ten | interval 0.60 wide instead of 0.40; the estimate ranges from 0.45 to 0.95 over all choices of 4 seeds |
 | | 3. What 72 of 72 proves | a failure rate of up to about 4 % is still plausible (rule of three: 3/72) |
+| [08](../notebooks/08_generalisation_and_selection_bias.ipynb) | 1. Easier and harder tracks | difficulty 0: `mlp_oval` 48 of 48, `quantum_oval` 29 of 48; difficulty 1: both oval drivers 0 of 48, `quantum_universal` 33 of 48 |
+| | 2. A driver that never changes | true 0.75; the best of 16 evals reports 0.94, of 60 evals 0.99 — far more than the real +0.028, because real snapshots differ in skill |
+| | 3. Is the lap time optimistic too? | hardly: the fresh mean lap is a median 0.00 s off the picked-on one (569 runs ranked by reliability) |
 
-The checkpoint questions at the end of notebooks 00–04 have their answers
+The checkpoint questions at the end of notebooks 00–04 and 08 have their answers
 in a collapsed box right below them.

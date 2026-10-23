@@ -285,8 +285,18 @@ statistic. Not the same as bootstrapping in Q-learning. *More:* nb04, Part B.
 circuit's outputs; one drives racetraQ's oval as the circuit does. *More:*
 nb07, Part B.
 
+**Generalisation** — Doing well on data the model was not trained on; for a
+driver, lapping tracks it never saw. The gp-trained drivers and the universal
+driver lap freshly generated tracks; the oval specialists do not. *More:*
+nb08, Part A.
+
 **IQM (interquartile mean)** — The mean of the middle half of the values,
 less swayed by one lucky or unlucky seed than the mean. *More:* nb04, Part B.
+
+**Overfitting** — Fitting the training data so closely that the model does
+worse on new data; for a driver, a policy that only works in the situations
+its training track produced (one seed of the universal study laps its four
+training tracks and none of ten generated ones). *More:* nb08, Part A.
 
 **Probability of improvement** — The chance that a random seed of one recipe
 beats a random seed of another; 0.5 means no difference. *More:* nb04, Part B.
@@ -302,6 +312,11 @@ easy to simulate classically. *More:* nb04, closing section; SCIENCE.md,
 **Seed** — The number that fixes a run's random choices; different seeds of
 the same recipe can learn very differently, so results are reported over
 8–10 seeds. *More:* nb04, Part B and exercise 1.
+
+**Selection bias (winner's curse)** — A number that was used to choose
+something overstates it: the in-training eval that picked a best snapshot is,
+on average, higher than the same snapshot on fresh episodes, which is why
+bundled drivers report fresh evals. *More:* nb08, Part B.
 
 **Stability** — After a run's greedy evaluation first laps, the fraction of
 later evaluation episodes that still lap; 1 means it keeps what it learned.
