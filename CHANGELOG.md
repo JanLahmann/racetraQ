@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Booth: Explain → **Take it home** (DE: Zum Mitnehmen) shows four QR codes:
+  racetraq.org, the learning path, the notebooks and the technical report, so
+  visitors leave with the next step. The codes are committed SVGs
+  (`tools/make_qr.py`), so the booth shows them offline.
 - racetraq.org pings IndexNow (Bing, Yandex & co.) after each deploy, through
   the Fun with Quantum family workflow; the sitemap's `lastmod` is the deploy
   date.

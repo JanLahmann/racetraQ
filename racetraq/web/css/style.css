@@ -1514,3 +1514,36 @@ body.kiosk #sidebar h2 {
     transition-duration: 1ms !important;
   }
 }
+
+/* -- Explain -> Take it home: QR codes per learner level ------------------- */
+
+.take-home {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.take-home-card {
+  margin: 0;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 10px;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.take-home-card img {
+  /* the SVG carries its own white quiet zone, so phones can scan it on the dark theme */
+  width: 116px;
+  height: 116px;
+  border-radius: 6px;
+  image-rendering: pixelated;
+}
+
+.take-home-card figcaption strong {
+  display: block;
+  margin-bottom: 2px;
+}
