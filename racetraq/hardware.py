@@ -56,6 +56,7 @@ from typing import Any
 
 import numpy as np
 
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER, circuit_entangler
 from racetraq.agents.training import spsa
 
 WEIGHTS_DIR = Path(__file__).resolve().parent / "weights"
@@ -316,15 +317,17 @@ def _transpile_best(circuit, backend, seeds: Sequence[int] = _TRANSPILE_SEEDS):
     return best
 
 
-def _build_circuit(n_qubits: int, n_layers: int, n_actions: int, prune: bool):
-    """The canonical circuit, or its light-cone-pruned twin (same parameter names)."""
+def _build_circuit(n_qubits: int, n_layers: int, n_actions: int, prune: bool,
+                   entangler: str = DEFAULT_ENTANGLER):
+    """The canonical circuit, or its light-cone-pruned twin (same parameter names);
+    ``entangler`` is the ``[circuit] entangler`` ("none": no CZ rings)."""
     if prune:
         from racetraq.agents.quantum import lightcone
 
-        return lightcone.pruned_circuit(n_qubits, n_layers, n_actions).circuit
+        return lightcone.pruned_circuit(n_qubits, n_layers, n_actions, entangler).circuit
     from racetraq.agents.quantum import circuit as circuit_mod
 
-    return circuit_mod.build_circuit(n_qubits, n_layers)
+    return circuit_mod.build_circuit(n_qubits, n_layers, entangler)
 
 
 def _circuit_shape(circuit_cfg: dict) -> tuple[int, int, int]:
@@ -405,6 +408,7 @@ def local_simulator(
     n_layers: int = 4,
     n_actions: int | None = None,
     prune: bool = True,
+    entangler: str = DEFAULT_ENTANGLER,
 ):
     """Aer twin of a fake device with its noise model built ONCE (cached).
 
@@ -416,7 +420,7 @@ def local_simulator(
     the simulator models exactly the physical qubits it touches (same gate
     and readout errors, T1/T2, coupling). The circuit then transpiles onto
     the patch as it would onto the device, at a fraction of the simulation
-    cost. Cached per (device, circuit shape).
+    cost. Cached per (device, circuit shape and entangler).
     """
     from qiskit_aer import AerSimulator
 
@@ -426,13 +430,16 @@ def local_simulator(
     patch = device.num_qubits > PATCH_MIN_QUBITS
     if patch:
         key += (int(n_qubits), int(n_layers), int(n_actions), bool(prune))
+        if entangler != DEFAULT_ENTANGLER:  # the default keeps its historical key
+            key += (str(entangler),)
     with _SIM_LOCK:
         simulator = _SIMULATORS.get(key)
         if simulator is None:
             qubits = None
             source = device
             if patch:
-                circuit = _build_circuit(int(n_qubits), int(n_layers), int(n_actions), prune)
+                circuit = _build_circuit(int(n_qubits), int(n_layers), int(n_actions),
+                                         prune, entangler)
                 qubits = _patch_qubits(device, circuit)
                 source = _patch_backend(device, qubits)
             simulator = AerSimulator.from_backend(source)
@@ -452,7 +459,8 @@ def execution_backend(backend, circuit_cfg: dict, prune: bool = True):
     if not isinstance(backend, FakeBackendV2):
         return backend
     n_qubits, n_layers, n_actions = _circuit_shape(circuit_cfg)
-    return local_simulator(backend, n_qubits, n_layers, n_actions, prune)
+    return local_simulator(backend, n_qubits, n_layers, n_actions, prune,
+                           entangler=circuit_entangler(circuit_cfg))
 
 
 def backend_label(backend) -> str:
@@ -587,6 +595,8 @@ class HardwareQFunction:
         cfg = circuit_cfg.get("circuit", circuit_cfg)
         self.n_qubits = int(cfg.get("n_qubits", 4))
         self.n_layers = int(cfg.get("n_layers", 4))
+        # "cz_ring" (default) | "none": the entanglement ablation, no CZ gates
+        self.entangler = circuit_entangler(cfg)
         self.seed = int(cfg.get("seed", 7))
         self.shots = int(shots)
         from racetraq.agents.quantum import noise as noise_mod
@@ -630,7 +640,8 @@ class HardwareQFunction:
         self.backend = backend
         self.backend_name = backend_label(backend)
 
-        qc = _build_circuit(self.n_qubits, self.n_layers, self.n_actions, self.pruned)
+        qc = _build_circuit(self.n_qubits, self.n_layers, self.n_actions, self.pruned,
+                            self.entangler)
         self._isa_circuit = _transpile_best(qc, backend)
         self._isa_observables = [
             obs.apply_layout(self._isa_circuit.layout)
@@ -770,7 +781,8 @@ class HardwareQFunction:
         from racetraq.agents.quantum.qdqn import QuantumQFunction
 
         fast = QuantumQFunction(
-            {"n_qubits": self.n_qubits, "n_layers": self.n_layers, "n_actions": self.n_actions},
+            {"n_qubits": self.n_qubits, "n_layers": self.n_layers, "n_actions": self.n_actions,
+             "entangler": self.entangler},
             seed=self.seed,
         )
         fast.set_params(self.get_params())

@@ -41,6 +41,10 @@ resample_spacing = 1.5
 n_qubits = 4
 n_layers = 4              # data re-uploading blocks
 seed = 7
+entangler = "cz_ring"     # "cz_ring": CZ(0,1) CZ(1,2) ... CZ(n-1,0) closes every block;
+                          # "none": no CZ gates at all (entanglement ablation — each
+                          # action then sees only its own qubit's feature). Weights
+                          # trained without the ring record it in their .meta.json.
 # n_actions = 6           # scaled action readout: Q_a = <Z_a> on the first
 #                         # n_actions qubits (4 | 6 | 8; default min(4, n_qubits)).
 #                         # 6 adds trail braking, 8 adds half-steer — see

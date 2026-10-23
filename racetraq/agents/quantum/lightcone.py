@@ -38,12 +38,20 @@ and both CZs are reported dead — removable as a pair, not one at a time):
   ``<Z_a>`` sees exactly the features within ring distance ``L - 1`` of qubit
   a, and full visibility needs ``L >= n // 2 + 1`` blocks.
 
+Without the ring (``[circuit] entangler = "none"``, the entanglement ablation)
+nothing ever spreads: ``<Z_a>`` sees only the feature on its own qubit a at
+any depth, every gate on another qubit is dead, and so is the last block's RZ
+on qubit a. Every function below takes that ``entangler`` keyword
+("cz_ring" | "none"); the ``cz`` arrays keep their (L, n) shape and are all
+False for "none" — there are no CZ gates to be live.
+
 numpy/stdlib only at import time — qiskit is imported lazily inside
 :func:`pruned_circuit`.
 
 Command line::
 
-    python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4 [--actions 4]
+    python -m racetraq.agents.quantum.lightcone --qubits 10 --layers 4 [--actions 4] \\
+        [--entangler none]
 """
 
 from __future__ import annotations
@@ -55,6 +63,7 @@ from typing import Any, NamedTuple
 import numpy as np
 
 from racetraq.agents.base import action_labels as default_action_labels
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER, ENTANGLERS, check_entangler
 
 # Kind of support the back-propagated operator has on one qubit.
 _NONE, _DIAG, _FULL = 0, 1, 2
@@ -89,20 +98,35 @@ def _check_shape(n_qubits: int, n_layers: int, n_actions: int | None) -> tuple[i
     return n, layers, actions
 
 
-def readout_live_gates(n_qubits: int, n_layers: int, qubit: int) -> dict[str, np.ndarray]:
+def _ring_edges(n: int, entangler: str) -> list[tuple[int, int]]:
+    """The (i, (i+1) % n) pairs whose CZ can spread support, per block."""
+    # At n = 2 the "ring" is CZ(0,1) CZ(1,0) = identity: nothing entangles.
+    if check_entangler(entangler) == "none" or n <= 2:
+        return []
+    return [(i, (i + 1) % n) for i in range(n)]
+
+
+def cz_gates_per_block(n_qubits: int, entangler: str = DEFAULT_ENTANGLER) -> int:
+    """How many CZ gates one block has: n for the ring, 0 without one."""
+    return 0 if check_entangler(entangler) == "none" else int(n_qubits)
+
+
+def readout_live_gates(
+    n_qubits: int, n_layers: int, qubit: int, entangler: str = DEFAULT_ENTANGLER
+) -> dict[str, np.ndarray]:
     """Live gates for the single readout ``<Z_qubit>``.
 
     Returns bool arrays ``{"enc", "ry", "rz", "cz"}``, each (L, n), True where
     the gate can influence the readout; ``cz[l, i]`` is CZ(i, (i+1) % n) of
-    block l. The building block of every other function in this module.
+    block l (all False for ``entangler="none"``). The building block of every
+    other function in this module.
     """
     n, layers, _ = _check_shape(n_qubits, n_layers, None)
     qubit = int(qubit)
     if not 0 <= qubit < n:
         raise ValueError(f"readout qubit must be in 0..{n - 1}, got {qubit}")
 
-    # At n = 2 the "ring" is CZ(0,1) CZ(1,0) = identity: nothing entangles.
-    ring = [(i, (i + 1) % n) for i in range(n)] if n > 2 else []
+    ring = _ring_edges(n, entangler)
 
     live = {kind: np.zeros((layers, n), dtype=bool) for kind in GATE_KINDS}
     support = np.full(n, _NONE, dtype=np.int8)
@@ -128,7 +152,8 @@ def readout_live_gates(n_qubits: int, n_layers: int, qubit: int) -> dict[str, np
 
 
 def live_gates(
-    n_qubits: int, n_layers: int, n_actions: int | None = None
+    n_qubits: int, n_layers: int, n_actions: int | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
 ) -> dict[str, np.ndarray]:
     """Gates that can influence at least one of the readouts ``<Z_0..Z_{A-1}>``.
 
@@ -139,25 +164,31 @@ def live_gates(
     n, layers, actions = _check_shape(n_qubits, n_layers, n_actions)
     live = {kind: np.zeros((layers, n), dtype=bool) for kind in GATE_KINDS}
     for a in range(actions):
-        for kind, mask in readout_live_gates(n, layers, a).items():
+        for kind, mask in readout_live_gates(n, layers, a, entangler).items():
             live[kind] |= mask
     return live
 
 
-def feature_visibility(n_qubits: int, n_layers: int, n_actions: int | None = None) -> np.ndarray:
+def feature_visibility(
+    n_qubits: int, n_layers: int, n_actions: int | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
+) -> np.ndarray:
     """Which features each readout can depend on: bool (A, n).
 
     ``[a, j]`` is True iff ``<Z_a>`` can depend on the feature encoded on
-    qubit j, i.e. iff at least one of its encoding gates is live for Z_a.
+    qubit j, i.e. iff at least one of its encoding gates is live for Z_a
+    (without an entangler: iff j == a).
     """
     n, layers, actions = _check_shape(n_qubits, n_layers, n_actions)
     return np.stack(
-        [readout_live_gates(n, layers, a)["enc"].any(axis=0) for a in range(actions)]
+        [readout_live_gates(n, layers, a, entangler)["enc"].any(axis=0)
+         for a in range(actions)]
     )
 
 
 def live_parameter_mask(
-    n_qubits: int, n_layers: int, n_actions: int | None = None
+    n_qubits: int, n_layers: int, n_actions: int | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
 ) -> dict[str, np.ndarray]:
     """Circuit parameters that can have a non-zero gradient for some readout.
 
@@ -167,22 +198,25 @@ def live_parameter_mask(
     part of the flat parameter vector. False = structurally dead: the gradient
     is exactly zero for every input and every readout.
     """
-    live = live_gates(n_qubits, n_layers, n_actions)
+    live = live_gates(n_qubits, n_layers, n_actions, entangler)
     return {"lam": live["enc"].copy(), "theta": np.stack([live["ry"], live["rz"]], axis=-1)}
 
 
-def min_layers_full_visibility(n_qubits: int, n_actions: int | None = None) -> int:
+def min_layers_full_visibility(
+    n_qubits: int, n_actions: int | None = None, entangler: str = DEFAULT_ENTANGLER
+) -> int:
     """Smallest number of blocks L at which every readout sees every feature.
 
     Found by growing L until :func:`feature_visibility` is all True (for the
     CZ ring this lands on ``n_qubits // 2 + 1``). Raises ValueError when no
-    depth achieves it (n = 2, whose two-CZ "ring" is the identity).
+    depth achieves it (n = 2, whose two-CZ "ring" is the identity, and any
+    circuit without an entangler).
     """
     n, _, actions = _check_shape(n_qubits, 1, n_actions)
     previous = None
     layers = 1
     while True:
-        visible = feature_visibility(n, layers, actions)
+        visible = feature_visibility(n, layers, actions, entangler)
         if visible.all():
             return layers
         if previous is not None and np.array_equal(visible, previous):
@@ -211,6 +245,7 @@ def blind_spots(
     n_layers: int,
     n_actions: int | None = None,
     action_labels: Sequence[str] | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
 ) -> list[str]:
     """Human-readable list of what each action's readout cannot see.
 
@@ -221,7 +256,7 @@ def blind_spots(
     labels (``racetraq.agents.base.action_labels``).
     """
     names = [str(name) for name in feature_names]
-    visible = feature_visibility(len(names), n_layers, n_actions)
+    visible = feature_visibility(len(names), n_layers, n_actions, entangler)
     labels = _default_labels(visible.shape[0]) if action_labels is None else list(action_labels)
     lines = []
     for a, row in enumerate(visible):
@@ -236,6 +271,7 @@ def blind_spot_warning(
     n_layers: int,
     n_actions: int | None = None,
     action_labels: Sequence[str] | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
 ) -> list[str]:
     """Warning lines for a circuit whose light cone hides features from actions.
 
@@ -245,10 +281,14 @@ def blind_spot_warning(
     an error: the circuit still trains, each action just decides without the
     listed features.
     """
-    lines = blind_spots(feature_names, n_layers, n_actions, action_labels)
+    lines = blind_spots(feature_names, n_layers, n_actions, action_labels, entangler)
     if not lines:
         return []
     n = len(feature_names)
+    if check_entangler(entangler) == "none":
+        head = ('light cone: [circuit] entangler = "none" — without the CZ ring each '
+                "action sees only the feature on its own qubit, at any depth")
+        return [head, *(f"  {line}" for line in lines)]
     try:
         fix = f"full visibility needs n_layers >= {min_layers_full_visibility(n, n_actions)}"
     except ValueError:
@@ -258,7 +298,10 @@ def blind_spot_warning(
     return [head, *(f"  {line}" for line in lines)]
 
 
-def pruned_circuit(n_qubits: int, n_layers: int, n_actions: int | None = None) -> PrunedCircuit:
+def pruned_circuit(
+    n_qubits: int, n_layers: int, n_actions: int | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
+) -> PrunedCircuit:
     """Build the canonical circuit with only its live gates, in the original order.
 
     The Parameters carry the same names as ``circuit.build_circuit``'s
@@ -266,13 +309,14 @@ def pruned_circuit(n_qubits: int, n_layers: int, n_actions: int | None = None) -
     works unchanged; ``input_index`` / ``weight_index`` list the flat indices
     that remain. Its ``<Z_a>`` (a < n_actions) equals the full circuit's
     exactly for all parameter values — with fewer gates to run (at n = 4,
-    L = 4: 12 CZ instead of 16).
+    L = 4: 12 CZ instead of 16; without an entangler: no CZ at all, and only
+    the readout qubits' own gates).
     """
     from qiskit import QuantumCircuit
     from qiskit.circuit import ParameterVector
 
     n, layers, actions = _check_shape(n_qubits, n_layers, n_actions)
-    live = live_gates(n, layers, actions)
+    live = live_gates(n, layers, actions, entangler)
 
     x = ParameterVector("x", layers * n)
     theta = ParameterVector("theta", layers * n * 2)
@@ -291,7 +335,7 @@ def pruned_circuit(n_qubits: int, n_layers: int, n_actions: int | None = None) -
             if live["cz"][layer, i]:
                 qc.cz(i, (i + 1) % n)
 
-    mask = live_parameter_mask(n, layers, actions)
+    mask = live_parameter_mask(n, layers, actions, entangler)
     return PrunedCircuit(
         circuit=qc,
         input_index=np.flatnonzero(mask["lam"].ravel()),
@@ -299,19 +343,23 @@ def pruned_circuit(n_qubits: int, n_layers: int, n_actions: int | None = None) -
     )
 
 
-def report(n_qubits: int, n_layers: int, n_actions: int | None = None) -> str:
+def report(
+    n_qubits: int, n_layers: int, n_actions: int | None = None,
+    entangler: str = DEFAULT_ENTANGLER,
+) -> str:
     """Plain-text light-cone report (what the command line prints)."""
     n, layers, actions = _check_shape(n_qubits, n_layers, n_actions)
-    visible = feature_visibility(n, layers, actions)
-    live = live_gates(n, layers, actions)
-    mask = live_parameter_mask(n, layers, actions)
+    visible = feature_visibility(n, layers, actions, entangler)
+    live = live_gates(n, layers, actions, entangler)
+    mask = live_parameter_mask(n, layers, actions, entangler)
     labels = _default_labels(actions)
     names = [_readout_name(a, labels) for a in range(actions)]
     width = max(len(name) for name in names)
 
     lines = [
         f"Light cone of the canonical circuit: {n} qubits, {layers} blocks, "
-        f"readout Z_0..Z_{actions - 1}",
+        f"readout Z_0..Z_{actions - 1}"
+        + (", no entangler" if entangler == "none" else ""),
         "",
         "Feature visibility (row = readout, column = feature/qubit; X sees, . blind)",
         f"  {'':<{width}}  " + "".join(str(j % 10) for j in range(n)),
@@ -337,11 +385,12 @@ def report(n_qubits: int, n_layers: int, n_actions: int | None = None) -> str:
         dead = ["(" + ",".join(str(v) for v in idx) + ")" for idx in np.argwhere(~part)]
         if dead:
             lines.append(f"  dead {key}: " + " ".join(dead))
-    lines.append(f"Live two-qubit gates: {int(live['cz'].sum())}/{per} CZ")
+    n_cz = layers * cz_gates_per_block(n, entangler)
+    lines.append(f"Live two-qubit gates: {int(live['cz'].sum())}/{n_cz} CZ")
 
     lines.append("")
     try:
-        needed = min_layers_full_visibility(n, actions)
+        needed = min_layers_full_visibility(n, actions, entangler)
     except ValueError:
         lines.append("Full visibility: not reachable at any depth")
     else:
@@ -361,9 +410,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--actions", type=int, default=None,
         help="readout qubits Z_0..Z_{A-1} (default min(4, qubits))",
     )
+    parser.add_argument(
+        "--entangler", default=DEFAULT_ENTANGLER, choices=ENTANGLERS,
+        help=f"entangling layer of every block (default {DEFAULT_ENTANGLER})",
+    )
     args = parser.parse_args(argv)
     try:
-        print(report(args.qubits, args.layers, args.actions))
+        print(report(args.qubits, args.layers, args.actions, args.entangler))
     except ValueError as exc:
         parser.error(str(exc))
     return 0

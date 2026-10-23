@@ -687,3 +687,20 @@ def test_export_keeps_reconstructed_commits(tmp_path, monkeypatch):
     if "git_commits" in again:
         keys = list(again)
         assert keys.index("git_commits_reconstructed") == keys.index("git_commits") + 1
+
+
+
+def test_study_imports_racetraq_from_its_own_checkout(tmp_path):
+    """Run from a git worktree, tools/study.py must train that worktree's
+    code, not the checkout an editable install points at."""
+    import subprocess
+
+    script = (
+        "import runpy; "
+        f"runpy.run_path({str(STUDY_PATH)!r}, run_name='probe')['_find_racetraq'](); "
+        "import racetraq; print(racetraq.__file__)"
+    )
+    out = subprocess.run(
+        [sys.executable, "-c", script], cwd=tmp_path, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    assert Path(out).resolve() == STUDY_PATH.parent.parent / "racetraq" / "__init__.py"

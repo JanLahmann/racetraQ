@@ -107,8 +107,8 @@ def driver_recipe(driver: Path, profile: str | None = None) -> dict | None:
     sidecar: ``{"seed", "episodes", "overrides"}`` — the resolved training
     table as ``training.<key>`` overrides (:func:`make_stages` trains them
     with ``preset="none"``, so the replay does not depend on today's
-    presets), the circuit depth and action count, and the recorded
-    observation.  None when the sidecar is missing or records no
+    presets), the circuit depth, action count and entangler, and the
+    recorded observation.  None when the sidecar is missing or records no
     ``training`` table with a seed and an episode count (a pre-October-2026
     driver: its run cannot be replayed from what it recorded)."""
     meta = _read_sidecar(driver)
@@ -119,6 +119,8 @@ def driver_recipe(driver: Path, profile: str | None = None) -> dict | None:
     circuit = meta.get("circuit") if isinstance(meta.get("circuit"), dict) else {}
     if "n_layers" in circuit:
         overrides["circuit.n_layers"] = int(circuit["n_layers"])
+    if "entangler" in circuit:  # recorded only without the CZ ring
+        overrides["circuit.entangler"] = str(circuit["entangler"])
     profile_circuit = load_config(profile=profile).get("circuit", {})
     default_actions = int(profile_circuit.get(
         "n_actions", min(4, int(profile_circuit.get("n_qubits", 4)))))

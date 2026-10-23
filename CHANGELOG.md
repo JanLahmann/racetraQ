@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `[circuit] entangler = "none"` builds the circuit without its CZ rings (the
+  entanglement ablation of Learning Audit item 13; default `"cz_ring"`,
+  unchanged). fastsim, the adjoint gradients, the Qiskit/hardware circuits,
+  the light-cone analysis and the surrogate spectra all follow it; weights
+  trained that way record it in their `.meta.json` and every loader rebuilds
+  the same circuit. The browser export refuses such drivers.
 - **Predict, then check** in the browser edition (Learning Audit item 5): at a
   paused decision, "Guess before you look" hides the scores until you pick the
   move you expect, then says whether the driver agrees and how close it was;

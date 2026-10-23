@@ -568,6 +568,10 @@ def name_notes(name: str, meta: dict) -> list[str]:
     if agent == "quantum" and n_qubits != 4 and not tagged:
         notes.append(f"note: --name {name} has no '_q{n_qubits}' tag, but these are "
                      f"{n_qubits}-qubit weights (4-qubit loaders would pick them up)")
+    entangler = (meta.get("circuit") or {}).get("entangler", "cz_ring")
+    if agent == "quantum" and entangler != "cz_ring":
+        notes.append(f"note: these weights use circuit.entangler = {entangler!r} — the server "
+                     "honours it, but tools/export_browser.py refuses such drivers")
     return notes
 
 
