@@ -268,5 +268,5 @@ export const de: Record<Key, string> = {
   'toy.more': 'Das echte Training Schritt für Schritt: die {notebooks} (auf Englisch) und der {path}.',
 
   'footer.text':
-    'Nur Inferenz: Die Fahrer wurden offline mit {racetraq} trainiert (Python, Qiskit). Jeden Schaltkreis simuliert der Zustandsvektor-Simulator von {qamposer} hier in deinem Browser – ohne Server.',
+    'Die Rennfahrer fahren hier nur: Trainiert wurden sie offline mit {racetraq} (Python, Qiskit); nur der kleine Spielzeug-Schaltkreis lernt in deinem Browser. Jeden Schaltkreis simuliert der Zustandsvektor-Simulator von {qamposer} hier in deinem Browser – ohne Server.',
 };

@@ -263,7 +263,7 @@ export const en = {
   'toy.more': 'The real training, step by step: the {notebooks} and the {path}.',
 
   'footer.text':
-    "Inference only: the drivers were trained offline with {racetraq} (Python, Qiskit). Every circuit is simulated in this browser by {qamposer}'s state-vector simulator — no server.",
+    "The race drivers only drive here: they were trained offline with {racetraq} (Python, Qiskit); only the tiny toy circuit trains in your browser. Every circuit is simulated in this browser by {qamposer}'s state-vector simulator — no server.",
 } as const;
 
 export type Key = keyof typeof en;

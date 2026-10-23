@@ -113,7 +113,7 @@ describe('Train a tiny circuit', () => {
     // Reset draws a new seed and starts over
     click(button('Reset'));
     expect(step()).toBe(0);
-    expect(status()).toContain('seed 2');
+    expect(status()).toContain('seed 3');
   });
 
   it('pauses when the tab is hidden', async () => {
@@ -169,5 +169,16 @@ describe('stuck', () => {
     expect(isStuck(stuck.history)).toBe(true);
     expect(isStuck(good.history)).toBe(false);
     expect(isStuck(stuck.history.slice(0, 30))).toBe(false); // too early to say
+  });
+
+  it("the panel's first seed (2) learns with 1 and 2 qubits, so a first visit sees learning", () => {
+    const oval_ = new Track(oval, manifest.resample_spacing);
+    for (const qubits of [1, 2] as const) {
+      const trainer = new ToyTrainer(makeBatch(oval_, manifest.physics, 2), qubits);
+      for (let i = 0; i < 300; i++) trainer.step();
+      expect(isStuck(trainer.history)).toBe(false);
+      const best = Math.max(...trainer.history.map((h) => h.testAccuracy));
+      expect(best, `${qubits} qubit(s)`).toBeGreaterThanOrEqual(0.9);
+    }
   });
 });

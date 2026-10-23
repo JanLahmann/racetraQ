@@ -269,7 +269,9 @@ export function ToyPanel({ manifest, onClose }: { manifest: Manifest; onClose: (
   useLang();
   const [trackObj, setTrackObj] = useState<Track | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [seed, setSeed] = useState(1);
+  // seed 2: the first run learns with 1 and 2 qubits (seed 1 leaves the 1-qubit circuit in a
+  // local minimum); Reset draws new seeds, stuck ones included, and the stuck note explains them
+  const [seed, setSeed] = useState(2);
   const [qubits, setQubits] = useState<ToyQubits>(2);
   const [lr, setLr] = useState(DEFAULT_LEARNING_RATE);
   const [running, setRunning] = useState(false);
