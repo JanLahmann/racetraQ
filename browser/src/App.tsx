@@ -3,6 +3,7 @@ import { findDriver, loadManifest, quantumDrivers, type DriverInfo, type Manifes
 import { buildRace, labelCars, type BuiltRace, type Mode, type RaceSetup, type Rival } from './race';
 import { outbound, track } from './analytics';
 import { About } from './components/About';
+import { ToyPanel } from './components/ToyPanel';
 import { Lapboard, fmtLap } from './components/Lapboard';
 import { QuantumBrain } from './components/QuantumBrain';
 import { CircuitView } from './components/CircuitView';
@@ -112,6 +113,8 @@ export function App() {
   const [showRays, setShowRays] = useState(true);
   const [camera, setCamera] = useState<CameraView>(loadCamera);
   const [aboutOpen, setAboutOpen] = useState(firstVisit);
+  /** "Train a tiny circuit": the toy that trains in the browser */
+  const [toyOpen, setToyOpen] = useState(false);
   const [wideCircuit, setWideCircuit] = useState(false);
   /** "Guess before you look" (brain panel): for this page session only */
   const [guessMode, setGuessMode] = useState(false);
@@ -130,6 +133,11 @@ export function App() {
   const openAbout = () => {
     track('about open');
     setAboutOpen(true);
+  };
+
+  const openToy = () => {
+    closeAbout();
+    setToyOpen(true);
   };
 
   const cycleCamera = () => {
@@ -321,6 +329,10 @@ export function App() {
         {t('pitch.text')}{' '}
         <button type="button" className="link" onClick={openAbout}>
           {t('pitch.how')}
+        </button>{' '}
+        ·{' '}
+        <button type="button" className="link" onClick={openToy}>
+          {t('pitch.toy')}
         </button>
       </p>
 
@@ -331,7 +343,7 @@ export function App() {
               world={world}
               track={race.track}
               mode={setup.mode === 'watch' ? 'attract' : setup.mode}
-              paused={paused || (setup.mode === 'race' && aboutOpen)}
+              paused={paused || (setup.mode === 'race' && (aboutOpen || toyOpen))}
               speed={setup.mode === 'race' ? 1 : speed}
               showRays={showRays}
               camera={setup.mode === 'race' ? camera : 'top'}
@@ -529,7 +541,8 @@ export function App() {
         </a>
       </footer>
 
-      {aboutOpen && <About manifest={manifest} onClose={closeAbout} />}
+      {aboutOpen && <About manifest={manifest} onClose={closeAbout} onOpenToy={openToy} />}
+      {toyOpen && <ToyPanel manifest={manifest} onClose={() => setToyOpen(false)} />}
     </div>
   );
 }

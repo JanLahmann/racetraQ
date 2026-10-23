@@ -7,7 +7,8 @@ server, no account. A static site you can host anywhere (GitHub Pages,
 qamposer.org, a Raspberry Pi at a workshop) or open from a USB stick through
 any local web server.
 
-**Inference only.** Nothing is trained here. Every 0.1 s the quantum driver
+**Inference only** for the race: no driver is trained here (the one exception
+is a labelled toy, below). Every 0.1 s the quantum driver
 turns its sensor readings into rotation angles, the circuit runs on
 [QAMPoser](https://qamposer.org)'s in-browser state-vector simulator
 (`@qamposer/react`), and the car takes the action with the highest
@@ -33,6 +34,45 @@ model and no hardware path.
   **C** or the 📷 button switches between top-down, chase and cockpit cameras.
 - **Evolution** — four snapshots of one training run racing each other (the same mode as at the booth).
 
+## Train a tiny circuit — a toy
+
+So the page shows learning, not only its result (Learning Audit item 14):
+"Watch a tiny circuit learn" in the line under the header, or the link in
+"What is this?", opens a panel where one or two qubits learn **steer toward
+the longer ray** live, clearly labelled a toy. The core is pure and tested
+(`src/sim/toy.ts`, `tests/toy.test.ts`); the panel is
+`src/components/ToyPanel.tsx`.
+
+- **Data:** a frozen, seeded batch of real readings: 64 training and 32
+  held-out poses sampled on the oval (random centreline point, sideways offset
+  up to 0.8 half widths, heading within 0.5 rad of the tangent), the two side
+  rays (+60° left, −60° right, the drivers' outer rays) measured by the same
+  `Observer` as the race. Label: Left if the left ray is longer. The readings
+  lie close to one curve (left + right is roughly the track width), plus a few
+  capped at 30 m.
+- **Circuits** (QAMPoser's state vector, as in the race): 2 qubits, two blocks
+  of RY(π·left) on q0, RY(π·right) on q1, trained RY RZ per qubit, CZ(0,1);
+  score Left ⟨Z0⟩, score Right ⟨Z1⟩. Or 1 qubit, data re-uploading:
+  RY(π·left), RY RZ, RY(π·right), RY RZ; ⟨Z⟩ > 0 means Left. P(Left) =
+  sigmoid(3·margin), i.e. a softmax over 3·⟨Z0⟩, 3·⟨Z1⟩; mean cross-entropy.
+  The last RZ on each wire commutes with the readout: its gradient is 0 and
+  the panel greys it out.
+- **Training:** full-batch gradient descent (Adam; learning rate 0.02, 0.08
+  or 0.3), gradients by the parameter-shift rule (exact for RY/RZ, checked
+  against finite differences in the tests), initial angles uniform in
+  [−1, 1] rad from the seed, 15 steps a second in `requestAnimationFrame`
+  chunks, at most 300 steps. A step at 2 qubits is about 3 ms (64 samples ×
+  17 circuits). Closing the panel stops it; a hidden tab pauses it.
+- **What it reaches:** seed 1 at 2 qubits passes 90 % held-out accuracy at
+  step 13 (the test allows 40); at 1 qubit seed 1 gets stuck in a local
+  minimum (loss ≈ 0.89, the panel says so), seed 2 learns in 11 steps.
+- **Honest framing, in the panel:** a toy on a frozen batch; the race drivers
+  were trained with double DQN over thousands of episodes, offline in Python;
+  one line of classical code (left > right) solves the task, so nothing here
+  claims a quantum advantage. Without the CZ each score would see only its own
+  ray, which suffices for this rule, as on the oval in the entanglement
+  ablation.
+
 ## Languages
 
 English and German: the **EN/DE** switch in the header (at phone width at
@@ -56,7 +96,7 @@ placeholders.
 | track geometry, car physics, observation | numpy | TypeScript port (`src/sim/`) |
 | quantum circuit | numpy fastsim / Aer / IBM runtime | QAMPoser `simulateStatevector` |
 | drawing | `racetraq/web/js/race.js` | the same file, imported unchanged |
-| training, hardware, random/drawn tracks | yes | no |
+| training, hardware, random/drawn tracks | yes | no (only the labelled toy trains) |
 
 The port is checked against numpy, not just eyeballed: `tests/parity.test.ts`
 compares track resampling, projection, raycasts, curvature look-ahead, physics
@@ -117,5 +157,7 @@ in `src/analytics.ts`. The "predict, then check" tools in the brain panel add
 two: `racetraQ: predict` (`result` right | wrong, `qubits`) when a visitor
 guesses a paused decision, and `racetraQ: what-if` (`kind` sensor | angle) when
 a paused decision is re-run with a covered sensor or a nudged angle, at most
-once per decision and kind.
+once per decision and kind. The toy adds `racetraQ: toy train` (`qubits` 1 | 2)
+when a training run starts (Train or Step), once per run (seed and circuit),
+never per step.
 

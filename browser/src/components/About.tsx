@@ -16,7 +16,16 @@ function Out({ href, host = href, children }: { href: string; host?: string; chi
   );
 }
 
-export function About({ manifest, onClose }: { manifest: Manifest; onClose: () => void }) {
+export function About({
+  manifest,
+  onClose,
+  onOpenToy,
+}: {
+  manifest: Manifest;
+  onClose: () => void;
+  /** open "Train a tiny circuit" (closes this dialog) */
+  onOpenToy: () => void;
+}) {
   useLang();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -86,6 +95,15 @@ export function About({ manifest, onClose }: { manifest: Manifest; onClose: () =
               <Out href={`${REPO}/blob/main/docs/LEARN.md`} host={REPO}>
                 {t('about.path')}
               </Out>
+            ),
+          })}
+        </p>
+        <p className="hint">
+          {rich('about.toy', {
+            toy: (
+              <button type="button" className="link" onClick={onOpenToy}>
+                {t('about.toy_link')}
+              </button>
             ),
           })}
         </p>
