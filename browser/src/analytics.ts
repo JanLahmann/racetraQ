@@ -15,6 +15,8 @@
  *                                paused decision before the scores show (once per decision)
  * - `racetraQ: what-if`        — kind (sensor | angle): a paused decision re-run with a covered
  *                                sensor or a nudged angle (at most once per decision and kind)
+ * - `racetraQ: toy train`      — qubits (1 | 2): a run of "Train a tiny circuit" started (Train or
+ *                                Step; once per run, i.e. per seed and circuit, not per step)
  * - `racetraQ: about open`
  * - `racetraQ: outbound click` — host (a `data-umami-event` link)
  */
@@ -36,6 +38,7 @@ export type TraqEvent =
   | 'composer open'
   | 'predict'
   | 'what-if'
+  | 'toy train'
   | 'about open';
 
 export function track(what: TraqEvent, data: Record<string, string | number | undefined> = {}): void {

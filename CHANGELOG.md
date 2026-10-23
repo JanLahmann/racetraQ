@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- **Train a tiny circuit — a toy** in the browser edition (Learning Audit
+  item 14), so racetraq.org shows learning, not only its result: one or two
+  qubits learn "steer toward the longer ray" live, on a frozen, seeded batch
+  of 64 real side-ray readings from the oval (32 more held out), by full-batch
+  gradient descent with parameter-shift gradients. Live decision map over the
+  batch, loss and accuracy curves (training and held out), the circuit with
+  its angles moving; Train/Pause, Step, Reset (new seed), three learning
+  rates, 1 or 2 qubits; flags a run stuck in a local minimum. Clearly labelled
+  a toy: the race drivers were trained with double DQN, offline in Python, and
+  a classical one-liner solves the task. Seed 1 at 2 qubits passes 90 %
+  held-out accuracy at step 13. Opened from the line under the header and from
+  "What is this?"; EN/DE; pure tested core (`browser/src/sim/toy.ts`); one new
+  Umami event, `racetraQ: toy train` (`qubits`), once per run.
 - **Notebook 08 — Does it drive tracks it never saw?** Generalisation and
   overfitting: four quantum and two MLP drivers on eight freshly generated
   tracks (trackgen seeds 800–807, none used for training or selection) — the
