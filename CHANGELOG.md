@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- racetraq.org accessibility (family quality scan): purple text uses a lighter
+  tint and the active mode button a deeper fill, so both meet WCAG AA 4.5:1;
+  the EN/DE buttons are named "EN, English" / "DE, Deutsch" (the visible label
+  is part of the name); the line under the header is a named region.
 - **Train a tiny circuit — a toy** in the browser edition (Learning Audit
   item 14), so racetraq.org shows learning, not only its result: one or two
   qubits learn "steer toward the longer ray" live, on a frozen, seeded batch

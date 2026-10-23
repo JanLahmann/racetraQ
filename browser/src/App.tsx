@@ -69,6 +69,12 @@ function firstVisit(): boolean {
 const CAMERA_LABELS: Record<CameraView, Key> = { top: 'camera.top', chase: 'camera.chase', cockpit: 'camera.cockpit' };
 
 /** A track name in the active language (the manifest's name when unknown). */
+/** A car's colour as text on the dark panels: the quantum purple is below 4.5:1
+ *  there, so it reads in its lighter tint; the other car colours pass as they are. */
+function textColor(carColor: string): string {
+  return carColor.toLowerCase() === '#7a5cff' ? 'var(--quantum-text)' : carColor;
+}
+
 function trackName(id: string, name: string): string {
   const key = `track.${id}`;
   return hasKey(key) ? t(key) : name;
@@ -325,6 +331,7 @@ export function App() {
         </button>
         <LangSwitch />
       </header>
+      <section aria-label={t('pitch.aria')}>
       <p className="pitch">
         {t('pitch.text')}{' '}
         <button type="button" className="link" onClick={openAbout}>
@@ -335,6 +342,7 @@ export function App() {
           {t('pitch.toy')}
         </button>
       </p>
+      </section>
 
       <main>
         <div className="left">
@@ -506,7 +514,7 @@ export function App() {
           <h2>
             {t('panel.heading')}
             {focus && (
-              <span className="focus-name" style={{ color: focus.color }}>
+              <span className="focus-name" style={{ color: textColor(focus.color) }}>
                 {' '}
                 · {focus.label}
               </span>
