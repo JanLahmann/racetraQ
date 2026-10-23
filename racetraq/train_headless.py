@@ -30,6 +30,7 @@ import numpy as np
 
 from racetraq.agents.base import N_ACTIONS
 from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER
 from racetraq.agents.training import DQNTrainer
 from racetraq.agents.training.dqn import DEFAULT_EVAL_EPISODES, OPTION_KEYS
 from racetraq.config import apply_overrides, load_config, parse_override, resolve_training_cfg
@@ -126,6 +127,16 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
     npz_path = out_dir / f"{agent}_{track_name}{qtag}.npz"
     np.savez(npz_path, params=qfunc.get_params())
     obs_cfg = config["observation"]
+    circuit = {
+        "n_qubits": n_qubits,
+        "n_layers": int(config.get("circuit", {}).get("n_layers", 4)),
+        "n_actions": int(qfunc.n_actions),
+    }
+    # only a circuit without the CZ ring says so (same parameter count, so
+    # loaders cannot tell it from the file; absent = "cz_ring")
+    entangler = getattr(qfunc, "entangler", DEFAULT_ENTANGLER)
+    if entangler != DEFAULT_ENTANGLER:
+        circuit["entangler"] = entangler
     meta = {
         "agent": agent,
         "track": track_name,
@@ -133,11 +144,7 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
         "episodes": episodes,
         # the circuit shape the params belong to (n_layers is not recoverable
         # from the filename; an MLP only uses n_qubits as its feature count)
-        "circuit": {
-            "n_qubits": n_qubits,
-            "n_layers": int(config.get("circuit", {}).get("n_layers", 4)),
-            "n_actions": int(qfunc.n_actions),
-        },
+        "circuit": circuit,
         # what the driver was trained to see; loaders (see
         # runtime.weights_observation) overlay this on the profile obs
         "observation": {
@@ -161,21 +168,23 @@ def save_weights(qfunc, agent: str, track_name: str, config: dict, episodes: int
 
 
 def _adopt_init_circuit(config: dict, init: str | Path, explicit_layers: bool,
-                        explicit_actions: bool) -> int:
-    """``--init`` on a quantum agent: the run continues at the circuit depth
-    and action count of the init weights (``runtime.weights_circuit``: their
-    sidecar's ``circuit`` block, else their parameter count), written into
-    ``config["circuit"]`` — with one printed line when that changes anything.
+                        explicit_actions: bool, explicit_entangler: bool = False) -> int:
+    """``--init`` on a quantum agent: the run continues at the circuit depth,
+    action count and entangler of the init weights (``runtime.weights_circuit``:
+    their sidecar's ``circuit`` block, else their parameter count), written
+    into ``config["circuit"]`` — with one printed line when that changes
+    anything.
 
     A depth the caller asked for EXPLICITLY (``--set circuit.n_layers``) that
     contradicts the weights raises ``ValueError``, as do weights of another
-    qubit count or of a parameter count that fits no depth.  An explicit
+    qubit count or of a parameter count that fits no depth, and an explicit
+    ``circuit.entangler`` that is not the weights' one.  An explicit
     action count (``--actions`` / ``circuit.n_actions``) LARGER than the
     weights' widens them (:func:`widen_actions`: the action tables are
     prefixes of each other); a smaller one raises.  Returns the init weights'
     action count.
     """
-    from racetraq.server.runtime import weights_circuit
+    from racetraq.server.runtime import weights_circuit, weights_entangler
 
     name = Path(init).name
     circuit = config.setdefault("circuit", {})
@@ -192,6 +201,14 @@ def _adopt_init_circuit(config: dict, init: str | Path, explicit_layers: bool,
                          f"circuit.n_layers = {have['n_layers']} was requested — drop the "
                          "override (the run continues at the init weights' depth) or "
                          "start from weights of that depth")
+    entangler, theirs = circuit.get("entangler", DEFAULT_ENTANGLER), weights_entangler(init)
+    if explicit_entangler and theirs != entangler:
+        raise ValueError(f"--init weights '{name}' were trained with circuit.entangler = "
+                         f"\"{theirs}\", but \"{entangler}\" was requested — drop the "
+                         "override or start from weights with that entangler")
+    if theirs != entangler:
+        circuit["entangler"] = theirs
+        print(f"circuit entangler from --init {name}: {theirs} (config: {entangler})")
     if explicit_actions and shape["n_actions"] > have["n_actions"]:
         raise ValueError(f"--init weights '{name}' use {shape['n_actions']} actions, but "
                          f"{have['n_actions']} were requested (--actions / "
@@ -307,7 +324,8 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
     if init is not None and agent == "quantum":
         init_actions = _adopt_init_circuit(
             config, init, explicit_layers="circuit.n_layers" in overrides,
-            explicit_actions=actions is not None or "circuit.n_actions" in overrides)
+            explicit_actions=actions is not None or "circuit.n_actions" in overrides,
+            explicit_entangler="circuit.entangler" in overrides)
 
     spacing = config["track"]["resample_spacing"]
     n_parallel = training_cfg["n_parallel_envs"]
@@ -352,7 +370,8 @@ def train(agent: str, track_name: str, episodes: int | None, seed: int | None,
         # too few blocks for the ring: some actions decide without some features
         from racetraq.agents.quantum.lightcone import blind_spot_warning
 
-        for line in blind_spot_warning(env.feature_names, qfunc.n_layers, qfunc.n_actions):
+        for line in blind_spot_warning(env.feature_names, qfunc.n_layers, qfunc.n_actions,
+                                       entangler=qfunc.entangler):
             print(f"WARNING: {line}")
 
     trainer = DQNTrainer(qfunc, monitor, training_cfg, rng=np.random.default_rng(seed),

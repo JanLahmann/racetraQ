@@ -14,6 +14,7 @@ import numpy as np
 
 from racetraq.agents.base import N_ACTIONS
 from racetraq.agents.classical import MLPQFunction
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER, ENTANGLERS
 from racetraq.agents.quantum.qdqn import QuantumQFunction
 from racetraq.config import load_config, resolve_training_cfg  # noqa: F401  (re-export)
 from racetraq.env.track import TRACKS_DIR, Track
@@ -151,7 +152,8 @@ def weights_circuit(path: Path, n_qubits: int | None = None,
                     n_actions: int | None = None) -> dict:
     """The circuit shape ``{n_qubits, n_layers, n_actions}`` a QUANTUM weights
     file needs — what every loader builds its Q-function with, so a driver
-    brings its own depth the way it brings its observation and action count.
+    brings its own depth the way it brings its observation and action count
+    (and its entangler: :func:`weights_entangler`).
 
     - ``n_qubits``: the sidecar's ``circuit.n_qubits``; else the caller's
       ``n_qubits`` (the size it loads the file at); else the recorded
@@ -205,15 +207,36 @@ def weights_circuit(path: Path, n_qubits: int | None = None,
     return {"n_qubits": n, "n_layers": int(layers), "n_actions": a}
 
 
-def with_weights_circuit(config: dict, path: Path) -> dict:
-    """``config`` with the ``[circuit]`` depth and action count the quantum
-    weights at ``path`` need (:func:`weights_circuit`; the config's own
-    ``n_actions`` is the fallback for a file that records none). A shallow
-    copy — only the circuit table is new; ``config`` itself is untouched.
+def weights_entangler(path: Path) -> str:
+    """The ``[circuit] entangler`` a QUANTUM weights file was trained with:
+    its sidecar's ``circuit.entangler``, else ``"cz_ring"`` — only weights
+    trained without the CZ ring record one, and the parameter count is the
+    same either way, so the sidecar is the only place it can come from.
+    Loaders build the circuit with it (:func:`with_weights_circuit`).
 
-    Raises ``ValueError`` when the weights fit no depth or belong to another
-    qubit count than the config's: the observation that goes with a size
-    comes from the profile, so the size is the caller's to pick.
+    Raises ``ValueError`` when the sidecar records an unknown entangler.
+    """
+    block = _weights_meta(Path(path)).get("circuit")
+    entangler = (block.get("entangler", DEFAULT_ENTANGLER) if isinstance(block, dict)
+                 else DEFAULT_ENTANGLER)
+    if entangler not in ENTANGLERS:
+        raise ValueError(f"weights '{Path(path).name}' record circuit.entangler = "
+                         f"{entangler!r} in their .meta.json (known: {', '.join(ENTANGLERS)})")
+    return str(entangler)
+
+
+def with_weights_circuit(config: dict, path: Path) -> dict:
+    """``config`` with the ``[circuit]`` depth, action count and entangler the
+    quantum weights at ``path`` need (:func:`weights_circuit`,
+    :func:`weights_entangler`; the config's own ``n_actions`` is the fallback
+    for a file that records none). A shallow copy — only the circuit table is
+    new; ``config`` itself is untouched. The entangler key is only written
+    when it differs from the config's.
+
+    Raises ``ValueError`` when the weights fit no depth, belong to another
+    qubit count than the config's (the observation that goes with a size
+    comes from the profile, so the size is the caller's to pick) or record
+    an unknown entangler.
     """
     circuit = dict(config.get("circuit", {}))
     n_qubits = int(circuit.get("n_qubits", 4))
@@ -225,6 +248,9 @@ def with_weights_circuit(config: dict, path: Path) -> dict:
             "profile")
     circuit["n_layers"] = shape["n_layers"]
     circuit["n_actions"] = shape["n_actions"]
+    entangler = weights_entangler(path)
+    if entangler != circuit.get("entangler", DEFAULT_ENTANGLER):
+        circuit["entangler"] = entangler
     return {**config, "circuit": circuit}
 
 
@@ -244,9 +270,10 @@ def with_weights_config(config: dict, path: Path) -> dict:
     """The config a quantum weights file drives under, for loaders outside the
     session (hardware lap / sprint, the noise tools): ``config`` with the
     file's recorded observation (:func:`with_weights_observation`) and the
-    circuit depth and action count it needs (:func:`with_weights_circuit`) —
-    the rule the demo server and ``records`` apply per driver. ``config``
-    itself is untouched; raises ``ValueError`` like ``with_weights_circuit``."""
+    circuit depth, action count and entangler it needs
+    (:func:`with_weights_circuit`) — the rule the demo server and ``records``
+    apply per driver. ``config`` itself is untouched; raises ``ValueError``
+    like ``with_weights_circuit``."""
     return with_weights_circuit(with_weights_observation(config, path), path)
 
 

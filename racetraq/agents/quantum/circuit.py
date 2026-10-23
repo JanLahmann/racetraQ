@@ -5,8 +5,12 @@ Circuit spec (n qubits, L data re-uploading blocks, acting on |0...0>):
     block l = 0..L-1:
         for qubit i: RY(x[l, i]) on qubit i        # x[l, i] = lam[l, i] * s[i]
         for qubit i: RY(theta[l, i, 0]) then RZ(theta[l, i, 1]) on qubit i
-        CZ ring: CZ(0, 1), CZ(1, 2), ..., CZ(n-1, 0)
+        CZ ring: CZ(0, 1), CZ(1, 2), ..., CZ(n-1, 0)    # [circuit] entangler
     readout: E_a = <Z_a>, Q_a = w[a] * E_a + b[a]   # a = 0..min(4, n)-1; head outside
+
+``[circuit] entangler = "none"`` (default ``"cz_ring"``) leaves the CZ ring
+out of every block — the entanglement ablation. Parameters, their order and
+the readout are the same either way.
 
 The encoding angle is exposed as a separate input Parameter ``x[l*n + i]``;
 the product ``x[l, i] = lam[l, i] * s[i]`` is computed OUTSIDE the circuit
@@ -26,9 +30,10 @@ from __future__ import annotations
 
 from racetraq.agents.base import action_labels
 from racetraq.agents.quantum import lightcone
+from racetraq.agents.quantum.fastsim import DEFAULT_ENTANGLER, check_entangler, circuit_entangler
 
 
-def build_circuit(n_qubits: int = 4, n_layers: int = 4):
+def build_circuit(n_qubits: int = 4, n_layers: int = 4, entangler: str = DEFAULT_ENTANGLER):
     """Build the canonical parameterized QuantumCircuit.
 
     Input parameters: ParameterVector "x" of length L*n (encoding angles,
@@ -36,10 +41,12 @@ def build_circuit(n_qubits: int = 4, n_layers: int = 4):
     ParameterVector "theta" of length L*n*2, flat order (l, i, k) with k=0 the
     RY angle and k=1 the RZ angle — the same order as theta.ravel() in the
     numpy fast path. Use :func:`split_parameters` to recover both orderings.
+    ``entangler="none"`` builds it without the CZ rings.
     """
     from qiskit import QuantumCircuit
     from qiskit.circuit import ParameterVector
 
+    ring = check_entangler(entangler) == "cz_ring"
     x = ParameterVector("x", n_layers * n_qubits)
     theta = ParameterVector("theta", n_layers * n_qubits * 2)
 
@@ -50,8 +57,9 @@ def build_circuit(n_qubits: int = 4, n_layers: int = 4):
         for i in range(n_qubits):
             qc.ry(theta[(layer * n_qubits + i) * 2], i)
             qc.rz(theta[(layer * n_qubits + i) * 2 + 1], i)
-        for i in range(n_qubits):
-            qc.cz(i, (i + 1) % n_qubits)
+        if ring:
+            for i in range(n_qubits):
+                qc.cz(i, (i + 1) % n_qubits)
     return qc
 
 
@@ -79,7 +87,9 @@ def observables(n_qubits: int = 4) -> list:
     ]
 
 
-def _light_cone_spec(n: int, layers: int, n_actions: int) -> tuple[dict, dict | None]:
+def _light_cone_spec(
+    n: int, layers: int, n_actions: int, entangler: str = DEFAULT_ENTANGLER
+) -> tuple[dict, dict | None]:
     """The light-cone part of :func:`circuit_spec` (see ``lightcone.py``).
 
     Returns ``(fields, live)``. ``fields["visibility"][a][j]`` is 1 iff readout
@@ -90,16 +100,25 @@ def _light_cone_spec(n: int, layers: int, n_actions: int) -> tuple[dict, dict | 
     ``counts``), the gates outside every readout's light cone. ``live`` is
     ``lightcone.live_gates`` — the per-gate flags behind those counts. All
     None for a shape the analysis rejects (more readouts than qubits, no
-    blocks).
+    blocks). Without an entangler ``min_layers_full_visibility`` is None (no
+    depth gets there) and no CZ is counted dead: there are none.
     """
     try:
-        visible = lightcone.feature_visibility(n, layers, n_actions)
-        live = lightcone.live_gates(n, layers, n_actions)
-        min_layers = lightcone.min_layers_full_visibility(n, n_actions)
+        visible = lightcone.feature_visibility(n, layers, n_actions, entangler)
+        live = lightcone.live_gates(n, layers, n_actions, entangler)
     except ValueError:
         return {"visibility": None, "dead_params": None,
                 "min_layers_full_visibility": None, "dead_gates": None}, None
-    dead = {key: int(live[kind].size - live[kind].sum())
+    try:
+        min_layers = lightcone.min_layers_full_visibility(n, n_actions, entangler)
+    except ValueError:
+        if entangler == DEFAULT_ENTANGLER:  # as before: n = 2 rejects the whole spec
+            return {"visibility": None, "dead_params": None,
+                    "min_layers_full_visibility": None, "dead_gates": None}, None
+        min_layers = None
+    n_gates = {"enc": layers * n, "ry": layers * n, "rz": layers * n,
+               "cz": layers * lightcone.cz_gates_per_block(n, entangler)}
+    dead = {key: int(n_gates[kind] - live[kind].sum())
             for key, kind in (("ry_enc", "enc"), ("ry", "ry"), ("rz", "rz"), ("cz", "cz"))}
     dead["total"] = sum(dead.values())
     return {
@@ -123,6 +142,7 @@ def circuit_spec(config: dict) -> dict:
     and the hardware path drops it), None when the analysis rejects the shape.
     ``pruned_on_hardware`` says whether the hardware path really drops those
     gates: ``[hardware] prune_light_cone`` of a full config (default true).
+    ``entangler`` is the ``[circuit] entangler`` ("none": no CZ gates listed).
     """
     cfg = config.get("circuit", config) if isinstance(config.get("circuit"), dict) else config
     hardware_cfg = config.get("hardware")
@@ -132,8 +152,10 @@ def circuit_spec(config: dict) -> dict:
     layers = int(cfg.get("n_layers", 4))
     # Z_a readout on the first n_actions qubits (default: the first 4)
     n_actions = int(cfg.get("n_actions", min(4, n)))
+    entangler = circuit_entangler(cfg)
+    n_cz = lightcone.cz_gates_per_block(n, entangler)
 
-    light_cone, live = _light_cone_spec(n, layers, n_actions)
+    light_cone, live = _light_cone_spec(n, layers, n_actions, entangler)
 
     def is_live(kind: str, layer: int, i: int) -> bool | None:
         return None if live is None else bool(live[kind][layer, i])
@@ -148,7 +170,7 @@ def circuit_spec(config: dict) -> dict:
                           "live": is_live("ry", layer, i)})
             gates.append({"type": "rz", "qubit": i, "layer": layer,
                           "live": is_live("rz", layer, i)})
-        for i in range(n):
+        for i in range(n_cz):
             gates.append({"type": "cz", "q0": i, "q1": (i + 1) % n, "layer": layer,
                           "live": is_live("cz", layer, i)})
 
@@ -156,13 +178,14 @@ def circuit_spec(config: dict) -> dict:
         "n_qubits": n,
         "n_layers": layers,
         "n_actions": n_actions,
+        "entangler": entangler,
         "gates": gates,
         "counts": {
             "ry_enc": layers * n,
             "ry": layers * n,
             "rz": layers * n,
-            "cz": layers * n,
-            "total": 4 * layers * n,
+            "cz": layers * n_cz,
+            "total": 3 * layers * n + layers * n_cz,
         },
         "n_params": {
             "lam": layers * n,

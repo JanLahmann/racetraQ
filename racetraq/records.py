@@ -63,7 +63,8 @@ class Driver:
 def _quantum_config(n_qubits: int, path: Path) -> dict:
     """Packaged q<n> profile with the weights' recorded observation and
     action-set size overlaid, at the circuit depth the weights need (their
-    sidecar's, else the one their parameter count implies)."""
+    sidecar's, else the one their parameter count implies) and with their
+    entangler (recorded only when it is not the CZ ring)."""
     config = load_config() if n_qubits == 4 else load_config(f"q{n_qubits}")
     obs = weights_observation(path)
     n_actions = weights_actions(path)
@@ -80,6 +81,9 @@ def _quantum_config(n_qubits: int, path: Path) -> dict:
     if int(config["circuit"].get("n_layers", 4)) != shape["n_layers"]:
         config = copy.deepcopy(config)
         config["circuit"]["n_layers"] = shape["n_layers"]
+    if "entangler" in shape and config["circuit"].get("entangler") != shape["entangler"]:
+        config = copy.deepcopy(config)  # with_weights_circuit sets it only when it differs
+        config["circuit"]["entangler"] = shape["entangler"]
     return config
 
 

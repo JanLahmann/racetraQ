@@ -14,6 +14,17 @@
   in about 45 s and in CI. Linked from the README, the learning path (tracks
   2–5), the glossary (overfitting, generalisation, selection bias) and the
   teaching answer key.
+- **Entanglement ablation** (SCIENCE.md, REPORT §4.7; `data/studies/entangler_oval_4q`,
+  `entangler_chicane_4q`): the shipped 4-qubit recipe without the CZ ring, 8 seeds. On the
+  oval nothing is lost (best snapshots lap 276 of 288 episodes without the ring, 278
+  with it); on the chicane no seed becomes reliable (26 without, 280 with). Without the ring each action is scored from one sensor, so
+  this measures the sensors-to-actions channel, not entanglement alone.
+- `[circuit] entangler = "none"` builds the circuit without its CZ rings (the
+  entanglement ablation of Learning Audit item 13; default `"cz_ring"`,
+  unchanged). fastsim, the adjoint gradients, the Qiskit/hardware circuits,
+  the light-cone analysis and the surrogate spectra all follow it; weights
+  trained that way record it in their `.meta.json` and every loader rebuilds
+  the same circuit. The browser export refuses such drivers.
 - **Predict, then check** in the browser edition (Learning Audit item 5): at a
   paused decision, "Guess before you look" hides the scores until you pick the
   move you expect, then says whether the driver agrees and how close it was;
