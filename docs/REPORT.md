@@ -600,6 +600,25 @@ lap too. The evidence is in the function: exact reproduction, and the cube fit
 where only the true frequencies still drive. Only inference is dequantized;
 fitted Q-iteration on the surrogate [15] was not run.
 
+### 4.7 Entanglement ablation
+
+The shipped oval and chicane recipe (4 qubits, 800 episodes, 8 seeds) with
+and without the CZ ring (`[circuit] entangler = "none"`, all else equal;
+`data/studies/entangler_oval_4q`, `entangler_chicane_4q`). The CZ-ring arm
+reproduced `robust_oval_4q` and `robust_chicane_4q` exactly, seed for seed.
+
+| Track | Best snapshots lapped, of 288: CZ ring / none | Reliable seeds: CZ ring / none |
+|---|---|---|
+| oval | 278 / 276 | 8 / 8 |
+| chicane | 280 / 26 | 8 / 0 |
+
+Without a two-qubit gate each action's ⟨Z⟩ sees one sensor only (Brake sees
+just the speed), so the ablation removes all information flow between
+sensors and actions, not only entanglement. That is enough for the oval and
+not for the chicane, which needs braking on what lies ahead. Entanglement as
+such is not isolated from information flow; see SCIENCE.md "Is the CZ ring
+pulling its weight?".
+
 ## 5 Honest assessment
 
 **Shown.** A 56-parameter circuit learns each track from scratch and one
@@ -682,8 +701,8 @@ IBM's teaching material [19] set the bar this project does not meet.
   `report.json`, a pure function of the result files (fixed bootstrap seed).
 - `tools/export_study.py STUDY_DIR --name NAME` writes the committable
   `data/studies/NAME/{report.md, report.json, cells.json}`; `cells.json` holds
-  every seed's eval log and both 36-episode evals. Twenty-six studies are
-  committed, 721 finished cells by their headers: the sixteen of the audit,
+  every seed's eval log and both 36-episode evals. Twenty-eight studies are
+  committed, 753 finished cells by their headers: the sixteen of the audit,
   505 (`gp_4q` 202, `oval_4q` 56, `chicane_4q` 56, `combo_4q` 35, `oval_q6`
   16, `chicane_q6` 16, `oval_q8` 18, `chicane_q8` 18, `oval_q10` 18,
   `chicane_q10` 18, `gp_q10feat` 6, `universal_4q` 15, `pro` 3,
@@ -691,7 +710,9 @@ IBM's teaching material [19] set the bar this project does not meet.
   follow-ups of 2026-10-09/14, 216 (`gp_4q_followups` 24, `gp_4q_pace30` 16,
   `gp_q10feat_8seeds` 16, `gp_q10feat_plain` 8, `gp_q10feat_pace_L4` 16,
   `gp_q10feat_pace_L6` 16, `gp_q10feat_widen` 24, `levers_oval_4q`,
-  `levers_chicane_4q` and `levers_gp_4q` 32 each), plus six single runs in
+  `levers_chicane_4q` and `levers_gp_4q` 32 each), the entanglement
+  ablation of 2026-10-21, 32 (`entangler_oval_4q`, `entangler_chicane_4q`
+  16 each), plus six single runs in
   `gp_q10feat_july_recipe/results.json`. Weights and full logs are not in the
   repository; SCIENCE.md's "487 training runs" predates the `chicane_q10` export.
 - Code commits of the audit studies. The sixteen audit studies ran from

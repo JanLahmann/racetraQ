@@ -162,7 +162,9 @@ probability, so on its own it cannot change what a $Z$ measurement reads.
 parameters".
 
 **Entanglement** — A joint state of several qubits that cannot be written as
-separate states of each; the CZ ring creates it. *More:* nb00, section 5.
+separate states of each; the CZ ring creates it. What removing it costs the
+drivers: SCIENCE.md, "Is the CZ ring pulling its weight?". *More:* nb00,
+section 5.
 
 **Expectation value ⟨Z⟩** — The average of +1 (outcome 0) and −1 (outcome 1)
 over many measurements, $P(0) - P(1)$, a number in $[-1, 1]$; each action's

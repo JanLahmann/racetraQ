@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Entanglement ablation** (SCIENCE.md, REPORT §4.7; `data/studies/entangler_oval_4q`,
+  `entangler_chicane_4q`): the shipped 4-qubit recipe without the CZ ring, 8 seeds. On the
+  oval nothing is lost (best snapshots lap 276 of 288 episodes without the ring, 278
+  with it); on the chicane no seed becomes reliable (26 without, 280 with). Without the ring each action is scored from one sensor, so
+  this measures the sensors-to-actions channel, not entanglement alone.
 - `[circuit] entangler = "none"` builds the circuit without its CZ rings (the
   entanglement ablation of Learning Audit item 13; default `"cz_ring"`,
   unchanged). fastsim, the adjoint gradients, the Qiskit/hardware circuits,
