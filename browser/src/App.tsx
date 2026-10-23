@@ -113,6 +113,8 @@ export function App() {
   const [camera, setCamera] = useState<CameraView>(loadCamera);
   const [aboutOpen, setAboutOpen] = useState(firstVisit);
   const [wideCircuit, setWideCircuit] = useState(false);
+  /** "Guess before you look" (brain panel): for this page session only */
+  const [guessMode, setGuessMode] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
   const [, setTick] = useState(0);
   const keys = useRef({ left: false, right: false, gas: false, brake: false });
@@ -498,7 +500,14 @@ export function App() {
               </span>
             )}
           </h2>
-          <QuantumBrain car={focus} wideCircuit={wideCircuit} onToggleWide={() => setWideCircuit((w) => !w)} />
+          <QuantumBrain
+            car={focus}
+            wideCircuit={wideCircuit}
+            onToggleWide={() => setWideCircuit((w) => !w)}
+            paused={paused}
+            guessMode={guessMode}
+            onGuessMode={setGuessMode}
+          />
         </aside>
       </main>
 

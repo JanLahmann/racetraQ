@@ -91,6 +91,12 @@ reset brings the booth language back for the next visitor. The strings live
 in `racetraq/web/i18n/en.json` and `de.json`; the linked documentation stays
 English.
 
+Point visitors who want more at Explain → **Take it home**: four QR codes
+(racetraq.org, the [learning path](LEARN.md), the notebooks, the technical
+report) they can scan with a phone. The codes are part of the package, so
+they show without a network; regenerate them with `python tools/make_qr.py`
+(needs `pip install segno`) if a link ever changes.
+
 Profiles stack with an extra overlay via `--config <file.toml>`, and any
 `./config/<name>.toml` in the working directory shadows the packaged profile
 of the same name — so a Pi kiosk is `./run.sh --profile pi5 --config

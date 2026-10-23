@@ -11,6 +11,10 @@
  * - `racetraQ: rival change`   — rival (none | mlp | pro)
  * - `racetraQ: race lap`       — track, lap_time (s, 1 decimal), clean (yes | no), opponent
  * - `racetraQ: composer open`  — qubits, track (decision circuit sent to IBM Quantum Composer)
+ * - `racetraQ: predict`        — result (right | wrong), qubits (quantum drivers only): a guess at a
+ *                                paused decision before the scores show (once per decision)
+ * - `racetraQ: what-if`        — kind (sensor | angle): a paused decision re-run with a covered
+ *                                sensor or a nudged angle (at most once per decision and kind)
  * - `racetraQ: about open`
  * - `racetraQ: outbound click` — host (a `data-umami-event` link)
  */
@@ -30,6 +34,8 @@ export type TraqEvent =
   | 'rival change'
   | 'race lap'
   | 'composer open'
+  | 'predict'
+  | 'what-if'
   | 'about open';
 
 export function track(what: TraqEvent, data: Record<string, string | number | undefined> = {}): void {

@@ -24,6 +24,11 @@ model and no hardware path.
   decision's angles (QAMPoser's circuit editor, read-only), ⟨Z⟩ of every qubit
   and the Q-values. Pause, step one decision at a time, or open the exact circuit
   of a decision in IBM Quantum Composer.
+  **Predict, then check** (paused only, inference on copies, `src/sim/whatif.ts`):
+  with "Guess before you look" on, the scores (and ⟨Z⟩) stay hidden until you
+  pick the move you expect; "cover" a sensor to re-run the same decision with
+  that input at 0, or nudge one trained RY/RZ angle by up to ±π, and compare the
+  Q-values side by side (gates outside every readout's light cone are flagged).
 - **Race** — you (arrow keys / WASD / on-screen pedals) against the quantum car;
   **C** or the 📷 button switches between top-down, chase and cockpit cameras.
 - **Evolution** — four snapshots of one training run racing each other (the same mode as at the booth).
@@ -108,5 +113,9 @@ It uses the family's standard snippet: a `data-before-send` hook drops
 headless browsers and bots, and `?notrack` turns tracking off in this browser
 (`?track` turns it back on).
 Events follow the family taxonomy (`racetraQ: <what happened>`); the list is
-in `src/analytics.ts`.
+in `src/analytics.ts`. The "predict, then check" tools in the brain panel add
+two: `racetraQ: predict` (`result` right | wrong, `qubits`) when a visitor
+guesses a paused decision, and `racetraQ: what-if` (`kind` sensor | angle) when
+a paused decision is re-run with a covered sensor or a nudged angle, at most
+once per decision and kind.
 
