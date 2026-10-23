@@ -77,7 +77,10 @@ one, say what a neuron, a loss and a learning rate are, compute
 $\langle Z\rangle$ for a rotated qubit, build one block of the racetraQ
 circuit by hand, and say why some of its angles can never learn.
 
-**Going further:** the rest of notebook 03, then notebook 04 Part A and Part B.
+**Going further:** the rest of notebook 03, then notebook 04 Part A and Part B,
+then [08 — Does it drive tracks it never saw?](../notebooks/08_generalisation_and_selection_bias.ipynb):
+**overfitting**, **generalisation** and **selection bias** with the bundled
+drivers, no training needed.
 
 ## 3. ML practitioner, new to quantum
 
@@ -100,15 +103,21 @@ help.
 5. [04 — Training the quantum driver](../notebooks/04_training_the_quantum_driver.ipynb),
    Parts A and B and the closing section: the same DQN on both models, over
    8–10 seeds, with interval statistics. (40 min)
-6. [07 — Light cones and classical surrogates](../notebooks/07_light_cones_and_classical_surrogates.ipynb),
+6. [08 — Does it drive tracks it never saw?](../notebooks/08_generalisation_and_selection_bias.ipynb):
+   the train/test split in RL — specialists and the universal driver on
+   freshly generated tracks — and the selection bias of a best snapshot's
+   own eval, measured over 645 training runs with a control group. (25 min)
+7. [07 — Light cones and classical surrogates](../notebooks/07_light_cones_and_classical_surrogates.ipynb),
    Part B: the trained circuit as an explicit Fourier series, and a classical
    model that drives like it. (30 min)
-7. [SCIENCE.md](SCIENCE.md), "Honest claims". (10 min)
+8. [SCIENCE.md](SCIENCE.md), "Honest claims". (10 min)
 
 **After this you can** translate every part of the quantum model into the
 vocabulary of neural networks (and say where the analogy breaks), explain
 why training runs on a simulator with adjoint gradients, read a light-cone
-map, and judge the multi-seed comparison the project reports.
+map, judge the multi-seed comparison the project reports, and tell a
+driver's training score from its score on tracks and episodes it was never
+fitted or picked on.
 
 **Going further:** notebook 05 (shots, device noise, training for the
 device) and notebook 06 (wider circuits).
@@ -141,7 +150,10 @@ target network, what a learning rate and a loss do, why reinforcement
 learning results need many seeds, and how the project's statistics decide
 whether a difference is supported.
 
-**Going further:** [REPORT.md](REPORT.md), section 2 (evaluation protocol).
+**Going further:** [REPORT.md](REPORT.md), section 2 (evaluation protocol),
+and [notebook 08](../notebooks/08_generalisation_and_selection_bias.ipynb):
+overfitting and selection bias, with the bundled drivers and the committed
+study data.
 
 ## 5. Researcher
 
@@ -153,9 +165,12 @@ practice (Agarwal et al. 2021).
    §4 results, §5 honest assessment. (60 min)
 2. [SCIENCE.md](SCIENCE.md), "Honest claims" and the references. (20 min)
 3. Notebooks [06](../notebooks/06_scaling_and_features.ipynb) (qubits and
-   depth over many seeds) and
+   depth over many seeds),
    [07](../notebooks/07_light_cones_and_classical_surrogates.ipynb) (light
-   cones, Fourier spectrum, classical surrogates). (90 min)
+   cones, Fourier spectrum, classical surrogates) and
+   [08](../notebooks/08_generalisation_and_selection_bias.ipynb) (zero-shot
+   transfer to generated tracks; picked-on against fresh evals over 645
+   training runs). (115 min)
 4. The data: per-seed summaries in [`data/studies/`](../data/studies),
    bundled-driver records in [`data/records.json`](../data/records.json),
    the one physical-QPU lap in [`data/qpu/`](../data/qpu). Recompute one
@@ -200,7 +215,7 @@ an estimate from shots on real hardware, never an exact number.
 
 ## More
 
-- [Glossary](GLOSSARY.md) — about 75 terms in one sentence each.
+- [Glossary](GLOSSARY.md) — about 80 terms in one sentence each.
 - [Teaching with racetraQ](TEACHING.md) — a 90-minute and a half-day
   workshop, with an answer key.
 - [racetraQ in plain words](EXPLAINER.md), [SCIENCE.md](SCIENCE.md),

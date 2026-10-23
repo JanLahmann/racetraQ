@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **Notebook 08 — Does it drive tracks it never saw?** Generalisation and
+  overfitting: four quantum and two MLP drivers on eight freshly generated
+  tracks (trackgen seeds 800–807, none used for training or selection) — the
+  gp-trained and universal drivers lap them all, the oval and chicane
+  specialists almost never — and the universal study's top-ranked seed that
+  laps its training tracks and none of the generated ones. Selection bias:
+  over 645 committed training runs, the in-training eval a best snapshot was
+  picked on reads +0.028 [+0.021, +0.036] above 36 fresh episodes, against
+  +0.005 [−0.002, +0.011] for the unpicked final parameters. No training; runs
+  in about 45 s and in CI. Linked from the README, the learning path (tracks
+  2–5), the glossary (overfitting, generalisation, selection bias) and the
+  teaching answer key.
 - **Entanglement ablation** (SCIENCE.md, REPORT §4.7; `data/studies/entangler_oval_4q`,
   `entangler_chicane_4q`): the shipped 4-qubit recipe without the CZ ring, 8 seeds. On the
   oval nothing is lost (best snapshots lap 276 of 288 episodes without the ring, 278

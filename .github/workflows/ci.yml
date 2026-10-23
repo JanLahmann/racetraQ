@@ -64,7 +64,7 @@ jobs:
           cache: pip
       - name: Install
         run: pip install -e ".[notebooks,hardware]"
-      - name: Execute notebooks 00-04, 06 and 07
+      - name: Execute notebooks 00-04 and 06-08
         run: |
           jupyter nbconvert --to notebook --execute --output-dir /tmp/nb-out \
             --ExecutePreprocessor.timeout=900 \
@@ -74,7 +74,8 @@ jobs:
             notebooks/03_quantum_circuits_as_q_functions.ipynb \
             notebooks/04_training_the_quantum_driver.ipynb \
             notebooks/06_scaling_and_features.ipynb \
-            notebooks/07_light_cones_and_classical_surrogates.ipynb
+            notebooks/07_light_cones_and_classical_surrogates.ipynb \
+            notebooks/08_generalisation_and_selection_bias.ipynb
       - name: Execute notebook 05 (hardware cells no-op)
         env:
           RACETRAQ_SKIP_HW: "1"
