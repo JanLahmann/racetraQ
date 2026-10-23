@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- racetraq.org has an `apple-touch-icon.png` (180×180, opaque) and a real
+  `favicon.ico` (16/32/48 px), drawn from the SVG mark by `tools/make_icons.py`;
+  `/favicon.ico` no longer returns 404.
 - **Train a tiny circuit — a toy** in the browser edition (Learning Audit
   item 14), so racetraq.org shows learning, not only its result: one or two
   qubits learn "steer toward the longer ray" live, on a frozen, seeded batch

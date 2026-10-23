@@ -70,3 +70,28 @@ describe('crawlable page', () => {
     expect(sitemap.match(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/g)).toHaveLength(locs.length);
   });
 });
+
+describe('icons', () => {
+  // bitmaps written by tools/make_icons.py from the inline SVG mark
+  const png = readFileSync(resolve(root, 'public/apple-touch-icon.png'));
+  const ico = readFileSync(resolve(root, 'public/favicon.ico'));
+
+  it('links an apple-touch-icon and a favicon.ico next to the SVG icon', () => {
+    expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
+    expect(html).toContain('<link rel="icon" href="/favicon.ico"');
+    expect(html).toContain('<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,');
+  });
+
+  it('apple-touch-icon is a 180x180 opaque PNG', () => {
+    expect(png.subarray(1, 4).toString('ascii')).toBe('PNG');
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([180, 180]);
+    expect(png[25]).toBe(2); // colour type 2: RGB, no alpha channel
+  });
+
+  it('favicon.ico holds 16, 32 and 48 px images', () => {
+    expect(ico.readUInt16LE(2)).toBe(1); // type: icon
+    const count = ico.readUInt16LE(4);
+    const sizes = Array.from({ length: count }, (_, i) => ico[6 + 16 * i] || 256).sort((a, b) => a - b);
+    expect(sizes).toEqual([16, 32, 48]);
+  });
+});
